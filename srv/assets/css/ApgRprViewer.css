@@ -1,0 +1,44 @@
+
+
+.fullWidth {
+    padding: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+
+#ApgWglGltfViewerContainer {
+    /* makes this the origin of its children */
+    position: relative;
+}
+
+#ApgWglGltfViewerCanvas {
+    /* let our container decide its width */
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#ApgWglGltfViewerLogger {
+    /* place at top left*/
+    position: absolute;
+    /* Change the cursor to a hand when hover */
+    cursor: pointer;
+    /* don't let the text get selected */
+    user-select: none;
+
+    font-size: 0.5rem;
+
+    color: cyan;
+}
+
+#ApgWglGltfViewerLogger>li {
+    list-style-type: disc;
+    margin: 0;
+}
+
+#ApgWglGltfViewerLogger>li:hover {
+    color: orange;
+}

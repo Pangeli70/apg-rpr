@@ -1,0 +1,34 @@
+<div style="display: flex; width: 100%; margin: 0; padding: 0; ">
+  <div id="ApgRprViewerToolbar">
+    <div
+      id="ApgRprViewerToolbarTitle"
+      style="text-align: center;"
+    >
+      <img
+        title="APG-Logo"
+        style="width:1.25rem; height:1.25rem; margin-left: 0.25rem"
+        src="https://apg-cdn.deno.dev/assets/img/png/APG-logo-2022-128px.png"
+      />
+      <span style="font-size: 1rem"> [: $site.name :] </span>
+      <span style="font-size: 0.4rem"> [: $site.version :] </span> <br>
+      <span style="font-size: 0.6rem"> [: $site.title :] </span>
+    </div>
+    <div
+      id="ApgRprViewerToolbarPanels"
+      style="height: 70%"
+    ></div>
+  </div>
+  <div id="ApgRprViewerContainer"></div>
+</div>
+
+<script type="module">
+
+  import { RAPIER } from "./assets/ts/ApgRprDeps.ts";
+  import { ApgRpr_Simulator } from "./assets/ts/ApgRpr_Simulator.ts";
+  import { ApgRpr_Simulations } from "./assets/ts/ApgRpr_Simulations.ts";
+
+  await RAPIER.init();
+  const simulator = new ApgRpr_Simulator(window, document, ApgRpr_Simulations);
+  simulator.run();
+
+</script>

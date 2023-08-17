@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "noImplicitOverride": true,
+    "include": ["dom"]
+  },
+  "tasks": {
+    "run": "deno run -A --unstable --watch server.ts",
+    "deploy": "deno run --allow-net --unstable --watch server.ts",
+    "test": "deno run -A --unstable --watch test.ts",
+    "cacheLib": "deno cache --reload --lock-write ./lib/deps.ts",
+    "cacheSrv": "deno cache --reload --lock-write ./srv/deps.ts",
+    "cacheTst": "deno cache --reload --lock-write ./test/deps.ts"
+  }
+}

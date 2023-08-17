@@ -1,0 +1,7 @@
+.lil-gui .controller.number.hasSlider input {
+    height: 1.1rem;
+}
+
+.lil-gui input[type=checkbox]:checked:before {
+    content: "";
+}
