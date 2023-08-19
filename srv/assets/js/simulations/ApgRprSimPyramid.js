@@ -1,25 +1,18 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
-export class ApgRprSimPyramid extends ApgRprSim_Base {
+export class ApgRprSim_Pyramid extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     const settings = this.params.guiSettings;
-    const guiBuilder = new ApgRprSimPyramidGuiBuilder(this.simulator.gui, this.params);
-    const gui = guiBuilder.build();
-    this.simulator.viewer.panels.innerHTML = gui;
-    guiBuilder.bindControls();
-    this.createWorld(settings);
+    this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
+    this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: -30, y: 20, z: -30 },
-        target: { x: 0, y: 0, z: 0 }
-      };
-      this.simulator.resetCamera(cameraPosition);
+      this.simulator.resetCamera(settings.cameraPosition);
     } else {
       this.params.restart = false;
     }
@@ -27,7 +20,7 @@ export class ApgRprSimPyramid extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  createWorld(asettings) {
+  #createWorld(asettings) {
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groundBodyDesc);
     const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30, 0.1, 30);
@@ -59,6 +52,7 @@ export class ApgRprSimPyramid extends ApgRprSim_Base {
   defaultGuiSettings() {
     const r = {
       ...super.defaultGuiSettings(),
+      isCubesGroupOpened: false,
       cubesRestitution: 0.5,
       cubesRestitutionMMS: {
         min: 0.05,
@@ -72,21 +66,24 @@ export class ApgRprSimPyramid extends ApgRprSim_Base {
         step: 1
       }
     };
+    r.cameraPosition.eye.x = -30;
+    r.cameraPosition.eye.y = 20;
+    r.cameraPosition.eye.z = -30;
     return r;
   }
 }
-export class ApgRprSimPyramidGuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
+  buildHtml() {
     const cubesGroupControl = this.#buildCubesGroupControl();
-    const simControls = super.build();
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSimPyramidSettingsPanel",
-      eApgRpr_SimulationName.A_PYRAMID,
+      ApgRpr_eSimulationName.A_PYRAMID,
       [
         cubesGroupControl,
         simControls
@@ -126,11 +123,19 @@ export class ApgRprSimPyramidGuiBuilder extends ApgRprSim_GuiBuilder {
       }
     );
     const r = this.buildGroupControl(
+      "cubesGroupControl",
       "Cubes:",
       [
         cubesRestitutionControl,
         pyramidSizeControl
-      ]
+      ],
+      this.guiSettings.isCubesGroupOpened,
+      () => {
+        if (!this.gui.isRefreshing) {
+          this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
+          this.gui.log("Cubes group toggled");
+        }
+      }
     );
     return r;
   }

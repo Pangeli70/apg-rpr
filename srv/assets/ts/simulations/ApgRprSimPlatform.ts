@@ -11,24 +11,22 @@ import {
 } from "../ApgDom.ts";
 import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
-    ApgRprSim_Base,
-    IApgRprSim_GuiSettings,
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
 
-export interface IApgRprSim_Platform_GuiSettings extends IApgRprSim_GuiSettings {
+export interface ApgRprSim_Platform_IGuiSettings extends ApgRprSim_IGuiSettings {
 
 }
 
 
-export class ApgRprSimPlatform extends ApgRprSim_Base {
+export class ApgRprSim_Platform extends ApgRprSim_Base {
 
     platformBody!: RAPIER.RigidBody;
     t = 0;
@@ -39,32 +37,29 @@ export class ApgRprSimPlatform extends ApgRprSim_Base {
     ) {
         super(asimulator, aparams);
 
+        const settings = this.params.guiSettings! as ApgRprSim_Platform_IGuiSettings;
+
+        // TODO Implement this pattern in the other simulations -- APG 20230819
         this.buildGui(ApgRprSim_Platform_GuiBuilder);
 
-        const settings = this.params.guiSettings! as IApgRprSim_Platform_GuiSettings;
-        this.createWorld(settings);
-
-
-        asimulator.addWorld(this.world);
+        this.#createWorld(settings);
+        this.simulator.addWorld(this.world);
 
         if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: -80, y: 50, z: -80 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-            asimulator.resetCamera(cameraPosition);
-        } else {
+            asimulator.resetCamera(settings.cameraPosition);
+        }
+        else {
             this.params.restart = false;
         }
 
         asimulator.setPreStepAction(() => {
             this.updateFromGui();
-            this.movePlatform();
+            this.#movePlatform();
         });
     }
 
 
-    private createWorld(asettings: IApgRprSim_Platform_GuiSettings) {
+    #createWorld(asettings: ApgRprSim_Platform_IGuiSettings) {
 
         // Create Trimesh  collider as platform
         const platformBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
@@ -120,7 +115,8 @@ export class ApgRprSimPlatform extends ApgRprSim_Base {
         }
     }
 
-    movePlatform() {
+
+    #movePlatform() {
         if (this && this.platformBody) {
 
             this.t += (2 * Math.PI) / 360;
@@ -136,16 +132,17 @@ export class ApgRprSimPlatform extends ApgRprSim_Base {
 
         if (this.needsUpdate()) {
 
-            // TODO implement collision groups settings 
+            // TODO implement Platform settings 
 
             super.updateFromGui();
         }
 
     }
 
+
     override defaultGuiSettings() {
 
-        const r: IApgRprSim_Platform_GuiSettings = {
+        const r: ApgRprSim_Platform_IGuiSettings = {
 
             ...super.defaultGuiSettings(),
 
@@ -158,7 +155,7 @@ export class ApgRprSimPlatform extends ApgRprSim_Base {
 
 export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
 
-    guiSettings: IApgRprSim_Platform_GuiSettings;
+    guiSettings: ApgRprSim_Platform_IGuiSettings;
 
 
     constructor(
@@ -167,17 +164,17 @@ export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
     ) {
         super(agui, aparams);
 
-        this.guiSettings = this.params.guiSettings as IApgRprSim_Platform_GuiSettings;
+        this.guiSettings = this.params.guiSettings as ApgRprSim_Platform_IGuiSettings;
     }
 
 
-    override build() {
+    override buildHtml() {
 
-        const simControls = super.build();
+        const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             "ApgRprSim_Platform_PanelControl",
-            eApgRpr_SimulationName.I_PLATFORM,
+            ApgRpr_eSimulationName.I_PLATFORM,
             [
                 simControls
             ]

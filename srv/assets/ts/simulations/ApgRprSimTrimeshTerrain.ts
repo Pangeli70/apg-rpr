@@ -5,16 +5,51 @@
  * -----------------------------------------------------------------------
 */
 
+import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
+import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
+    IApgRprSim_Params
+} from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
-import { ApgRprSim_Base, IApgRprSim_Params } from "../ApgRprSimulationBase.ts";
 
-export class ApgRprSimTrimeshTerrain extends ApgRprSim_Base {
 
-    constructor(asimulator: ApgRpr_Simulator, aparams: IApgRprSim_Params) {
+export interface ApgRprSim_TrimeshTerrain_IGuiSettings extends ApgRprSim_IGuiSettings {
+
+}
+
+
+export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
+
+    constructor(
+        asimulator: ApgRpr_Simulator,
+        aparams: IApgRprSim_Params
+    ) {
+
         super(asimulator, aparams);
 
+        const settings = this.params.guiSettings! as ApgRprSim_TrimeshTerrain_IGuiSettings;
+
+        this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
+
+        this.#createWorld(settings);
+        asimulator.addWorld(this.world);
+
+        if (!this.params.restart) {
+            this.simulator.resetCamera(settings.cameraPosition);
+        }
+        else {
+            this.params.restart = false;
+        }
+
+        this.simulator.setPreStepAction(() => { this.updateFromGui(); });
+    }
+
+
+    #createWorld(asettings: ApgRprSim_TrimeshTerrain_IGuiSettings) {
         // Create Trimesh platform collider.
         const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const platformBody = this.world.createRigidBody(platformBodyDesc);
@@ -67,18 +102,66 @@ export class ApgRprSimTrimeshTerrain extends ApgRprSim_Base {
             }
             offset -= 0.05 * rad * (num - 1.0);
         }
-
-        asimulator.addWorld(this.world);
-
-        // TODO create a property and a method for this. -- APG 20230815
-        if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: -80, y: 50, z: -80 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-            asimulator.resetCamera(cameraPosition);
-        }
     }
+
+
+    override updateFromGui() {
+
+        if (this.needsUpdate()) {
+
+            // TODO implement Pyramid settings
+
+            super.updateFromGui();
+        }
+
+    }
+
+
+    override defaultGuiSettings() {
+
+        const r: ApgRprSim_TrimeshTerrain_IGuiSettings = {
+
+            ...super.defaultGuiSettings(),
+
+        }
+
+        return r;
+    }
+
+}
+
+
+export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
+
+    guiSettings: ApgRprSim_TrimeshTerrain_IGuiSettings;
+
+
+    constructor(
+        agui: ApgGui,
+        aparams: IApgRprSim_Params
+    ) {
+        super(agui, aparams);
+
+        this.guiSettings = this.params.guiSettings as ApgRprSim_TrimeshTerrain_IGuiSettings;
+    }
+
+
+    override buildHtml() {
+
+        const simControls = super.buildHtml();
+
+        const r = this.buildPanelControl(
+            "ApgRprSim_TrimesgTerrain_SettingsPanel",
+            ApgRpr_eSimulationName.A_PYRAMID,
+            [
+                simControls
+            ]
+        );
+
+        return r;
+
+    }
+
 
 
 }

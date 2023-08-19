@@ -1,5 +1,5 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -12,11 +12,7 @@ export class ApgRprSim_LockedRotations extends ApgRprSim_Base {
     this.createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: -10, y: 3, z: 0 },
-        target: { x: 0, y: 3, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
+      asimulator.resetCamera(settings.cameraPosition);
     } else {
       this.params.restart = false;
     }
@@ -49,6 +45,10 @@ export class ApgRprSim_LockedRotations extends ApgRprSim_Base {
     const r = {
       ...super.defaultGuiSettings()
     };
+    r.cameraPosition.eye.x = -10;
+    r.cameraPosition.eye.y = 3;
+    r.cameraPosition.eye.z = 0;
+    r.cameraPosition.target.y = 3;
     return r;
   }
 }
@@ -58,11 +58,11 @@ export class ApgRprSim_LockedRotations_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
-    const simControls = super.build();
+  buildHtml() {
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSim_LockedRotations_PanelControl",
-      eApgRpr_SimulationName.C_LOCKED_ROTATIONS,
+      ApgRpr_eSimulationName.C_LOCKED_ROTATIONS,
       [
         simControls
       ]

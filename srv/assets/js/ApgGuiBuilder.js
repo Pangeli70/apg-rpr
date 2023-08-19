@@ -2,7 +2,7 @@ import {
   eApgDomFormElementType,
   eApgDomInputType
 } from "./ApgDom.ts";
-export class ApgGuiBuilder {
+export class ApgGui_Builder {
   gui;
   constructor(agui) {
     this.gui = agui;
@@ -15,7 +15,7 @@ export class ApgGuiBuilder {
     }
     this.gui.controls.set(aId, acontrol);
   }
-  build(acontainer) {
+  buildHtml(acontainer) {
     const r = "Override the ApgGuiBuilder.build() method to get the GUI";
     acontainer.innerHTML = r;
   }
@@ -49,12 +49,12 @@ export class ApgGuiBuilder {
         `;
     return r;
   }
-  buildRangeControl(aId, acaption, avalue, amin, amax, astep, acallback) {
+  buildRangeControl(aId, acaption, avalue, amin, amax, astep, ainputCallback) {
     const rangeControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.RANGE,
-      callback: acallback
+      callback: ainputCallback
     };
     this.#addControl(aId, rangeControl);
     const outputControl = {
@@ -88,11 +88,11 @@ export class ApgGuiBuilder {
         `;
     return r;
   }
-  buildButtonControl(aId, acaption, acallback) {
+  buildButtonControl(aId, acaption, aclickCallback) {
     const buttonControl = {
       element: null,
       type: eApgDomFormElementType.BUTTON,
-      callback: acallback
+      callback: aclickCallback
     };
     this.#addControl(aId, buttonControl);
     const r = `
@@ -106,12 +106,12 @@ export class ApgGuiBuilder {
         `;
     return r;
   }
-  buildCheckBoxControl(aId, acaption, avalue, acallback) {
+  buildCheckBoxControl(aId, acaption, avalue, achangeCallback) {
     const checkBoxControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.CHECK_BOX,
-      callback: acallback
+      callback: achangeCallback
     };
     this.#addControl(aId, checkBoxControl);
     const r = `
@@ -139,9 +139,19 @@ export class ApgGuiBuilder {
         `;
     return r;
   }
-  buildGroupControl(acaption, acontrols) {
+  buildGroupControl(aId, acaption, acontrols, aopened = false, atoggleCallback) {
+    const groupControl = {
+      element: null,
+      type: eApgDomFormElementType.DETAILS,
+      callback: atoggleCallback
+    };
+    this.#addControl(aId, groupControl);
     const r = `
-        <details style="padding: 0.5rem; margin-bottom: 0px">
+        <details 
+          id="${aId}"
+          style="padding: 0.5rem; margin-bottom: 0px"
+          ${aopened ? "open" : ""}
+        >
             <summary>${acaption}</summary>
             ${acontrols.join("\n")}
         </details>
@@ -162,11 +172,11 @@ export class ApgGuiBuilder {
         `;
     return r;
   }
-  buildSelectControl(aId, acaption, avalue, avalues, acallback) {
+  buildSelectControl(aId, acaption, avalue, avalues, achangeCallback) {
     const selectControl = {
       element: null,
       type: eApgDomFormElementType.SELECT,
-      callback: acallback
+      callback: achangeCallback
     };
     this.#addControl(aId, selectControl);
     const options = [];
@@ -228,7 +238,9 @@ export class ApgGuiBuilder {
       if (control.callback) {
         if (control.type == eApgDomFormElementType.INPUT) {
           if (control.inputType == void 0) {
-            alert(`Input type of control ${control.element.id} is not defined`);
+            const message = `Input type of control ${control.element.id} is not defined`;
+            alert(message);
+            throw new Error(message);
           }
           switch (control.inputType) {
             case eApgDomInputType.RANGE: {
@@ -240,6 +252,9 @@ export class ApgGuiBuilder {
               break;
             }
           }
+        }
+        if (control.type == eApgDomFormElementType.DETAILS) {
+          element.addEventListener("toggle", control.callback);
         }
       }
       if (control.type == eApgDomFormElementType.BUTTON) {

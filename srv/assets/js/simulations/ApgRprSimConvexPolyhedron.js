@@ -1,8 +1,26 @@
 import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
-import { ApgRprSim_Base } from "../ApgRprSimulationBase.ts";
-export class ApgRprSimConvexPolyhedron extends ApgRprSim_Base {
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+  ApgRprSim_Base
+} from "../ApgRprSimulationBase.ts";
+export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
+    const settings = this.params.guiSettings;
+    this.buildGui(ApgRprSim_ConvexPolyhedrons_GuiBuilder);
+    this.#createWorld(settings);
+    asimulator.addWorld(this.world);
+    if (!this.params.restart) {
+      this.simulator.resetCamera(settings.cameraPosition);
+    } else {
+      this.params.restart = false;
+    }
+    this.simulator.setPreStepAction(() => {
+      this.updateFromGui();
+    });
+  }
+  #createWorld(asettings) {
     const groudBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groudBodyDesc);
     const heightMap = this.generateRandomHeightMap("Convex Polyhedron 1", 20, 20, 40, 4, 40);
@@ -41,16 +59,8 @@ export class ApgRprSimConvexPolyhedron extends ApgRprSim_Base {
         }
       }
     }
-    asimulator.addWorld(this.world);
-    if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: -80, y: 50, z: -80 },
-        target: { x: 0, y: 0, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
-    }
   }
-  pipo(nsubdivs, wx, wy, wz) {
+  #pipo(nsubdivs, wx, wy, wz) {
     let vertices = [];
     let indices = [];
     let elementWidth = 1 / nsubdivs;
@@ -78,5 +88,34 @@ export class ApgRprSimConvexPolyhedron extends ApgRprSim_Base {
       vertices: new Float32Array(vertices),
       indices: new Uint32Array(indices)
     };
+  }
+  updateFromGui() {
+    if (this.needsUpdate()) {
+      super.updateFromGui();
+    }
+  }
+  defaultGuiSettings() {
+    const r = {
+      ...super.defaultGuiSettings()
+    };
+    return r;
+  }
+}
+export class ApgRprSim_ConvexPolyhedrons_GuiBuilder extends ApgRprSim_GuiBuilder {
+  guiSettings;
+  constructor(agui, aparams) {
+    super(agui, aparams);
+    this.guiSettings = this.params.guiSettings;
+  }
+  buildHtml() {
+    const simControls = super.buildHtml();
+    const r = this.buildPanelControl(
+      "ApgRprSim_ConvexPolyHedron_SettingsPanel",
+      ApgRpr_eSimulationName.A_PYRAMID,
+      [
+        simControls
+      ]
+    );
+    return r;
   }
 }

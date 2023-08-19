@@ -6,47 +6,45 @@
 */
 
 import {
-    IApgDomCheckBox,
-    IApgDomElement, IApgDomRange
+    IApgDomCheckBox, IApgDomElement,
+    IApgDomRange
 } from "../ApgDom.ts";
-import { ApgGui } from "../ApgGui.ts";
+import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
-import { IApgRpr_CameraPosition, IApgRpr_Point3D } from "../ApgRprInterfaces.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
+import { IApgRpr_Point3D } from "../ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
-    ApgRprSim_Base,
-    IApgRprSim_GuiSettings,
-    IApgRprSim_MinMaxStep,
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
-export interface IApgRprSim_CCDs_GuiSettings extends IApgRprSim_GuiSettings{
+export interface ApgRprSim_CCDs_IGuiSettings extends ApgRprSim_IGuiSettings {
 
-
+    isProjectileGroupOpened: boolean;
     projectileRadious: number;
-    projectileRadiousMMS: IApgRprSim_MinMaxStep;
+    projectileRadiousMMS: ApgGui_IMinMaxStep;
 
     projectileDensity: number;
-    projectileDensityMMS: IApgRprSim_MinMaxStep;
+    projectileDensityMMS: ApgGui_IMinMaxStep;
 
     projectileSpeed: number;
-    projectileSpeedMMS: IApgRprSim_MinMaxStep;
+    projectileSpeedMMS: ApgGui_IMinMaxStep;
 
     projectileCcd: boolean;
 
-    
+
+    isWallsGroupOpened: boolean;
     wallsNumber: number;
-    wallsNumberMMS: IApgRprSim_MinMaxStep;
+    wallsNumberMMS: ApgGui_IMinMaxStep;
 
     wallsHeight: number;
-    wallsHeightMMS: IApgRprSim_MinMaxStep;
+    wallsHeightMMS: ApgGui_IMinMaxStep;
 
     wallsDensity: number;
-    wallsDensityMMS: IApgRprSim_MinMaxStep;
-
+    wallsDensityMMS: ApgGui_IMinMaxStep;
 
     wallsCcd: boolean;
 
@@ -55,28 +53,28 @@ export interface IApgRprSim_CCDs_GuiSettings extends IApgRprSim_GuiSettings{
 
 export class ApgRprSim_CCDs extends ApgRprSim_Base {
 
-    constructor(asimulator: ApgRpr_Simulator, aparams: IApgRprSim_Params) {
+    constructor(
+        asimulator: ApgRpr_Simulator,
+        aparams: IApgRprSim_Params
+    ) {
 
         super(asimulator, aparams);
 
+        const settings = this.params.guiSettings! as ApgRprSim_CCDs_IGuiSettings;
+        
         const guiBuilder = new ApgRprSim_CCDs_GuiBuilder(
             this.simulator.gui,
             this.params
         );
-        const gui = guiBuilder.build();
-        this.simulator.viewer.panels.innerHTML = gui;
+        const html = guiBuilder.buildHtml();
+        this.simulator.updateViewerPanel(html);
         guiBuilder.bindControls();
 
-        const settings = this.params.guiSettings! as IApgRprSim_CCDs_GuiSettings;
-        this.createWorld(settings);
+        this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
         if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: -80, y: 50, z: -80 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-            this.simulator.resetCamera(cameraPosition);
+            this.simulator.resetCamera(settings.cameraPosition);
         }
         else {
             this.params.restart = false;
@@ -85,7 +83,8 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
         this.simulator.setPreStepAction(() => { this.updateFromGui(); });
     }
 
-    private createWorld(asettings: IApgRprSim_CCDs_GuiSettings) {
+
+    #createWorld(asettings: ApgRprSim_CCDs_IGuiSettings) {
 
         // Create Ground.
         const groundHeight = 0.1;
@@ -115,6 +114,32 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
         this.world.createCollider(projectileColliderDesc, projectileBody);
     }
 
+    
+    #createWall(offset: IApgRpr_Point3D, stackHeight: number, aisCcdEnabled = false) {
+
+        const shiftY = 1.0;
+        const shiftZ = 2.0;
+        for (let i = 0; i < stackHeight; ++i) {
+            for (let j = i; j < stackHeight; ++j) {
+                const x = offset.x;
+                const y = i * shiftY + offset.y;
+                const z = (i * shiftZ) / 2.0 + (j - i) * shiftZ + offset.z - stackHeight;
+                // Create dynamic cube.
+                const bodyDesc = RAPIER.RigidBodyDesc
+                    .dynamic()
+                    .setTranslation(x, y, z)
+                if (aisCcdEnabled) {
+                    bodyDesc.setCcdEnabled(true);
+                }
+                const body = this.world.createRigidBody(bodyDesc);
+                const colliderDesc = RAPIER.ColliderDesc
+                    .cuboid(0.5, 0.5, 1.0)
+                    .setDensity(2.0);
+                this.world.createCollider(colliderDesc, body);
+            }
+        }
+    }
+
 
     override updateFromGui() {
 
@@ -130,9 +155,11 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
 
     override defaultGuiSettings() {
 
-        const r: IApgRprSim_CCDs_GuiSettings = {
+        const r: ApgRprSim_CCDs_IGuiSettings = {
 
             ...super.defaultGuiSettings(),
+
+            isProjectileGroupOpened: false,
 
             projectileRadious: 1.25,
             projectileRadiousMMS: {
@@ -156,6 +183,8 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
             },
 
             projectileCcd: true,
+
+            isWallsGroupOpened: false,
 
             wallsNumber: 5,
             wallsNumberMMS: {
@@ -183,35 +212,12 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
         return r;
     }
 
-    #createWall(offset: IApgRpr_Point3D, stackHeight: number, aisCcdEnabled = false) {
-
-        const shiftY = 1.0;
-        const shiftZ = 2.0;
-        for (let i = 0; i < stackHeight; ++i) {
-            for (let j = i; j < stackHeight; ++j) {
-                const x = offset.x;
-                const y = i * shiftY + offset.y;
-                const z = (i * shiftZ) / 2.0 + (j - i) * shiftZ + offset.z - stackHeight;
-                // Create dynamic cube.
-                const bodyDesc = RAPIER.RigidBodyDesc
-                    .dynamic()
-                    .setTranslation(x, y, z)
-                if (aisCcdEnabled) {
-                    bodyDesc.setCcdEnabled(true);
-                }
-                const body = this.world.createRigidBody(bodyDesc);
-                const colliderDesc = RAPIER.ColliderDesc
-                    .cuboid(0.5, 0.5, 1.0)
-                    .setDensity(2.0);
-                this.world.createCollider(colliderDesc, body);
-            }
-        }
-    }
 }
+
 
 export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
 
-    ccdSettings: IApgRprSim_CCDs_GuiSettings;
+    guiSettings: ApgRprSim_CCDs_IGuiSettings;
 
     constructor(
         agui: ApgGui,
@@ -219,20 +225,21 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
     ) {
         super(agui, aparams);
 
-        this.ccdSettings = this.params.guiSettings as IApgRprSim_CCDs_GuiSettings;
+        this.guiSettings = this.params.guiSettings as ApgRprSim_CCDs_IGuiSettings;
     }
 
-    override build() {
+    
+    override buildHtml() {
 
         const projectileGroupControl = this.#buildProjectileGroupControl();
 
         const wallsGroupControl = this.#buildWallsGroupControl();
 
-        const simControls = super.build();
+        const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             "ApgRprSimCcdSettingsPanel",
-            eApgRpr_SimulationName.J_CCDs,
+            ApgRpr_eSimulationName.J_CCDs,
             [
                 projectileGroupControl,
                 wallsGroupControl,
@@ -244,18 +251,19 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     }
 
+
     #buildWallsGroupControl() {
         const WALLS_DENS_CNT = 'wallsDensityControl';
         const wallsDensityControl = this.buildRangeControl(
             WALLS_DENS_CNT,
             'Density',
-            this.ccdSettings.wallsDensity,
-            this.ccdSettings.wallsDensityMMS.min,
-            this.ccdSettings.wallsDensityMMS.max,
-            this.ccdSettings.wallsDensityMMS.step,
+            this.guiSettings.wallsDensity,
+            this.guiSettings.wallsDensityMMS.min,
+            this.guiSettings.wallsDensityMMS.max,
+            this.guiSettings.wallsDensityMMS.step,
             () => {
                 const range = this.gui.controls.get(WALLS_DENS_CNT)!.element as IApgDomRange;
-                this.ccdSettings.wallsDensity = parseFloat(range.value);
+                this.guiSettings.wallsDensity = parseFloat(range.value);
                 const output = this.gui.controls.get(`${WALLS_DENS_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
@@ -266,13 +274,13 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const wallsHeightControl = this.buildRangeControl(
             WALLS_HEIGHT_CNT,
             'Height',
-            this.ccdSettings.wallsHeight,
-            this.ccdSettings.wallsHeightMMS.min,
-            this.ccdSettings.wallsHeightMMS.max,
-            this.ccdSettings.wallsHeightMMS.step,
+            this.guiSettings.wallsHeight,
+            this.guiSettings.wallsHeightMMS.min,
+            this.guiSettings.wallsHeightMMS.max,
+            this.guiSettings.wallsHeightMMS.step,
             () => {
                 const range = this.gui.controls.get(WALLS_HEIGHT_CNT)!.element as IApgDomRange;
-                this.ccdSettings.wallsHeight = parseInt(range.value);
+                this.guiSettings.wallsHeight = parseInt(range.value);
                 const output = this.gui.controls.get(`${WALLS_HEIGHT_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
@@ -283,13 +291,13 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const wallsNumberControl = this.buildRangeControl(
             WALLS_NUMB_CNT,
             'Number',
-            this.ccdSettings.wallsNumber,
-            this.ccdSettings.wallsNumberMMS.min,
-            this.ccdSettings.wallsNumberMMS.max,
-            this.ccdSettings.wallsNumberMMS.step,
+            this.guiSettings.wallsNumber,
+            this.guiSettings.wallsNumberMMS.min,
+            this.guiSettings.wallsNumberMMS.max,
+            this.guiSettings.wallsNumberMMS.step,
             () => {
                 const range = this.gui.controls.get(WALLS_NUMB_CNT)!.element as IApgDomRange;
-                this.ccdSettings.wallsNumber = parseInt(range.value);
+                this.guiSettings.wallsNumber = parseInt(range.value);
                 const output = this.gui.controls.get(`${WALLS_NUMB_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
@@ -300,39 +308,47 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const wallsCCDControl = this.buildCheckBoxControl(
             WALLS_CCD_CNT,
             'Enable CCD',
-            this.ccdSettings.wallsCcd,
+            this.guiSettings.wallsCcd,
             () => {
                 const chkbox = this.gui.controls.get(WALLS_CCD_CNT)!.element as IApgDomCheckBox;
-                this.ccdSettings.wallsCcd = chkbox.checked;
+                this.guiSettings.wallsCcd = chkbox.checked;
                 // alert(chkbox.checked.toString());
             }
         );
 
         const wallsGroupControl = this.buildGroupControl(
+            "wallsGroupControl",
             "Walls:",
             [
                 wallsNumberControl,
                 wallsHeightControl,
                 wallsDensityControl,
                 wallsCCDControl
-            ]
-
+            ],
+            this.guiSettings.isWallsGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.guiSettings.isWallsGroupOpened = !this.guiSettings.isWallsGroupOpened;
+                    this.gui.log('Walls group toggled')
+                }
+            }
         );
         return wallsGroupControl;
     }
+
 
     #buildProjectileGroupControl() {
         const PROJ_RADIOUS_CNT = 'projectileRadiousControl';
         const projectileRadiousControl = this.buildRangeControl(
             PROJ_RADIOUS_CNT,
             'Radious',
-            this.ccdSettings.projectileRadious,
-            this.ccdSettings.projectileRadiousMMS.min,
-            this.ccdSettings.projectileRadiousMMS.max,
-            this.ccdSettings.projectileRadiousMMS.step,
+            this.guiSettings.projectileRadious,
+            this.guiSettings.projectileRadiousMMS.min,
+            this.guiSettings.projectileRadiousMMS.max,
+            this.guiSettings.projectileRadiousMMS.step,
             () => {
                 const range = this.gui.controls.get(PROJ_RADIOUS_CNT)!.element as IApgDomRange;
-                this.ccdSettings.projectileRadious = parseFloat(range.value);
+                this.guiSettings.projectileRadious = parseFloat(range.value);
                 const output = this.gui.controls.get(`${PROJ_RADIOUS_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
@@ -343,13 +359,13 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const projectileDensityControl = this.buildRangeControl(
             PROJ_DENSITY_CNT,
             'Density',
-            this.ccdSettings.projectileDensity,
-            this.ccdSettings.projectileDensityMMS.min,
-            this.ccdSettings.projectileDensityMMS.max,
-            this.ccdSettings.projectileDensityMMS.step,
+            this.guiSettings.projectileDensity,
+            this.guiSettings.projectileDensityMMS.min,
+            this.guiSettings.projectileDensityMMS.max,
+            this.guiSettings.projectileDensityMMS.step,
             () => {
                 const range = this.gui.controls.get(PROJ_DENSITY_CNT)!.element as IApgDomRange;
-                this.ccdSettings.projectileDensity = parseFloat(range.value);
+                this.guiSettings.projectileDensity = parseFloat(range.value);
                 const output = this.gui.controls.get(`${PROJ_DENSITY_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
@@ -360,13 +376,13 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const projectileSpeedControl = this.buildRangeControl(
             PROJ_SPEED_CNT,
             'Speed',
-            this.ccdSettings.projectileSpeed,
-            this.ccdSettings.projectileSpeedMMS.min,
-            this.ccdSettings.projectileSpeedMMS.max,
-            this.ccdSettings.projectileSpeedMMS.step,
+            this.guiSettings.projectileSpeed,
+            this.guiSettings.projectileSpeedMMS.min,
+            this.guiSettings.projectileSpeedMMS.max,
+            this.guiSettings.projectileSpeedMMS.step,
             () => {
                 const range = this.gui.controls.get(PROJ_SPEED_CNT)!.element as IApgDomRange;
-                this.ccdSettings.projectileSpeed = parseFloat(range.value);
+                this.guiSettings.projectileSpeed = parseFloat(range.value);
                 const output = this.gui.controls.get(`${PROJ_SPEED_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
@@ -377,22 +393,30 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const projectileCCDControl = this.buildCheckBoxControl(
             PROJ_CCD_CNT,
             'Enable CCD',
-            this.ccdSettings.projectileCcd,
+            this.guiSettings.projectileCcd,
             () => {
                 const chkbox = this.gui.controls.get(PROJ_CCD_CNT)!.element as IApgDomCheckBox;
-                this.ccdSettings.projectileCcd = chkbox.checked;
+                this.guiSettings.projectileCcd = chkbox.checked;
                 // alert(chkbox.checked.toString());
             }
         );
 
         const r = this.buildGroupControl(
+            "projectileGroupControl",
             "Projectile:",
             [
                 projectileSpeedControl,
                 projectileRadiousControl,
                 projectileDensityControl,
                 projectileCCDControl
-            ]
+            ],
+            this.guiSettings.isProjectileGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.guiSettings.isProjectileGroupOpened = !this.guiSettings.isProjectileGroupOpened;
+                    this.gui.log('Projectile group toggled')
+                }
+            }
 
         );
         return r;

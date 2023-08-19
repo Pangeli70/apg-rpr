@@ -11,12 +11,12 @@ import {
 } from "../ApgDom.ts";
 import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base,
-    IApgRprSim_GuiSettings,
+    ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
@@ -24,7 +24,7 @@ import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
 
-export interface IApgRprSim_CollisionGroups_GuiSettings extends IApgRprSim_GuiSettings {
+export interface IApgRprSim_CollisionGroups_GuiSettings extends ApgRprSim_IGuiSettings {
 
 }
 
@@ -46,13 +46,11 @@ export class ApgRprSim_CollisionGroups extends ApgRprSim_Base {
         asimulator.addWorld(this.world);
 
         if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: 5.0, y: 4.0, z: 5.0 },
-                target: { x: 0, y: 2, z: 0 },
-            };
-            asimulator.resetCamera(cameraPosition);
-        } else {
+            asimulator.resetCamera(settings.cameraPosition);
+        }
+        else {
             this.params.restart = false;
+            this.simulator.gui.log("restarted");
         }
 
         this.simulator.setPreStepAction(() => { this.updateFromGui(); });
@@ -132,8 +130,14 @@ export class ApgRprSim_CollisionGroups extends ApgRprSim_Base {
 
             ...super.defaultGuiSettings(),
 
-
         }
+
+        r.cameraPosition.eye.x = 5;
+        r.cameraPosition.eye.y = 4;
+        r.cameraPosition.eye.z = 5;
+
+        r.cameraPosition.target.y = 2;
+
         return r;
     }
 
@@ -155,13 +159,13 @@ export class ApgRprSim_CollisionGroups_GuiBuilder extends ApgRprSim_GuiBuilder {
     }
 
 
-    override build() {
+    override buildHtml() {
 
-        const simControls = super.build();
+        const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             "ApgRprSim_CollisionGroups_PanelControl",
-            eApgRpr_SimulationName.E_COLLISION_GROUPS,
+            ApgRpr_eSimulationName.E_COLLISION_GROUPS,
             [
                 simControls
             ]

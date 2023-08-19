@@ -5,31 +5,31 @@
  * -----------------------------------------------------------------------
 */
 
-import { ApgGuiStats } from "./ApgGuiStats.ts";
+import { ApgGui_IMinMaxStep } from "./ApgGui.ts";
+import { ApgGui_Stats } from "./ApgGuiStats.ts";
 import { RAPIER, PRANDO } from './ApgRprDeps.ts';
-import { eApgRpr_SimulationName } from "./ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
 import { IApgRprDebugInfo, IApgRpr_CameraPosition } from "./ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "./ApgRprSimGuiBuilder.ts";
 import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
 
 
-export interface IApgRprSim_MinMaxStep {
-    min: number;
-    max: number;
-    step: number;
-}
 
 
-export interface IApgRprSim_GuiSettings {
+export interface ApgRprSim_IGuiSettings {
+
+    isSimulationGroupOpened: boolean;
 
     velocityIterations: number;
-    velocityIterationsMMS: IApgRprSim_MinMaxStep;
+    velocityIterationsMMS: ApgGui_IMinMaxStep;
 
     frictionIterations: number;
-    frictionIterationsMMS: IApgRprSim_MinMaxStep;
+    frictionIterationsMMS: ApgGui_IMinMaxStep;
 
     slowdown: number;
-    slowdownMMS: IApgRprSim_MinMaxStep;
+    slowdownMMS: ApgGui_IMinMaxStep;
+
+    isStatsGroupOpened: boolean;
 
     cameraPosition: IApgRpr_CameraPosition;
 
@@ -40,12 +40,12 @@ export interface IApgRprSim_Params {
     gravity?: RAPIER.Vector3,
     restart?: boolean;
 
-    simulation: eApgRpr_SimulationName,
-    simulations?: eApgRpr_SimulationName[],
+    simulation: ApgRpr_eSimulationName,
+    simulations?: ApgRpr_eSimulationName[],
 
-    guiSettings?: IApgRprSim_GuiSettings;
+    guiSettings?: ApgRprSim_IGuiSettings;
 
-    stats?: ApgGuiStats;
+    stats?: ApgGui_Stats;
 
     debugInfo?: IApgRprDebugInfo;
 }
@@ -94,9 +94,11 @@ export class ApgRprSim_Base {
             this.simulator.gui,
             this.params
         );
-        const gui = guiBuilder.build();
-        this.simulator.viewer.panels.innerHTML = gui;
+        const html = guiBuilder.buildHtml();
+        this.simulator.updateViewerPanel(html);
         guiBuilder.bindControls();
+
+        this.simulator.gui.log('Sim Gui built', true);
     }
 
 
@@ -106,7 +108,7 @@ export class ApgRprSim_Base {
         if (this.params.restart) {
             this.simulator.setSimulation(this.params);
         }
-        
+
         // TODO move everything coming from the gui in the guiSettings -- APG 20230817
         if (this.prevParams.simulation != this.params.simulation) {
             this.simulator.setSimulation({ simulation: this.params.simulation })
@@ -131,7 +133,9 @@ export class ApgRprSim_Base {
 
     protected defaultGuiSettings() {
 
-        const r: IApgRprSim_GuiSettings = {
+        const r: ApgRprSim_IGuiSettings = {
+
+            isSimulationGroupOpened: false,
 
             velocityIterations: this.simulator.DEFAULT_VELOCITY_ITERATIONS,
             velocityIterationsMMS: {
@@ -153,6 +157,8 @@ export class ApgRprSim_Base {
                 max: this.simulator.MAX_SLOWDOWN,
                 step: 1
             },
+
+            isStatsGroupOpened: false,
 
             cameraPosition: {
                 eye: { x: - 80, y: 10, z: 80 },
@@ -201,24 +207,30 @@ export class ApgRprSim_Base {
 
     protected generateRandomHeightMap(
         arandomSeed: string | number,
-        anumWidthXDivs: number,
-        anumDepthZDivs: number,
-        awidthX: number,
-        aheightY: number,
-        adepthZ: number,
+        axNum: number,
+        azNum: number,
+        axScale: number,
+        ayScale: number,
+        azScale: number,
     ) {
 
         const rng = new PRANDO(arandomSeed)
 
         const randomHeights: number[] = [];
-        for (let i = 0; i <= anumWidthXDivs; i++) {
-            for (let j = 0; j <= anumDepthZDivs; j++) {
+
+        for (let i = 0; i < (axNum + 1); i++) {
+
+            for (let j = 0; j < (azNum + 1); j++) {
+
                 randomHeights.push(rng.next());
+
             }
+
         }
+
         const r = this.generateHeightMap(
-            anumWidthXDivs, anumDepthZDivs,
-            awidthX, aheightY, adepthZ,
+            axNum, azNum,
+            axScale, ayScale, azScale,
             randomHeights);
 
         return r;
@@ -226,40 +238,54 @@ export class ApgRprSim_Base {
 
 
     protected generateHeightMap(
-        anumWidthXDivs: number,
-        anumDepthZDivs: number,
-        awidthX: number,
-        aheightY: number,
-        adepthZ: number,
+        axNum: number,
+        azNum: number,
+        axScale: number,
+        ayScale: number,
+        azScale: number,
         aheights: number[],
     ) {
 
-        const elementWidthX = 1.0 / anumWidthXDivs;
-        const elementDepthZ = 1.0 / anumDepthZDivs;
+        const xSize = axScale / axNum;
+        const zSize = azScale / azNum;
+
+        const xHalf = axScale / 2;
+        const zHalf = azScale / 2;
 
         // create vertices lattice
         const vertices: number[] = [];
-        for (let i = 0; i <= anumWidthXDivs; ++i) {
-            for (let j = 0; j <= anumDepthZDivs; ++j) {
-                const index = (i * anumWidthXDivs) + j;
-                const x = (i * elementWidthX - 0.5) * awidthX;
-                const y = aheights[index] * aheightY;
-                const z = (j * elementDepthZ - 0.5) * adepthZ;
+
+        for (let iz = 0; iz < (azNum + 1); iz++) {
+
+            for (let ix = 0; ix < (axNum + 1); ix++) {
+
+                const index = ix + (iz * axNum);
+                const x = (ix * xSize) - xHalf;
+                const y = aheights[index] * ayScale;
+                const z = (iz * zSize) - zHalf;
                 vertices.push(x, y, z);
+
             }
+
         }
 
         // create triangle indexes 
         const indices: number[] = [];
-        for (let i = 0; i < anumWidthXDivs; ++i) {
-            for (let j = 0; j < anumDepthZDivs; ++j) {
-                const i1 = (i + 0) * (anumWidthXDivs + 1) + (j + 0);
-                const i2 = (i + 0) * (anumWidthXDivs + 1) + (j + 1);
-                const i3 = (i + 1) * (anumWidthXDivs + 1) + (j + 0);
-                const i4 = (i + 1) * (anumWidthXDivs + 1) + (j + 1);
-                indices.push(i1, i3, i2);
-                indices.push(i3, i4, i2);
+
+        for (let z = 0; z < azNum; z++) {
+
+            for (let x = 0; x < axNum; x++) {
+
+                const i1 = x + (z * (axNum + 1));
+                const i2 = x + ((z + 1) * (axNum + 1));
+                const i3 = i1 + 1;
+                const i4 = i2 + 1;
+
+                indices.push(i1, i2, i3);
+                indices.push(i3, i2, i4);
+
             }
+
         }
 
         return {

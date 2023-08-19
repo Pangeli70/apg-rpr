@@ -1,6 +1,6 @@
-import { ApgGuiBuilder } from "./ApgGuiBuilder.ts";
+import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
 import { RAPIER } from "./ApgRprDeps.ts";
-export class ApgRprSimDebugGuiBuilder extends ApgGuiBuilder {
+export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
   debugInfo;
   DEBUG_INFO_DIALOG_CNT = "debugInfoDialogControl";
   DEBUG_INFO_PAR_CNT = "debugInfoParagraphControl";
@@ -8,7 +8,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGuiBuilder {
     super(agui);
     this.debugInfo = ainfo;
   }
-  build() {
+  buildHtml() {
     const debugInfoDialogControl = this.#buildDebugInfoDialogControl();
     const DEBUG_INFO_OPEN_BTN_CNT = "debugInfoOpenButtonControl";
     const debugInfoOpenButtonControl = this.buildButtonControl(
@@ -22,6 +22,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGuiBuilder {
       }
     );
     const r = this.buildGroupControl(
+      "debugInfoGroupControl",
       "Debug:",
       [
         debugInfoDialogControl,

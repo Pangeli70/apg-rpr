@@ -11,17 +11,17 @@ import {
 } from "../ApgDom.ts";
 import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base,
-    IApgRprSim_GuiSettings,
+    ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
-export interface IApgRprSim_Damping_GuiSettings extends IApgRprSim_GuiSettings {
+export interface IApgRprSim_Damping_GuiSettings extends ApgRprSim_IGuiSettings {
 
 }
 
@@ -32,7 +32,7 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
 
         // Custom +Z gravity on this simulation
         super(asimulator, {
-            simulation: eApgRpr_SimulationName.D_DAMPING,
+            simulation: ApgRpr_eSimulationName.D_DAMPING,
             gravity: (aparams != undefined && aparams.gravity != undefined) ? aparams.gravity : new RAPIER.Vector3(0, 0, +9.81),
             restart: (aparams != undefined && aparams.restart != undefined) ? aparams.restart : false
         });
@@ -45,11 +45,7 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
         asimulator.addWorld(this.world);
 
         if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: 0, y: 2.0, z: 80 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-            asimulator.resetCamera(cameraPosition);
+            asimulator.resetCamera(settings.cameraPosition);
         }
         else {
             this.params.restart = false;
@@ -111,6 +107,11 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
             ...super.defaultGuiSettings(),
 
         }
+
+        r.cameraPosition.eye.x = 0;
+        r.cameraPosition.eye.y = 2;
+        r.cameraPosition.eye.z = 80;
+
         return r;
     }
 
@@ -131,13 +132,13 @@ export class ApgRprSim_Damping_GuiBuilder extends ApgRprSim_GuiBuilder {
     }
 
 
-    override build() {
+    override buildHtml() {
 
-        const simControls = super.build();
+        const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             "ApgRprSim_Damping_PanelControl",
-            eApgRpr_SimulationName.D_DAMPING,
+            ApgRpr_eSimulationName.D_DAMPING,
             [
                 simControls
             ]

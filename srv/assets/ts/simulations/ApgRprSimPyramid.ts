@@ -5,55 +5,49 @@
  * -----------------------------------------------------------------------
 */
 
-import {
-    IApgDomElement,
-    IApgDomRange
-} from "../ApgDom.ts";
-import { ApgGui } from "../ApgGui.ts";
+import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
+import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
-    ApgRprSim_Base, IApgRprSim_GuiSettings,
-    IApgRprSim_Params, IApgRprSim_MinMaxStep
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
+    IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
-export interface IApgRprSimPyramidGuiSettings extends IApgRprSim_GuiSettings {
+export interface ApgRprSim_Pyramid_IGuiSettings extends ApgRprSim_IGuiSettings {
+
+    isCubesGroupOpened: boolean;
 
     cubesRestitution: number;
-    cubesRestitutionMMS: IApgRprSim_MinMaxStep;
+    cubesRestitutionMMS: ApgGui_IMinMaxStep;
 
     size: number;
-    sizeMMS: IApgRprSim_MinMaxStep;
+    sizeMMS: ApgGui_IMinMaxStep;
 
 }
 
 
-export class ApgRprSimPyramid extends ApgRprSim_Base {
+export class ApgRprSim_Pyramid extends ApgRprSim_Base {
 
-    constructor(asimulator: ApgRpr_Simulator, aparams: IApgRprSim_Params) {
+    constructor(
+        asimulator: ApgRpr_Simulator,
+        aparams: IApgRprSim_Params
+    ) {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as IApgRprSimPyramidGuiSettings;
+        const settings = this.params.guiSettings! as ApgRprSim_Pyramid_IGuiSettings;
 
-        const guiBuilder = new ApgRprSimPyramidGuiBuilder(this.simulator.gui, this.params);
-        const gui = guiBuilder.build();
-        this.simulator.viewer.panels.innerHTML = gui;
-        guiBuilder.bindControls();
+        this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
 
-        this.createWorld(settings);
+        this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
         if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: -30, y: 20, z: -30 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-            this.simulator.resetCamera(cameraPosition);
+            this.simulator.resetCamera(settings.cameraPosition);
         }
         else {
             this.params.restart = false;
@@ -62,7 +56,8 @@ export class ApgRprSimPyramid extends ApgRprSim_Base {
         this.simulator.setPreStepAction(() => { this.updateFromGui(); });
     }
 
-    private createWorld(asettings: IApgRprSimPyramidGuiSettings) {
+
+    #createWorld(asettings: ApgRprSim_Pyramid_IGuiSettings) {
 
         // Create Ground.
         const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
@@ -112,9 +107,11 @@ export class ApgRprSimPyramid extends ApgRprSim_Base {
 
     override defaultGuiSettings() {
 
-        const r: IApgRprSimPyramidGuiSettings = {
+        const r: ApgRprSim_Pyramid_IGuiSettings = {
 
             ...super.defaultGuiSettings(),
+
+            isCubesGroupOpened: false,
 
             cubesRestitution: 0.5,
             cubesRestitutionMMS: {
@@ -131,15 +128,20 @@ export class ApgRprSimPyramid extends ApgRprSim_Base {
             },
 
         }
+
+        r.cameraPosition.eye.x = -30;
+        r.cameraPosition.eye.y = 20;
+        r.cameraPosition.eye.z = -30;
+
         return r;
     }
 
 }
 
 
-export class ApgRprSimPyramidGuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
 
-    guiSettings: IApgRprSimPyramidGuiSettings;
+    guiSettings: ApgRprSim_Pyramid_IGuiSettings;
 
 
     constructor(
@@ -148,18 +150,19 @@ export class ApgRprSimPyramidGuiBuilder extends ApgRprSim_GuiBuilder {
     ) {
         super(agui, aparams);
 
-        this.guiSettings = this.params.guiSettings as IApgRprSimPyramidGuiSettings;
+        this.guiSettings = this.params.guiSettings as ApgRprSim_Pyramid_IGuiSettings;
     }
 
-    override build() {
+
+    override buildHtml() {
 
         const cubesGroupControl = this.#buildCubesGroupControl();
 
-        const simControls = super.build();
+        const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             "ApgRprSimPyramidSettingsPanel",
-            eApgRpr_SimulationName.A_PYRAMID,
+            ApgRpr_eSimulationName.A_PYRAMID,
             [
                 cubesGroupControl,
                 simControls
@@ -169,6 +172,7 @@ export class ApgRprSimPyramidGuiBuilder extends ApgRprSim_GuiBuilder {
         return r;
 
     }
+
 
     #buildCubesGroupControl() {
         const CUBES_REST_CNT = 'cubesRestitutionControl';
@@ -207,11 +211,19 @@ export class ApgRprSimPyramidGuiBuilder extends ApgRprSim_GuiBuilder {
 
 
         const r = this.buildGroupControl(
+            "cubesGroupControl",
             "Cubes:",
             [
                 cubesRestitutionControl,
                 pyramidSizeControl,
-            ]
+            ],
+            this.guiSettings.isCubesGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
+                    this.gui.log('Cubes group toggled')
+                }
+            }
 
         );
         return r;

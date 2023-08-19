@@ -1,11 +1,11 @@
 import { ApgGui } from "./ApgGui.ts";
 import {
-  ApgGuiRprCollidersStatsPanel,
-  ApgGuiRprStepStatsPanel,
-  ApgGuiStats
+  ApgRpr_Colliders_StatsPanel,
+  ApgRpr_Step_StatsPanel,
+  ApgGui_Stats
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from "./ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "./ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
 import { ApgRprThreeViewer } from "./ApgRprThreeViewer.ts";
 export class ApgRpr_Simulator {
   /** Used to interact with the browser we don't like global variables */
@@ -58,22 +58,23 @@ export class ApgRpr_Simulator {
       stepId: 0
     };
     this.viewer = new ApgRprThreeViewer(this.window, this.document);
+    this.gui.log(`ApgRprThreeViewer created`, true);
     this.mouse = { x: 0, y: 0 };
     this.events = new RAPIER.EventQueue(true);
     this.window.addEventListener("mousemove", (event) => {
       this.mouse.x = event.clientX / this.window.innerWidth * 2 - 1;
       this.mouse.y = 1 - event.clientY / this.window.innerHeight * 2;
     });
-    this.setSimulation({ simulation: eApgRpr_SimulationName.A_PYRAMID });
+    this.setSimulation({ simulation: ApgRpr_eSimulationName.A_PYRAMID });
   }
   #initStats() {
     const pixelRatio = this.window.devicePixelRatio;
     const statsPanelWidth = 80;
-    this.stats = new ApgGuiStats(this.document, pixelRatio, statsPanelWidth);
-    this.stepStatsPanel = new ApgGuiRprStepStatsPanel(this.document, pixelRatio, statsPanelWidth);
+    this.stats = new ApgGui_Stats(this.document, pixelRatio, statsPanelWidth);
+    this.stepStatsPanel = new ApgRpr_Step_StatsPanel(this.document, pixelRatio, statsPanelWidth);
     this.stepStatsPanel.updateInMainLoop = false;
     this.stats.addPanel(this.stepStatsPanel);
-    this.collidersStatsPanel = new ApgGuiRprCollidersStatsPanel(this.document, pixelRatio, statsPanelWidth);
+    this.collidersStatsPanel = new ApgRpr_Colliders_StatsPanel(this.document, pixelRatio, statsPanelWidth);
     this.collidersStatsPanel.updateInMainLoop = false;
     this.stats.addPanel(this.collidersStatsPanel);
   }
@@ -94,6 +95,14 @@ export class ApgRpr_Simulator {
     this.world.forEachCollider((coll) => {
       this.viewer.addCollider(coll);
     });
+    this.gui.log("RAPIER world added", true);
+  }
+  updateViewerPanel(ahtml) {
+    this.gui.isRefreshing = true;
+    this.viewer.panels.innerHTML = ahtml;
+    setTimeout(() => {
+      this.gui.isRefreshing = false;
+    }, 0);
   }
   /** If we call this it means that the camera is locked */
   resetCamera(acameraPosition) {
@@ -110,6 +119,7 @@ export class ApgRpr_Simulator {
     this.gui.clearControls();
     this.viewer.reset();
     const newSimulation = new simulationType(this, aparams);
+    this.gui.log(`${aparams.simulation} simulation created`, true);
   }
   takeSnapshot() {
     if (this.world) {
@@ -141,6 +151,7 @@ export class ApgRpr_Simulator {
       this.world.step(this.events);
       this.stepId++;
       this.stepStatsPanel.end();
+      this.collidersStatsPanel.update(this.world.colliders.len());
       this.debugInfo.stepId = this.stepId;
       if (this.world) {
         this.stats.begin();

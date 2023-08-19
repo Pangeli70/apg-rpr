@@ -13,6 +13,7 @@ export enum eApgDomFormElementType {
 
     PARAGRAPH = 'paragraph',
     DIV = 'div',
+    DETAILS = 'details',
     INPUT = "input",
     LABEL ="label",
     SELECT ="select",
@@ -55,16 +56,40 @@ export enum eApgDomInputType {
 
 
 export interface IApgDomStyle {
-    visibility: string;
-    position: string;
-    top: string;
-    color: string;
-    display: string;
+    visibility?: string;
 
-    width: string;
-    height: string;
+    position?: string;
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
 
-    cssText: string;
+    color?: string;
+    display?: string;
+
+    width?: string;
+    height?: string;
+
+    cssText?: string;
+}
+
+
+export interface IApgDomBrowserWindow {
+
+    devicePixelRatio: number;
+    innerWidth: number;
+    innerHeight: number;
+    localStorage: IApgDomBrowserLocalStorage,
+
+    addEventListener(aevent: string, acallBack: Function, aflag?: boolean): void;
+
+    requestAnimationFrame(acallBack: Function): void;
+}
+
+
+export interface IApgDomBrowserLocalStorage {
+    getItem(akey: string): unknown;
+    setItem(akey: string, avalue: unknown): void;
 }
 
 
@@ -88,12 +113,6 @@ export interface IApgDomElement {
 }
 
 
-export interface IApgDomBody extends IApgDomElement {
-    requestFullscreen(): void;
-    cancelFullscreen(): void;
-}
-
-
 export interface IApgDomDocument extends IApgDomElement {
 
     getElementById(aid: string): IApgDomElement;
@@ -107,21 +126,11 @@ export interface IApgDomDocument extends IApgDomElement {
 }
 
 
-export interface IApgWglBrowserLocalStorage {
-    getItem(akey: string): unknown;
-    setItem(akey: string, avalue: unknown): void;
-}
+export interface IApgDomBody extends IApgDomElement {
 
+    requestFullscreen(): void;
+    cancelFullscreen(): void;
 
-export interface IApgDomBrowserWindow {
-    devicePixelRatio: number;
-    innerWidth: number;
-    innerHeight: number;
-    localStorage: IApgWglBrowserLocalStorage,
-
-    addEventListener(aevent: string, acallBack: Function, aflag?: boolean): void;
-
-    requestAnimationFrame(acallBack: Function): void;
 }
 
 
@@ -143,7 +152,15 @@ export interface IApgDomButton extends IApgDomElement {
 
 }
 
+export interface IApgDomUl extends IApgDomElement {
 
+    firstElementChild: IApgDomElement;
+    children: IApgDomElement[];
+
+    insertBefore(alement: IApgDomElement, anextElement: IApgDomElement): void;
+    removeChild(alement: IApgDomElement): void;
+
+}
 
 export interface IApgDomImageData {
 
@@ -151,28 +168,6 @@ export interface IApgDomImageData {
     colorSpace: string,
     width: number,
     height: number,
-}
-
-
-export interface IApgDom2DRenderingContext {
-    font: string;
-    textBaseline: string;
-    fillStyle: string;
-
-    globalAlpha: number;
-
-    fillRect(x: number, y: number, w: number, h: number): void;
-
-    fillText(t: string, x: number, y: number): void;
-
-    drawImage(
-        image: IApgDomCanvas,
-        sourceX: number, sourceY: number, sourceW: number, sourceH: number,
-        destX: number, destY: number, destW: number, destH: number
-    ): void;
-
-    getImageData(sourceX: number, sourceY: number, sourceW: number, sourceH: number): IApgDomImageData;
-
 }
 
 
@@ -195,9 +190,33 @@ export interface IApgDomCanvas extends IApgDomElement {
 }
 
 
+export interface IApgDom2DRenderingContext {
+    font: string;
+    textBaseline: string;
+    fillStyle: string;
+
+    globalAlpha: number;
+
+    fillRect(x: number, y: number, w: number, h: number): void;
+
+    fillText(t: string, x: number, y: number): void;
+
+    drawImage(
+        image: IApgDomCanvas,
+        x: number, y: number, width?: number, height?: number,
+        destX?: number, destY?: number, destWidth?: number, destHeight?: number
+    ): void;
+
+    getImageData(sourceX: number, sourceY: number, sourceW: number, sourceH: number): IApgDomImageData;
+
+}
+
+
 export interface IApgDomDialog extends IApgDomElement {
+
     close(): void;
     showModal(): void;
+
 }
 
 
@@ -221,7 +240,6 @@ export interface IApgDomInput extends IApgDomFormElement {
 
 }
 
-
 export interface IApgDomCheckBox extends IApgDomInput {
 
     checked: boolean;
@@ -230,12 +248,9 @@ export interface IApgDomCheckBox extends IApgDomInput {
 
 }
 
-
 export interface IApgDomColorPicker extends IApgDomInput {
     value: string;
 }
-
-
 export interface IApgDomRange extends IApgDomInput {
 
     min: string;
@@ -243,7 +258,6 @@ export interface IApgDomRange extends IApgDomInput {
     step: string;
     value: string;
 }
-
 
 export interface IApgDomOutput extends IApgDomElement {
     textContent: string;

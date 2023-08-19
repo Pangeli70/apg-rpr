@@ -13,7 +13,7 @@ import {
 
 
 
-export class ApgGuiStatsPanel {
+export class ApgGui_StatsPanel {
 
     current = 0;
     min = 10000;
@@ -186,7 +186,7 @@ export class ApgGuiStatsPanel {
 }
 
 
-export class ApgGuiMsStatsPanel extends ApgGuiStatsPanel {
+export class ApgGui_Ms_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
         adocument: IApgDomDocument,
@@ -214,7 +214,7 @@ export class ApgGuiMsStatsPanel extends ApgGuiStatsPanel {
 }
 
 
-export class ApgGuiFpsStatsPanel extends ApgGuiStatsPanel {
+export class ApgGui_Fps_StatsPanel extends ApgGui_StatsPanel {
 
     frames = 0;
 
@@ -256,7 +256,7 @@ export class ApgGuiFpsStatsPanel extends ApgGuiStatsPanel {
 }
 
 
-export class ApgGuiMemStatsPanel extends ApgGuiStatsPanel {
+export class ApgGui_Mem_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
         adocument: IApgDomDocument,
@@ -295,7 +295,7 @@ export class ApgGuiMemStatsPanel extends ApgGuiStatsPanel {
 }
 
 
-export class ApgGuiRprStepStatsPanel extends ApgGuiStatsPanel {
+export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
         adocument: IApgDomDocument,
@@ -322,7 +322,7 @@ export class ApgGuiRprStepStatsPanel extends ApgGuiStatsPanel {
 }
 
 
-export class ApgGuiRprCollidersStatsPanel extends ApgGuiStatsPanel {
+export class ApgRpr_Colliders_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
         adocument: IApgDomDocument,
@@ -340,23 +340,17 @@ export class ApgGuiRprCollidersStatsPanel extends ApgGuiStatsPanel {
         );
     }
 
-    override end(aendTime?: number) {
-        super.end(aendTime);
-        const ms = this.endTime - this.beginTime;
-        this.update(ms);
-    }
-
 }
 
 
-export class ApgGuiStats {
+export class ApgGui_Stats {
 
     document: IApgDomDocument;
 
     currentPanelIndex = 0;
-    panels: Map<string, ApgGuiStatsPanel> = new Map();
+    panels: Map<string, ApgGui_StatsPanel> = new Map();
 
-    currentPanel!: ApgGuiStatsPanel;
+    currentPanel!: ApgGui_StatsPanel;
 
     containerId = 'statContainerDivControl';
     container: IApgDomElement;
@@ -381,7 +375,7 @@ export class ApgGuiStats {
 
 
     #addDefaultPanels(adocument: IApgDomDocument) {
-        const fpsPanel = new ApgGuiFpsStatsPanel(
+        const fpsPanel = new ApgGui_Fps_StatsPanel(
             adocument,
             this.pixelRatio,
             this.width
@@ -389,7 +383,7 @@ export class ApgGuiStats {
         this.addPanel(fpsPanel);
         this.currentPanel = fpsPanel;
 
-        const msPanel = new ApgGuiMsStatsPanel(
+        const msPanel = new ApgGui_Ms_StatsPanel(
             adocument,
             this.pixelRatio,
             this.width
@@ -397,7 +391,7 @@ export class ApgGuiStats {
         this.addPanel(msPanel);
 
         if (self.performance && (self.performance as any).memory) {
-            const memPanel = new ApgGuiMemStatsPanel(
+            const memPanel = new ApgGui_Mem_StatsPanel(
                 adocument,
                 this.pixelRatio,
                 this.width
@@ -407,7 +401,7 @@ export class ApgGuiStats {
     }
 
 
-    addPanel(apanel: ApgGuiStatsPanel) {
+    addPanel(apanel: ApgGui_StatsPanel) {
 
         this.container.appendChild(apanel.container);
         this.panels.set(apanel.name, apanel);

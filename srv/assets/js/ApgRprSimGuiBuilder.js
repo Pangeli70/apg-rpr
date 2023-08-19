@@ -1,16 +1,16 @@
-import { ApgGuiBuilder } from "./ApgGuiBuilder.ts";
+import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
 import { ApgRprSimStatsGuiBuilder } from "./ApgRprSimStatsGuiBuilder.ts";
 import { ApgRprSimDebugGuiBuilder } from "./ApgRprSimDebugGuiBuilder.ts";
-export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
+export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
   params;
   CREDITS_DIALOG_CNT = "creditsDialogControl";
   constructor(agui, aparams) {
     super(agui);
     this.params = aparams;
   }
-  build() {
-    const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params.stats).build();
-    const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo).build();
+  buildHtml() {
+    const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params).buildHtml();
+    const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo).buildHtml();
     const simulationGroupControl = this.#buildSimulationGroupControl();
     const creditsDialogControl = this.#buildCreditsDialogControl();
     const RESTART_BTN_CNT = "restartButtonControl";
@@ -19,6 +19,7 @@ export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
       "Restart",
       () => {
         this.params.restart = true;
+        this.gui.log("Restart button pressed");
       }
     );
     const CREDITS_BTN_CNT = "creditsButtonControl";
@@ -88,12 +89,20 @@ export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
       }
     );
     const r = this.buildGroupControl(
+      "simulationGroupControl",
       "Simulation:",
       [
         simulationSelectControl,
         simulationVelocityIterationControl,
         simulationSpeedControl
-      ]
+      ],
+      this.params.guiSettings.isSimulationGroupOpened,
+      () => {
+        if (!this.gui.isRefreshing) {
+          this.params.guiSettings.isSimulationGroupOpened = !this.params.guiSettings.isSimulationGroupOpened;
+          this.gui.log("Simulation group toggled");
+        }
+      }
     );
     return r;
   }

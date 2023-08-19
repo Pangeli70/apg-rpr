@@ -11,25 +11,28 @@ import {
 } from "./ApgDom.ts";
 import { ApgGui } from "./ApgGui.ts";
 
-import { ApgGuiBuilder } from "./ApgGuiBuilder.ts";
-import { ApgGuiStats } from "./ApgGuiStats.ts";
+import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
+import { ApgGui_Stats } from "./ApgGuiStats.ts";
+import { IApgRprSim_Params } from "./ApgRprSimulationBase.ts";
 
-export class ApgRprSimStatsGuiBuilder extends ApgGuiBuilder {
+export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
 
-    stats: ApgGuiStats;
+    params: IApgRprSim_Params;
+    stats: ApgGui_Stats;
 
     constructor(
         agui: ApgGui,
-        astats: ApgGuiStats
+        aparams: IApgRprSim_Params,
     ) {
 
         super(agui);
 
-        this.stats = astats;
+        this.params = aparams;
+        this.stats = this.params.stats!;
 
     }
 
-    override build() {
+    override buildHtml() {
 
         const statsGroupControl = this.#buildStatsGroupControl();
 
@@ -75,11 +78,19 @@ export class ApgRprSimStatsGuiBuilder extends ApgGuiBuilder {
 
 
         const r = this.buildGroupControl(
+            "statsGroupControl",
             "Statistics:",
             [
                 statPanelSelectControl,
                 statDivControl
-            ]
+            ],
+            this.params.guiSettings!.isStatsGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.params.guiSettings!.isStatsGroupOpened = !this.params.guiSettings!.isStatsGroupOpened
+                    this.gui.log('Stats group toggled');
+                }
+            }
 
         );
         return r;

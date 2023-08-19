@@ -11,11 +11,11 @@ import {
 } from "./ApgDom.ts";
 import { ApgGui } from "./ApgGui.ts";
 import {
-    ApgGuiRprCollidersStatsPanel, ApgGuiRprStepStatsPanel,
-    ApgGuiStats
+    ApgRpr_Colliders_StatsPanel, ApgRpr_Step_StatsPanel,
+    ApgGui_Stats
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from './ApgRprDeps.ts';
-import { eApgRpr_SimulationName } from "./ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
 import {
     IApgRpr_CameraPosition, IApgRprDebugInfo,
     IApgRprPoint2D
@@ -34,15 +34,15 @@ export class ApgRpr_Simulator {
     document: IApgDomDocument;
 
     /** The current set of simulations */
-    simulations: Map<eApgRpr_SimulationName, typeof ApgRprSim_Base>;
+    simulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base>;
 
     /** Gui */
     gui: ApgGui;
 
     /** Stats objects */
-    stats!: ApgGuiStats;
-    stepStatsPanel!: ApgGuiRprStepStatsPanel;
-    collidersStatsPanel!: ApgGuiRprCollidersStatsPanel;
+    stats!: ApgGui_Stats;
+    stepStatsPanel!: ApgRpr_Step_StatsPanel;
+    collidersStatsPanel!: ApgRpr_Colliders_StatsPanel;
 
     /** The THREE viewer attached to the simulation */
     viewer: ApgRprThreeViewer;
@@ -88,7 +88,7 @@ export class ApgRpr_Simulator {
     constructor(
         awindow: IApgDomBrowserWindow,
         adocument: IApgDomDocument,
-        asimulations: Map<eApgRpr_SimulationName, typeof ApgRprSim_Base>
+        asimulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base>
     ) {
         this.window = awindow;
         this.document = adocument;
@@ -103,6 +103,7 @@ export class ApgRpr_Simulator {
         }
 
         this.viewer = new ApgRprThreeViewer(this.window, this.document);
+        this.gui.log(`ApgRprThreeViewer created`, true);
 
         this.mouse = { x: 0, y: 0 };
 
@@ -116,7 +117,7 @@ export class ApgRpr_Simulator {
         });
 
         // Set the first simulation
-        this.setSimulation({ simulation: eApgRpr_SimulationName.A_PYRAMID });
+        this.setSimulation({ simulation: ApgRpr_eSimulationName.A_PYRAMID });
     }
 
 
@@ -125,13 +126,13 @@ export class ApgRpr_Simulator {
         const pixelRatio = this.window.devicePixelRatio;
         const statsPanelWidth = 80;
 
-        this.stats = new ApgGuiStats(this.document, pixelRatio, statsPanelWidth);
+        this.stats = new ApgGui_Stats(this.document, pixelRatio, statsPanelWidth);
 
-        this.stepStatsPanel = new ApgGuiRprStepStatsPanel(this.document, pixelRatio, statsPanelWidth);
+        this.stepStatsPanel = new ApgRpr_Step_StatsPanel(this.document, pixelRatio, statsPanelWidth);
         this.stepStatsPanel.updateInMainLoop = false;
         this.stats.addPanel(this.stepStatsPanel);
 
-        this.collidersStatsPanel = new ApgGuiRprCollidersStatsPanel(this.document, pixelRatio, statsPanelWidth);
+        this.collidersStatsPanel = new ApgRpr_Colliders_StatsPanel(this.document, pixelRatio, statsPanelWidth);
         this.collidersStatsPanel.updateInMainLoop = false;
         this.stats.addPanel(this.collidersStatsPanel);
         
@@ -167,9 +168,17 @@ export class ApgRpr_Simulator {
             // Add a draw stub to all the colliders in the simulation
             this.viewer.addCollider(coll);
         });
+
+        this.gui.log('RAPIER world added', true);
     }
 
-
+    updateViewerPanel(ahtml: string) {
+        this.gui.isRefreshing = true;
+        this.viewer.panels.innerHTML = ahtml;
+        setTimeout(() => {
+            this.gui.isRefreshing = false;
+        }, 0);
+    }
 
     /** If we call this it means that the camera is locked */
     resetCamera(acameraPosition: IApgRpr_CameraPosition) {
@@ -196,7 +205,7 @@ export class ApgRpr_Simulator {
         // TODO Semantically this seems not good. We should store this somewhere and
         // dispose everyting when we change the simulation -- APG 20230812
         const newSimulation = new simulationType(this, aparams);
-
+        this.gui.log(`${aparams.simulation} simulation created`, true);
     }
 
 
@@ -241,6 +250,7 @@ export class ApgRpr_Simulator {
             this.world.step(this.events); // WTF ???
             this.stepId++;
             this.stepStatsPanel.end();
+            this.collidersStatsPanel.update(this.world.colliders.len());
 
             this.debugInfo.stepId = this.stepId;
 

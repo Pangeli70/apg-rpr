@@ -1,8 +1,26 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_Base } from "../ApgRprSimulationBase.ts";
-export class ApgRprSimTrimeshTerrain extends ApgRprSim_Base {
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+  ApgRprSim_Base
+} from "../ApgRprSimulationBase.ts";
+export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
+    const settings = this.params.guiSettings;
+    this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
+    this.#createWorld(settings);
+    asimulator.addWorld(this.world);
+    if (!this.params.restart) {
+      this.simulator.resetCamera(settings.cameraPosition);
+    } else {
+      this.params.restart = false;
+    }
+    this.simulator.setPreStepAction(() => {
+      this.updateFromGui();
+    });
+  }
+  #createWorld(asettings) {
     const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const platformBody = this.world.createRigidBody(platformBodyDesc);
     const heightMap = this.generateRandomHeightMap("Trimesh Height map", 20, 20, 70, 4, 70);
@@ -50,13 +68,34 @@ export class ApgRprSimTrimeshTerrain extends ApgRprSim_Base {
       }
       offset -= 0.05 * rad * (num - 1);
     }
-    asimulator.addWorld(this.world);
-    if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: -80, y: 50, z: -80 },
-        target: { x: 0, y: 0, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
+  }
+  updateFromGui() {
+    if (this.needsUpdate()) {
+      super.updateFromGui();
     }
+  }
+  defaultGuiSettings() {
+    const r = {
+      ...super.defaultGuiSettings()
+    };
+    return r;
+  }
+}
+export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
+  guiSettings;
+  constructor(agui, aparams) {
+    super(agui, aparams);
+    this.guiSettings = this.params.guiSettings;
+  }
+  buildHtml() {
+    const simControls = super.buildHtml();
+    const r = this.buildPanelControl(
+      "ApgRprSim_TrimesgTerrain_SettingsPanel",
+      ApgRpr_eSimulationName.A_PYRAMID,
+      [
+        simControls
+      ]
+    );
+    return r;
   }
 }

@@ -1,10 +1,17 @@
 import { PRANDO, RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
-export class ApgRprSimFountain extends ApgRprSim_Base {
+var ApgRprSim_Fountain_eGroundType = /* @__PURE__ */ ((ApgRprSim_Fountain_eGroundType2) => {
+  ApgRprSim_Fountain_eGroundType2["CYL"] = "Cylinder";
+  ApgRprSim_Fountain_eGroundType2["CONE"] = "Cone";
+  ApgRprSim_Fountain_eGroundType2["CUB"] = "Cuboid";
+  ApgRprSim_Fountain_eGroundType2["TRM"] = "Trimesh";
+  return ApgRprSim_Fountain_eGroundType2;
+})(ApgRprSim_Fountain_eGroundType || {});
+export class ApgRprSim_Fountain extends ApgRprSim_Base {
   rng;
   spawnCounter;
   SPAWN_EVERY_N_STEPS = 5;
@@ -15,30 +22,47 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
     this.rng = new PRANDO("Fountain");
     this.spawnCounter = 0;
     const settings = this.params.guiSettings;
-    const guiBuilder = new ApgRprSimFountainGuiBuilder(this.simulator.gui, this.params);
-    const gui = guiBuilder.build();
-    this.simulator.viewer.panels.innerHTML = gui;
+    const guiBuilder = new ApgRprSim_Fountain_GuiBuilder(this.simulator.gui, this.params);
+    const html = guiBuilder.buildHtml();
+    this.simulator.updateViewerPanel(html);
     guiBuilder.bindControls();
-    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
-    const groundBody = this.world.createRigidBody(groundBodyDesc);
-    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(40, 0.1, 40);
-    this.world.createCollider(groundColliderDesc, groundBody);
+    this.#createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: -90, y: 50, z: 80 },
-        target: { x: 0, y: 10, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
+      asimulator.resetCamera(settings.cameraPosition);
     } else {
       this.params.restart = false;
     }
     asimulator.setPreStepAction(() => {
-      this.spawnRandomBody(asimulator);
+      this.#spawnRandomBody(asimulator);
       this.updateFromGui();
     });
   }
-  spawnRandomBody(asimulator) {
+  #createWorld(asettings) {
+    const rad = 40;
+    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
+    const groundBody = this.world.createRigidBody(groundBodyDesc);
+    if (asettings.groundType == "Cuboid" /* CUB */) {
+      const cuboidGroundColliderDesc = RAPIER.ColliderDesc.cuboid(rad, 1, rad).setTranslation(0, -0.5, 0);
+      this.world.createCollider(cuboidGroundColliderDesc, groundBody);
+    }
+    if (asettings.groundType == "Cylinder" /* CYL */) {
+      const cylGroundColliderDesc = RAPIER.ColliderDesc.cylinder(1, rad).setTranslation(0, -0.5, 0);
+      this.world.createCollider(cylGroundColliderDesc, groundBody);
+    }
+    if (asettings.groundType == "Trimesh" /* TRM */) {
+      const heightMap = this.generateRandomHeightMap("Fountain", rad, rad, 2 * rad, rad / 10, 2 * rad);
+      const trimeshGroundColliderDesc = RAPIER.ColliderDesc.trimesh(
+        heightMap.vertices,
+        heightMap.indices
+      ).setTranslation(0, -rad / 20, 0);
+      this.world.createCollider(trimeshGroundColliderDesc, groundBody);
+    }
+    const coneRad = asettings.groundType == "Cone" /* CONE */ ? rad : rad / 10;
+    const coneGroundColliderDesc = RAPIER.ColliderDesc.cone(4, coneRad).setTranslation(0, 4, 0);
+    this.world.createCollider(coneGroundColliderDesc, groundBody);
+  }
+  #spawnRandomBody(asimulator) {
     const settings = this.params.guiSettings;
     if (this.spawnCounter < this.SPAWN_EVERY_N_STEPS) {
       this.spawnCounter++;
@@ -47,7 +71,7 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
     this.spawnCounter = 0;
     const rad = 1;
     const j = this.rng.nextInt(0, 4);
-    const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 0).setLinvel(0, 15, 0);
+    const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 0).setLinvel(0, 15, 0).setCcdEnabled(false);
     const body = this.world.createRigidBody(bodyDesc);
     let colliderDesc;
     switch (j) {
@@ -82,33 +106,44 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
       this.bodiesPool.shift();
     }
   }
+  updateFromGui() {
+    if (this.needsUpdate()) {
+      super.updateFromGui();
+    }
+  }
   defaultGuiSettings() {
     const r = {
       ...super.defaultGuiSettings(),
+      isBodiesGroupOpened: false,
       restitution: 0.25,
       restitutionMMS: {
         min: 0.05,
         max: 1,
         step: 0.05
-      }
+      },
+      isGroundGroupOpened: false,
+      groundType: "Cuboid" /* CUB */,
+      groundTypes: Object.values(ApgRprSim_Fountain_eGroundType)
     };
     return r;
   }
 }
-export class ApgRprSimFountainGuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
+  buildHtml() {
     const bodiesGroupControl = this.#buildBodiesGroupControl();
-    const simControls = super.build();
+    const groundGroupControl = this.#buildGrounGroupControl();
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSimFountainSettingsPanel",
-      eApgRpr_SimulationName.B_FOUNTAIN,
+      ApgRpr_eSimulationName.B_FOUNTAIN,
       [
         bodiesGroupControl,
+        groundGroupControl,
         simControls
       ]
     );
@@ -131,10 +166,51 @@ export class ApgRprSimFountainGuiBuilder extends ApgRprSim_GuiBuilder {
       }
     );
     const r = this.buildGroupControl(
+      "bodiesGroupControl",
       "Bodies:",
       [
         bodiesRestitutionControl
-      ]
+      ],
+      this.guiSettings.isBodiesGroupOpened,
+      () => {
+        if (!this.gui.isRefreshing) {
+          this.guiSettings.isBodiesGroupOpened = !this.guiSettings.isBodiesGroupOpened;
+          this.gui.log("Bodies group toggled");
+        }
+      }
+    );
+    return r;
+  }
+  #buildGrounGroupControl() {
+    const keyValues = /* @__PURE__ */ new Map();
+    for (const ground of this.guiSettings.groundTypes) {
+      keyValues.set(ground, ground);
+    }
+    const GROUND_SELECT_CNT = "groundSelectControl";
+    const groundSelectControl = this.buildSelectControl(
+      GROUND_SELECT_CNT,
+      "Type",
+      this.guiSettings.groundType,
+      keyValues,
+      () => {
+        const select = this.gui.controls.get(GROUND_SELECT_CNT).element;
+        this.guiSettings.groundType = select.value;
+        this.params.restart = true;
+      }
+    );
+    const r = this.buildGroupControl(
+      "hroundGroupControl",
+      "Ground:",
+      [
+        groundSelectControl
+      ],
+      this.guiSettings.isGroundGroupOpened,
+      () => {
+        if (!this.gui.isRefreshing) {
+          this.guiSettings.isGroundGroupOpened = !this.guiSettings.isGroundGroupOpened;
+          this.gui.log("Ground group toggled");
+        }
+      }
     );
     return r;
   }

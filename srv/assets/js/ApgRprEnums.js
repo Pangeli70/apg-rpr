@@ -6,17 +6,17 @@ export var eApgRprInstancedMeshesGroup = /* @__PURE__ */ ((eApgRprInstancedMeshe
   eApgRprInstancedMeshesGroup2[eApgRprInstancedMeshesGroup2["CAPSULES"] = 4] = "CAPSULES";
   return eApgRprInstancedMeshesGroup2;
 })(eApgRprInstancedMeshesGroup || {});
-export var eApgRpr_SimulationName = /* @__PURE__ */ ((eApgRpr_SimulationName2) => {
-  eApgRpr_SimulationName2["A_PYRAMID"] = "Pyramid";
-  eApgRpr_SimulationName2["B_FOUNTAIN"] = "Fountain";
-  eApgRpr_SimulationName2["C_LOCKED_ROTATIONS"] = "Locked rotations";
-  eApgRpr_SimulationName2["D_DAMPING"] = "Damping";
-  eApgRpr_SimulationName2["E_COLLISION_GROUPS"] = "Collision groups";
-  eApgRpr_SimulationName2["F_TRI_MESH_TERRAIN"] = "Tri-mesh terrain";
-  eApgRpr_SimulationName2["G_PNG_MESH_TERRAIN"] = "Png terrain";
-  eApgRpr_SimulationName2["H_CONVEX_POLYHEDRONS"] = "Convex polyhedrons";
-  eApgRpr_SimulationName2["I_PLATFORM"] = "Platform";
-  eApgRpr_SimulationName2["J_CCDs"] = "CCDs";
-  eApgRpr_SimulationName2["Z_NONE"] = "";
-  return eApgRpr_SimulationName2;
-})(eApgRpr_SimulationName || {});
+export var ApgRpr_eSimulationName = /* @__PURE__ */ ((ApgRpr_eSimulationName2) => {
+  ApgRpr_eSimulationName2["A_PYRAMID"] = "Pyramid";
+  ApgRpr_eSimulationName2["B_FOUNTAIN"] = "Fountain";
+  ApgRpr_eSimulationName2["C_LOCKED_ROTATIONS"] = "Locked rotations";
+  ApgRpr_eSimulationName2["D_DAMPING"] = "Damping";
+  ApgRpr_eSimulationName2["E_COLLISION_GROUPS"] = "Collision groups";
+  ApgRpr_eSimulationName2["F_TRI_MESH_TERRAIN"] = "Tri-mesh terrain";
+  ApgRpr_eSimulationName2["G_PNG_MESH_TERRAIN"] = "Png terrain";
+  ApgRpr_eSimulationName2["H_CONVEX_POLYHEDRONS"] = "Convex polyhedrons";
+  ApgRpr_eSimulationName2["I_PLATFORM"] = "Platform";
+  ApgRpr_eSimulationName2["J_CCDs"] = "CCDs";
+  ApgRpr_eSimulationName2["Z_NONE"] = "";
+  return ApgRpr_eSimulationName2;
+})(ApgRpr_eSimulationName || {});

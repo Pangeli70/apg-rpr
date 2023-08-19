@@ -1,5 +1,5 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -12,13 +12,10 @@ export class ApgRprSim_CollisionGroups extends ApgRprSim_Base {
     this.createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: 5, y: 4, z: 5 },
-        target: { x: 0, y: 2, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
+      asimulator.resetCamera(settings.cameraPosition);
     } else {
       this.params.restart = false;
+      this.simulator.gui.log("restarted");
     }
     this.simulator.setPreStepAction(() => {
       this.updateFromGui();
@@ -65,6 +62,10 @@ export class ApgRprSim_CollisionGroups extends ApgRprSim_Base {
     const r = {
       ...super.defaultGuiSettings()
     };
+    r.cameraPosition.eye.x = 5;
+    r.cameraPosition.eye.y = 4;
+    r.cameraPosition.eye.z = 5;
+    r.cameraPosition.target.y = 2;
     return r;
   }
 }
@@ -74,11 +75,11 @@ export class ApgRprSim_CollisionGroups_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
-    const simControls = super.build();
+  buildHtml() {
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSim_CollisionGroups_PanelControl",
-      eApgRpr_SimulationName.E_COLLISION_GROUPS,
+      ApgRpr_eSimulationName.E_COLLISION_GROUPS,
       [
         simControls
       ]

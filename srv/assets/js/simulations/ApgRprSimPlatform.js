@@ -1,33 +1,29 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
-export class ApgRprSimPlatform extends ApgRprSim_Base {
+export class ApgRprSim_Platform extends ApgRprSim_Base {
   platformBody;
   t = 0;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    this.buildGui(ApgRprSim_Platform_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.createWorld(settings);
-    asimulator.addWorld(this.world);
+    this.buildGui(ApgRprSim_Platform_GuiBuilder);
+    this.#createWorld(settings);
+    this.simulator.addWorld(this.world);
     if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: -80, y: 50, z: -80 },
-        target: { x: 0, y: 0, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
+      asimulator.resetCamera(settings.cameraPosition);
     } else {
       this.params.restart = false;
     }
     asimulator.setPreStepAction(() => {
       this.updateFromGui();
-      this.movePlatform();
+      this.#movePlatform();
     });
   }
-  createWorld(asettings) {
+  #createWorld(asettings) {
     const platformBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
     this.platformBody = this.world.createRigidBody(platformBodyDesc);
     const randomHeightMap = this.generateRandomHeightMap("Platform", 10, 10, 50, 5, 50);
@@ -76,7 +72,7 @@ export class ApgRprSimPlatform extends ApgRprSim_Base {
       offset -= 0.05 * rad * (num - 1);
     }
   }
-  movePlatform() {
+  #movePlatform() {
     if (this && this.platformBody) {
       this.t += 2 * Math.PI / 360;
       const deltaY = Math.sin(this.t) * 12.5;
@@ -103,11 +99,11 @@ export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
-    const simControls = super.build();
+  buildHtml() {
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSim_Platform_PanelControl",
-      eApgRpr_SimulationName.I_PLATFORM,
+      ApgRpr_eSimulationName.I_PLATFORM,
       [
         simControls
       ]

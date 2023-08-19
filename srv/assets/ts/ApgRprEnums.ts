@@ -15,7 +15,7 @@ export enum eApgRprInstancedMeshesGroup {
 }
 
 // TODO move this away -- APG 20230816
-export enum eApgRpr_SimulationName {
+export enum ApgRpr_eSimulationName {
   A_PYRAMID = 'Pyramid',
   B_FOUNTAIN = 'Fountain',
   C_LOCKED_ROTATIONS = 'Locked rotations',

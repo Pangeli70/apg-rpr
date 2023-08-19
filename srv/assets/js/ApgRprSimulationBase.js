@@ -27,9 +27,10 @@ export class ApgRprSim_Base {
       this.simulator.gui,
       this.params
     );
-    const gui = guiBuilder.build();
-    this.simulator.viewer.panels.innerHTML = gui;
+    const html = guiBuilder.buildHtml();
+    this.simulator.updateViewerPanel(html);
     guiBuilder.bindControls();
+    this.simulator.gui.log("Sim Gui built", true);
   }
   updateFromGui() {
     if (this.params.restart) {
@@ -51,6 +52,7 @@ export class ApgRprSim_Base {
   }
   defaultGuiSettings() {
     const r = {
+      isSimulationGroupOpened: false,
       velocityIterations: this.simulator.DEFAULT_VELOCITY_ITERATIONS,
       velocityIterationsMMS: {
         min: 1,
@@ -69,6 +71,7 @@ export class ApgRprSim_Base {
         max: this.simulator.MAX_SLOWDOWN,
         step: 1
       },
+      isStatsGroupOpened: false,
       cameraPosition: {
         eye: { x: -80, y: 10, z: 80 },
         target: { x: 0, y: 0, z: 0 }
@@ -101,46 +104,48 @@ export class ApgRprSim_Base {
     }
     this.prevParams.guiSettings = JSON.parse(JSON.stringify(this.params.guiSettings));
   }
-  generateRandomHeightMap(arandomSeed, anumWidthXDivs, anumDepthZDivs, awidthX, aheightY, adepthZ) {
+  generateRandomHeightMap(arandomSeed, axNum, azNum, axScale, ayScale, azScale) {
     const rng = new PRANDO(arandomSeed);
     const randomHeights = [];
-    for (let i = 0; i <= anumWidthXDivs; i++) {
-      for (let j = 0; j <= anumDepthZDivs; j++) {
+    for (let i = 0; i < axNum + 1; i++) {
+      for (let j = 0; j < azNum + 1; j++) {
         randomHeights.push(rng.next());
       }
     }
     const r = this.generateHeightMap(
-      anumWidthXDivs,
-      anumDepthZDivs,
-      awidthX,
-      aheightY,
-      adepthZ,
+      axNum,
+      azNum,
+      axScale,
+      ayScale,
+      azScale,
       randomHeights
     );
     return r;
   }
-  generateHeightMap(anumWidthXDivs, anumDepthZDivs, awidthX, aheightY, adepthZ, aheights) {
-    const elementWidthX = 1 / anumWidthXDivs;
-    const elementDepthZ = 1 / anumDepthZDivs;
+  generateHeightMap(axNum, azNum, axScale, ayScale, azScale, aheights) {
+    const xSize = axScale / axNum;
+    const zSize = azScale / azNum;
+    const xHalf = axScale / 2;
+    const zHalf = azScale / 2;
     const vertices = [];
-    for (let i = 0; i <= anumWidthXDivs; ++i) {
-      for (let j = 0; j <= anumDepthZDivs; ++j) {
-        const index = i * anumWidthXDivs + j;
-        const x = (i * elementWidthX - 0.5) * awidthX;
-        const y = aheights[index] * aheightY;
-        const z = (j * elementDepthZ - 0.5) * adepthZ;
+    for (let iz = 0; iz < azNum + 1; iz++) {
+      for (let ix = 0; ix < axNum + 1; ix++) {
+        const index = ix + iz * axNum;
+        const x = ix * xSize - xHalf;
+        const y = aheights[index] * ayScale;
+        const z = iz * zSize - zHalf;
         vertices.push(x, y, z);
       }
     }
     const indices = [];
-    for (let i = 0; i < anumWidthXDivs; ++i) {
-      for (let j = 0; j < anumDepthZDivs; ++j) {
-        const i1 = (i + 0) * (anumWidthXDivs + 1) + (j + 0);
-        const i2 = (i + 0) * (anumWidthXDivs + 1) + (j + 1);
-        const i3 = (i + 1) * (anumWidthXDivs + 1) + (j + 0);
-        const i4 = (i + 1) * (anumWidthXDivs + 1) + (j + 1);
-        indices.push(i1, i3, i2);
-        indices.push(i3, i4, i2);
+    for (let z = 0; z < azNum; z++) {
+      for (let x = 0; x < axNum; x++) {
+        const i1 = x + z * (axNum + 1);
+        const i2 = x + (z + 1) * (axNum + 1);
+        const i3 = i1 + 1;
+        const i4 = i2 + 1;
+        indices.push(i1, i2, i3);
+        indices.push(i3, i2, i4);
       }
     }
     return {

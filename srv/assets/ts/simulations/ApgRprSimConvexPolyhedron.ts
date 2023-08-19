@@ -5,25 +5,59 @@
  * -----------------------------------------------------------------------
 */
 
+import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
+import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
+    IApgRprSim_Params
+} from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
-import { ApgRprSim_Base, IApgRprSim_Params } from "../ApgRprSimulationBase.ts";
 
 
-export class ApgRprSimConvexPolyhedron extends ApgRprSim_Base {
+export interface ApgRprSim_ConvexPolyhedrons_IGuiSettings extends ApgRprSim_IGuiSettings {
 
-    constructor(asimulator: ApgRpr_Simulator, aparams: IApgRprSim_Params) {
+
+}
+
+export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
+
+    constructor(
+        asimulator: ApgRpr_Simulator,
+        aparams: IApgRprSim_Params
+    ) {
         super(asimulator, aparams);
 
-        // Create Ground.
+        const settings = this.params.guiSettings! as ApgRprSim_ConvexPolyhedrons_IGuiSettings;
+
+        this.buildGui(ApgRprSim_ConvexPolyhedrons_GuiBuilder);
+
+        this.#createWorld(settings);
+        asimulator.addWorld(this.world);
+
+        if (!this.params.restart) {
+            this.simulator.resetCamera(settings.cameraPosition);
+        }
+        else {
+            this.params.restart = false;
+        }
+
+        this.simulator.setPreStepAction(() => { this.updateFromGui(); });
+    }
+
+
+    #createWorld(asettings: ApgRprSim_ConvexPolyhedrons_IGuiSettings) {
+
+        // Create ground
         const groudBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const groundBody = this.world.createRigidBody(groudBodyDesc);
 
         const heightMap = this.generateRandomHeightMap('Convex Polyhedron 1', 20, 20, 40.0, 4.0, 40.0);
         const groundColliderDesc = RAPIER.ColliderDesc.trimesh(
             heightMap.vertices,
-            heightMap.indices,
+            heightMap.indices
         );
         this.world.createCollider(groundColliderDesc, groundBody);
 
@@ -61,27 +95,16 @@ export class ApgRprSimConvexPolyhedron extends ApgRprSim_Base {
 
                     // Build the rigid body.
                     const polyhedronBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-                        .setTranslation(x, y, z,);
+                        .setTranslation(x, y, z);
                     const polyhedronBody = this.world.createRigidBody(polyhedronBodyDesc);
                     const polyhedronColliderDesc = RAPIER.ColliderDesc.roundConvexHull(vertices, border_rad);
-                    this.world.createCollider(polyhedronColliderDesc, polyhedronBody)
+                    this.world.createCollider(polyhedronColliderDesc, polyhedronBody);
                 }
             }
         }
-
-        asimulator.addWorld(this.world);
-
-        if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: -80, y: 50, z: -80 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-            asimulator.resetCamera(cameraPosition);
-        }
     }
 
-
-    pipo(nsubdivs: number, wx: number, wy: number, wz: number) {
+    #pipo(nsubdivs: number, wx: number, wy: number, wz: number) {
         let vertices = [];
         let indices = [];
 
@@ -116,4 +139,63 @@ export class ApgRprSimConvexPolyhedron extends ApgRprSim_Base {
             indices: new Uint32Array(indices),
         };
     }
+
+    override updateFromGui() {
+
+        if (this.needsUpdate()) {
+
+            // TODO implement Pyramid settings
+
+            super.updateFromGui();
+        }
+
+    }
+
+
+    override defaultGuiSettings() {
+
+        const r: ApgRprSim_ConvexPolyhedrons_IGuiSettings = {
+
+            ...super.defaultGuiSettings(),
+        }
+
+        return r;
+    }
 }
+
+
+
+export class ApgRprSim_ConvexPolyhedrons_GuiBuilder extends ApgRprSim_GuiBuilder {
+
+    guiSettings: ApgRprSim_ConvexPolyhedrons_IGuiSettings;
+
+
+    constructor(
+        agui: ApgGui,
+        aparams: IApgRprSim_Params
+    ) {
+        super(agui, aparams);
+
+        this.guiSettings = this.params.guiSettings as ApgRprSim_ConvexPolyhedrons_IGuiSettings;
+    }
+
+
+    override buildHtml() {
+
+        const simControls = super.buildHtml();
+
+        const r = this.buildPanelControl(
+            "ApgRprSim_ConvexPolyHedron_SettingsPanel",
+            ApgRpr_eSimulationName.A_PYRAMID,
+            [
+                simControls
+            ]
+        );
+
+        return r;
+
+    }
+
+
+}
+

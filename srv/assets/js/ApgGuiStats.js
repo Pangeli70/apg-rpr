@@ -1,4 +1,4 @@
-export class ApgGuiStatsPanel {
+export class ApgGui_StatsPanel {
   current = 0;
   min = 1e4;
   max = 0;
@@ -53,7 +53,7 @@ export class ApgGuiStatsPanel {
     this.container.innerText = this.text;
   }
 }
-export class ApgGuiMsStatsPanel extends ApgGuiStatsPanel {
+export class ApgGui_Ms_StatsPanel extends ApgGui_StatsPanel {
   constructor(adocument, adevicePixelRatio, awidth, aname = "Frame time", ameasureUnit = "ms", aforeGroundFillStyle = "#f08", abackGroundFillStyle = "#201") {
     super(
       adocument,
@@ -71,7 +71,7 @@ export class ApgGuiMsStatsPanel extends ApgGuiStatsPanel {
     this.update(ms);
   }
 }
-export class ApgGuiFpsStatsPanel extends ApgGuiStatsPanel {
+export class ApgGui_Fps_StatsPanel extends ApgGui_StatsPanel {
   frames = 0;
   constructor(adocument, adevicePixelRatio, awidth, aname = "Frames per second", ameasureUnit = "fps", aforeGroundFillStyle = "#0ff", abackGroundFillStyle = "#002") {
     super(
@@ -96,7 +96,7 @@ export class ApgGuiFpsStatsPanel extends ApgGuiStatsPanel {
     }
   }
 }
-export class ApgGuiMemStatsPanel extends ApgGuiStatsPanel {
+export class ApgGui_Mem_StatsPanel extends ApgGui_StatsPanel {
   constructor(adocument, adevicePixelRatio, awidth, aname = "Memory usage", ameasureUnit = "Mb", aforeGroundFillStyle = "#0f0", abackGroundFillStyle = "#020") {
     super(
       adocument,
@@ -119,7 +119,7 @@ export class ApgGuiMemStatsPanel extends ApgGuiStatsPanel {
     }
   }
 }
-export class ApgGuiRprStepStatsPanel extends ApgGuiStatsPanel {
+export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
   constructor(adocument, adevicePixelRatio, awidth, aname = "Simulation time", ameasureUnit = "ms (step)", aforeGroundFillStyle = "#ff8", abackGroundFillStyle = "#221") {
     super(
       adocument,
@@ -137,7 +137,7 @@ export class ApgGuiRprStepStatsPanel extends ApgGuiStatsPanel {
     this.update(ms);
   }
 }
-export class ApgGuiRprCollidersStatsPanel extends ApgGuiStatsPanel {
+export class ApgRpr_Colliders_StatsPanel extends ApgGui_StatsPanel {
   constructor(adocument, adevicePixelRatio, awidth, aname = "Num. of colliders", ameasureUnit = "pcs", aforeGroundFillStyle = "#f08", abackGroundFillStyle = "#921") {
     super(
       adocument,
@@ -149,13 +149,8 @@ export class ApgGuiRprCollidersStatsPanel extends ApgGuiStatsPanel {
       abackGroundFillStyle
     );
   }
-  end(aendTime) {
-    super.end(aendTime);
-    const ms = this.endTime - this.beginTime;
-    this.update(ms);
-  }
 }
-export class ApgGuiStats {
+export class ApgGui_Stats {
   document;
   currentPanelIndex = 0;
   panels = /* @__PURE__ */ new Map();
@@ -173,21 +168,21 @@ export class ApgGuiStats {
     this.#addDefaultPanels(adocument);
   }
   #addDefaultPanels(adocument) {
-    const fpsPanel = new ApgGuiFpsStatsPanel(
+    const fpsPanel = new ApgGui_Fps_StatsPanel(
       adocument,
       this.pixelRatio,
       this.width
     );
     this.addPanel(fpsPanel);
     this.currentPanel = fpsPanel;
-    const msPanel = new ApgGuiMsStatsPanel(
+    const msPanel = new ApgGui_Ms_StatsPanel(
       adocument,
       this.pixelRatio,
       this.width
     );
     this.addPanel(msPanel);
     if (self.performance && self.performance.memory) {
-      const memPanel = new ApgGuiMemStatsPanel(
+      const memPanel = new ApgGui_Mem_StatsPanel(
         adocument,
         this.pixelRatio,
         this.width

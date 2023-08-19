@@ -10,13 +10,13 @@ import {
   IApgDomDialog, IApgDomElement,
   IApgDomRange, IApgDomSelect
 } from "./ApgDom.ts";
-import { eApgRpr_SimulationName } from "./ApgRprEnums.ts";
-import { ApgGuiBuilder } from "./ApgGuiBuilder.ts";
+import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
+import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
 import { ApgRprSimStatsGuiBuilder } from "./ApgRprSimStatsGuiBuilder.ts";
 import { ApgRprSimDebugGuiBuilder } from "./ApgRprSimDebugGuiBuilder.ts";
 import { ApgGui } from "./ApgGui.ts";
 
-export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
+export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
 
   params: IApgRprSim_Params;
 
@@ -31,12 +31,12 @@ export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
     this.params = aparams;
   }
 
-  override build() {
+  override buildHtml() {
 
-    const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params.stats!)
-      .build();
+    const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params)
+      .buildHtml();
     const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo!)
-      .build();
+      .buildHtml();
 
     const simulationGroupControl = this.#buildSimulationGroupControl();
 
@@ -48,7 +48,7 @@ export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
       'Restart',
       () => {
         this.params.restart = true;
-        //alert('Restart pressed');
+        this.gui.log('Restart button pressed');
       }
     );
 
@@ -92,7 +92,7 @@ export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
       keyValues,
       () => {
         const select = this.gui.controls.get(SIM_SELECT_CNT)!.element as IApgDomSelect;
-        this.params.simulation = select.value as eApgRpr_SimulationName;
+        this.params.simulation = select.value as ApgRpr_eSimulationName;
         //alert(select.value);
       }
     );
@@ -132,13 +132,20 @@ export class ApgRprSim_GuiBuilder extends ApgGuiBuilder {
     );
 
     const r = this.buildGroupControl(
+      "simulationGroupControl",
       "Simulation:",
       [
         simulationSelectControl,
         simulationVelocityIterationControl,
         simulationSpeedControl,
-      ]
-
+      ],
+      this.params.guiSettings!.isSimulationGroupOpened,
+      () => {
+        if (!this.gui.isRefreshing){ 
+          this.params.guiSettings!.isSimulationGroupOpened = !this.params.guiSettings!.isSimulationGroupOpened
+          this.gui.log('Simulation group toggled');
+        }
+      }
     );
     return r;
   }

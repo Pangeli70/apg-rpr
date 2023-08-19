@@ -1,6 +1,7 @@
 export var eApgDomFormElementType = /* @__PURE__ */ ((eApgDomFormElementType2) => {
   eApgDomFormElementType2["PARAGRAPH"] = "paragraph";
   eApgDomFormElementType2["DIV"] = "div";
+  eApgDomFormElementType2["DETAILS"] = "details";
   eApgDomFormElementType2["INPUT"] = "input";
   eApgDomFormElementType2["LABEL"] = "label";
   eApgDomFormElementType2["SELECT"] = "select";

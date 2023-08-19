@@ -9,12 +9,12 @@ import {
     IApgDomElement
 } from "./ApgDom.ts";
 import { ApgGui } from "./ApgGui.ts";
-import { ApgGuiBuilder } from "./ApgGuiBuilder.ts";
+import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
 import { RAPIER } from "./ApgRprDeps.ts";
 import { IApgRprDebugInfo } from "./ApgRprInterfaces.ts";
 
 
-export class ApgRprSimDebugGuiBuilder extends ApgGuiBuilder {
+export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
 
     debugInfo: IApgRprDebugInfo;
 
@@ -32,7 +32,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGuiBuilder {
     }
 
 
-    override build() {
+    override buildHtml() {
 
         const debugInfoDialogControl = this.#buildDebugInfoDialogControl();
 
@@ -50,6 +50,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGuiBuilder {
         );
 
         const r = this.buildGroupControl(
+            "debugInfoGroupControl",
             "Debug:",
             [
                 debugInfoDialogControl,

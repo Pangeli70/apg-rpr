@@ -15,10 +15,10 @@ import {
   eApgDomFormElementType,
   eApgDomInputType
 } from "./ApgDom.ts";
-import { ApgGui, IApgGuiControl } from "./ApgGui.ts";
+import { ApgGui, ApgGui_IControl } from "./ApgGui.ts";
 
 
-export class ApgGuiBuilder {
+export class ApgGui_Builder {
 
   gui: ApgGui
 
@@ -29,7 +29,7 @@ export class ApgGuiBuilder {
   }
 
 
-  #addControl(aId: string, acontrol: IApgGuiControl) {
+  #addControl(aId: string, acontrol: ApgGui_IControl) {
 
     if (this.gui.controls.has(aId)) {
       const message = `The control ${aId} is already in the map. Maybe you are adding a control with the same name!`;
@@ -41,7 +41,7 @@ export class ApgGuiBuilder {
   }
 
 
-  build(acontainer: IApgDomElement) {
+  buildHtml(acontainer: IApgDomElement) {
 
     const r = "Override the ApgGuiBuilder.build() method to get the GUI";
 
@@ -54,7 +54,7 @@ export class ApgGuiBuilder {
     acontent: string,
     astyle?: string
   ) {
-    const paragraphControl: IApgGuiControl = {
+    const paragraphControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.PARAGRAPH,
     };
@@ -73,7 +73,7 @@ export class ApgGuiBuilder {
     astyle = "",
     ainjected?: IApgDomElement
   ) {
-    const paragraphControl: IApgGuiControl = {
+    const paragraphControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.DIV,
       injected: ainjected
@@ -98,17 +98,17 @@ export class ApgGuiBuilder {
     amin: number,
     amax: number,
     astep: number,
-    acallback: TApgDomEventCallback
+    ainputCallback: TApgDomEventCallback
   ) {
-    const rangeControl: IApgGuiControl = {
+    const rangeControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.RANGE,
-      callback: acallback
+      callback: ainputCallback
     };
     this.#addControl(aId, rangeControl);
 
-    const outputControl: IApgGuiControl = {
+    const outputControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.OUTPUT,
     };
@@ -144,12 +144,12 @@ export class ApgGuiBuilder {
   buildButtonControl(
     aId: string,
     acaption: string,
-    acallback: TApgDomEventCallback
+    aclickCallback: TApgDomEventCallback
   ) {
-    const buttonControl: IApgGuiControl = {
+    const buttonControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.BUTTON,
-      callback: acallback
+      callback: aclickCallback
     };
     this.#addControl(aId, buttonControl);
 
@@ -169,13 +169,13 @@ export class ApgGuiBuilder {
     aId: string,
     acaption: string,
     avalue: boolean,
-    acallback: TApgDomEventCallback
+    achangeCallback: TApgDomEventCallback
   ) {
-    const checkBoxControl: IApgGuiControl = {
+    const checkBoxControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.CHECK_BOX,
-      callback: acallback
+      callback: achangeCallback
     };
     this.#addControl(aId, checkBoxControl);
     const r = `
@@ -209,11 +209,25 @@ export class ApgGuiBuilder {
   }
 
   buildGroupControl(
+    aId: string,
     acaption: string,
-    acontrols: string[]
+    acontrols: string[],
+    aopened = false,
+    atoggleCallback?: TApgDomEventCallback
   ) {
+    const groupControl: ApgGui_IControl = {
+      element: null,
+      type: eApgDomFormElementType.DETAILS,
+      callback: atoggleCallback
+    };
+    this.#addControl(aId, groupControl);
+
     const r = `
-        <details style="padding: 0.5rem; margin-bottom: 0px">
+        <details 
+          id="${aId}"
+          style="padding: 0.5rem; margin-bottom: 0px"
+          ${ aopened ? 'open':''}
+        >
             <summary>${acaption}</summary>
             ${acontrols.join("\n")}
         </details>
@@ -245,13 +259,13 @@ export class ApgGuiBuilder {
     acaption: string,
     avalue: string,
     avalues: Map<string, string>,
-    acallback: TApgDomEventCallback
+    achangeCallback: TApgDomEventCallback
   ) {
 
-    const selectControl: IApgGuiControl = {
+    const selectControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.SELECT,
-      callback: acallback
+      callback: achangeCallback
     };
     this.#addControl(aId, selectControl);
 
@@ -285,7 +299,7 @@ export class ApgGuiBuilder {
     acaption: string,
     acontrols: string[]
   ) {
-    const dialogControl: IApgGuiControl = {
+    const dialogControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.DIALOG,
     };
@@ -324,10 +338,13 @@ export class ApgGuiBuilder {
       }
 
       if (control.callback) {
+
         if (control.type == eApgDomFormElementType.INPUT) {
 
           if (control.inputType == undefined) {
-            alert(`Input type of control ${control.element.id} is not defined`);
+            const message = `Input type of control ${control.element.id} is not defined`
+            alert(message);
+            throw new Error(message);
           }
 
           switch (control.inputType) {
@@ -344,7 +361,13 @@ export class ApgGuiBuilder {
             }
           }
         }
+
+        if (control.type == eApgDomFormElementType.DETAILS) {
+          (element as IApgDomButton).addEventListener('toggle', control.callback as TApgDomEventCallback);
+          //alert(`${control.element.id} Details group bound`);
+        }
       }
+
       if (control.type == eApgDomFormElementType.BUTTON) {
         (element as IApgDomButton).addEventListener('click', control.callback as TApgDomEventCallback);
         //alert(`${control.element.id} Button bound`);

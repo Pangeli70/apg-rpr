@@ -1,5 +1,5 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -7,7 +7,7 @@ import {
 export class ApgRprSim_Damping extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, {
-      simulation: eApgRpr_SimulationName.D_DAMPING,
+      simulation: ApgRpr_eSimulationName.D_DAMPING,
       gravity: aparams != void 0 && aparams.gravity != void 0 ? aparams.gravity : new RAPIER.Vector3(0, 0, 9.81),
       restart: aparams != void 0 && aparams.restart != void 0 ? aparams.restart : false
     });
@@ -16,11 +16,7 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
     this.createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
-      const cameraPosition = {
-        eye: { x: 0, y: 2, z: 80 },
-        target: { x: 0, y: 0, z: 0 }
-      };
-      asimulator.resetCamera(cameraPosition);
+      asimulator.resetCamera(settings.cameraPosition);
     } else {
       this.params.restart = false;
     }
@@ -54,6 +50,9 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
     const r = {
       ...super.defaultGuiSettings()
     };
+    r.cameraPosition.eye.x = 0;
+    r.cameraPosition.eye.y = 2;
+    r.cameraPosition.eye.z = 80;
     return r;
   }
 }
@@ -63,11 +62,11 @@ export class ApgRprSim_Damping_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
-    const simControls = super.build();
+  buildHtml() {
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSim_Damping_PanelControl",
-      eApgRpr_SimulationName.D_DAMPING,
+      ApgRpr_eSimulationName.D_DAMPING,
       [
         simControls
       ]

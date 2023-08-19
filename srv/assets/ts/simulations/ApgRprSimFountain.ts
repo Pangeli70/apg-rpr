@@ -5,29 +5,43 @@
  * -----------------------------------------------------------------------
 */
 
-import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
-import { ApgGui } from "../ApgGui.ts";
+import { IApgDomElement, IApgDomRange, IApgDomSelect } from "../ApgDom.ts";
+import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { PRANDO, RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
-    ApgRprSim_Base, IApgRprSim_GuiSettings,
-    IApgRprSim_Params, IApgRprSim_MinMaxStep
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
+    IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
 
-export interface IApgRprSimFountainGuiSettings extends IApgRprSim_GuiSettings{
-    
-    restitutionMMS: IApgRprSim_MinMaxStep;
+enum ApgRprSim_Fountain_eGroundType {
+    CYL = 'Cylinder',
+    CONE = 'Cone',
+    CUB = 'Cuboid',
+    TRM = 'Trimesh'
+}
+
+
+interface ApgRprSim_Fountain_IGuiSettings extends ApgRprSim_IGuiSettings {
+
+    isBodiesGroupOpened: boolean;
+
     restitution: number;
+    restitutionMMS: ApgGui_IMinMaxStep;
+
+
+    isGroundGroupOpened: boolean;
+    groundType: ApgRprSim_Fountain_eGroundType;
+    groundTypes: ApgRprSim_Fountain_eGroundType[];
 
 }
 
 
-export class ApgRprSimFountain extends ApgRprSim_Base {
+export class ApgRprSim_Fountain extends ApgRprSim_Base {
 
 
     rng: PRANDO;
@@ -38,50 +52,85 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
 
     bodiesPool: RAPIER.RigidBody[] = [];
 
+
     constructor(asimulator: ApgRpr_Simulator, aparams: IApgRprSim_Params) {
+
         super(asimulator, aparams);
 
         this.rng = new PRANDO('Fountain');
         this.spawnCounter = 0;
 
-        const settings = this.params.guiSettings! as IApgRprSimFountainGuiSettings;
+        const settings = this.params.guiSettings! as ApgRprSim_Fountain_IGuiSettings;
 
-        const guiBuilder = new ApgRprSimFountainGuiBuilder(this.simulator.gui, this.params);
-        const gui = guiBuilder.build();
-        this.simulator.viewer.panels.innerHTML = gui;
+        const guiBuilder = new ApgRprSim_Fountain_GuiBuilder(this.simulator.gui, this.params);
+        const html = guiBuilder.buildHtml();
+        this.simulator.updateViewerPanel(html);
         guiBuilder.bindControls();
 
-
-        // Create Ground.
-        const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
-        const groundBody = this.world.createRigidBody(groundBodyDesc);
-        const groundColliderDesc = RAPIER.ColliderDesc.cuboid(40.0, 0.1, 40.0);
-        this.world.createCollider(groundColliderDesc, groundBody);
-
-        // This will be called every simulation step
-
+        this.#createWorld(settings);
         asimulator.addWorld(this.world);
 
         if (!this.params.restart) {
-            const cameraPosition: IApgRpr_CameraPosition = {
-                eye: { x: -90, y: 50, z: 80, },
-                target: { x: 0.0, y: 10.0, z: 0.0 },
-            };
-            asimulator.resetCamera(cameraPosition);
+            asimulator.resetCamera(settings.cameraPosition);
         }
         else {
             this.params.restart = false;
         }
 
         asimulator.setPreStepAction(() => {
-            this.spawnRandomBody(asimulator);
+            this.#spawnRandomBody(asimulator);
             this.updateFromGui();
         });
     }
 
-    spawnRandomBody(asimulator: ApgRpr_Simulator) {
 
-        const settings = this.params.guiSettings! as IApgRprSimFountainGuiSettings;
+    #createWorld(asettings: ApgRprSim_Fountain_IGuiSettings) {
+
+        const rad = 40;
+
+        const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
+        const groundBody = this.world.createRigidBody(groundBodyDesc);
+
+        if (asettings.groundType == ApgRprSim_Fountain_eGroundType.CUB) {
+            const cuboidGroundColliderDesc = RAPIER.ColliderDesc
+                .cuboid(rad, 1, rad)
+                .setTranslation(0.0, -0.5, 0.0);
+            this.world.createCollider(cuboidGroundColliderDesc, groundBody);
+        }
+
+        if (asettings.groundType == ApgRprSim_Fountain_eGroundType.CYL) {
+            const cylGroundColliderDesc = RAPIER.ColliderDesc
+                .cylinder(1, rad)
+                .setTranslation(0.0, -0.5, 0.0);
+            this.world.createCollider(cylGroundColliderDesc, groundBody);
+        }
+
+        if (asettings.groundType == ApgRprSim_Fountain_eGroundType.TRM) {
+            const heightMap = this.generateRandomHeightMap('Fountain', rad, rad, 2 * rad, rad / 10, 2 * rad);
+            //const heightMap = this.generateRandomHeightMap('Fountain', 2, 2, 2 * rad, 10, 2 * rad);
+            const trimeshGroundColliderDesc = RAPIER.ColliderDesc
+                .trimesh(
+                    heightMap.vertices,
+                    heightMap.indices
+                )
+                .setTranslation(0.0, -rad / 20, 0.0);
+            this.world.createCollider(trimeshGroundColliderDesc, groundBody);
+        }
+
+        const coneRad = (asettings.groundType == ApgRprSim_Fountain_eGroundType.CONE) ?
+            rad : rad / 10;
+        const coneGroundColliderDesc = RAPIER.ColliderDesc
+            .cone(4, coneRad)
+            .setTranslation(0.0, 4, 0.0);
+        this.world.createCollider(coneGroundColliderDesc, groundBody);
+
+
+    }
+
+
+    #spawnRandomBody(asimulator: ApgRpr_Simulator) {
+
+        const settings = this.params.guiSettings! as ApgRprSim_Fountain_IGuiSettings;
 
         if (this.spawnCounter < this.SPAWN_EVERY_N_STEPS) {
             this.spawnCounter++;
@@ -96,7 +145,8 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
         const bodyDesc = RAPIER.RigidBodyDesc
             .dynamic()
             .setTranslation(0.0, 10.0, 0.0)
-            .setLinvel(0.0, 15.0, 0.0);
+            .setLinvel(0.0, 15.0, 0.0)
+            .setCcdEnabled(false)
         const body = this.world.createRigidBody(bodyDesc);
 
         let colliderDesc;
@@ -139,18 +189,38 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
         }
     }
 
+
+    override updateFromGui() {
+
+        if (this.needsUpdate()) {
+
+            // TODO implement Fountain settings
+
+            super.updateFromGui();
+        }
+
+    }
+
+
     override defaultGuiSettings() {
 
-        const r: IApgRprSimFountainGuiSettings = {
+        const r: ApgRprSim_Fountain_IGuiSettings = {
 
             ...super.defaultGuiSettings(),
+
+            isBodiesGroupOpened: false,
 
             restitution: 0.25,
             restitutionMMS: {
                 min: 0.05,
                 max: 1.0,
                 step: 0.05
-            }
+            },
+
+            isGroundGroupOpened: false,
+
+            groundType: ApgRprSim_Fountain_eGroundType.CUB,
+            groundTypes: Object.values(ApgRprSim_Fountain_eGroundType),
 
         }
         return r;
@@ -158,10 +228,9 @@ export class ApgRprSimFountain extends ApgRprSim_Base {
 }
 
 
-export class ApgRprSimFountainGuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
 
-    guiSettings: IApgRprSimFountainGuiSettings;
-
+    guiSettings: ApgRprSim_Fountain_IGuiSettings;
 
     constructor(
         agui: ApgGui,
@@ -169,21 +238,23 @@ export class ApgRprSimFountainGuiBuilder extends ApgRprSim_GuiBuilder {
     ) {
         super(agui, aparams);
 
-        this.guiSettings = this.params.guiSettings as IApgRprSimFountainGuiSettings;
+        this.guiSettings = this.params.guiSettings as ApgRprSim_Fountain_IGuiSettings;
     }
 
 
-    override build() {
+    override buildHtml() {
 
         const bodiesGroupControl = this.#buildBodiesGroupControl();
+        const groundGroupControl = this.#buildGrounGroupControl();
 
-        const simControls = super.build();
+        const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             "ApgRprSimFountainSettingsPanel",
-            eApgRpr_SimulationName.B_FOUNTAIN,
+            ApgRpr_eSimulationName.B_FOUNTAIN,
             [
                 bodiesGroupControl,
+                groundGroupControl,
                 simControls
             ]
         );
@@ -191,6 +262,7 @@ export class ApgRprSimFountainGuiBuilder extends ApgRprSim_GuiBuilder {
         return r;
 
     }
+
 
     #buildBodiesGroupControl() {
         const BODIES_REST_CNT = 'restitutionControl';
@@ -211,11 +283,54 @@ export class ApgRprSimFountainGuiBuilder extends ApgRprSim_GuiBuilder {
         );
 
         const r = this.buildGroupControl(
+            "bodiesGroupControl",
             "Bodies:",
             [
                 bodiesRestitutionControl,
-            ]
+            ],
+            this.guiSettings.isBodiesGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.guiSettings.isBodiesGroupOpened = !this.guiSettings.isBodiesGroupOpened;
+                    this.gui.log('Bodies group toggled')
+                }
+            }
+        );
+        return r;
+    }
 
+
+    #buildGrounGroupControl() {
+        const keyValues = new Map<string, string>();
+        for (const ground of this.guiSettings.groundTypes) {
+            keyValues.set(ground, ground);
+        }
+        const GROUND_SELECT_CNT = 'groundSelectControl';
+        const groundSelectControl = this.buildSelectControl(
+            GROUND_SELECT_CNT,
+            'Type',
+            this.guiSettings.groundType,
+            keyValues,
+            () => {
+                const select = this.gui.controls.get(GROUND_SELECT_CNT)!.element as IApgDomSelect;
+                this.guiSettings.groundType = select.value as ApgRprSim_Fountain_eGroundType;
+                this.params.restart = true;
+            }
+        );
+
+        const r = this.buildGroupControl(
+            "hroundGroupControl",
+            "Ground:",
+            [
+                groundSelectControl,
+            ],
+            this.guiSettings.isGroundGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.guiSettings.isGroundGroupOpened = !this.guiSettings.isGroundGroupOpened;
+                    this.gui.log('Ground group toggled')
+                }
+            }
         );
         return r;
     }

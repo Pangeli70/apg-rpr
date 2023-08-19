@@ -1,87 +1,46 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { eApgRpr_SimulationName } from "../ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
-export class ApgRprSimPngTerrain extends ApgRprSim_Base {
+export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     const settings = this.params.guiSettings;
-    const guiBuilder = new ApgRprSimPngTerrainGuiBuilder(
-      this.simulator.gui,
-      this.params
-    );
-    const gui = guiBuilder.build();
-    this.simulator.viewer.panels.innerHTML = gui;
-    guiBuilder.bindControls();
-    this.createWorld(settings);
+    this.buildGui(ApgRprSim_PngTerrain_GuiBuilder);
+    this.#createWorld(settings);
   }
-  updateFromGui2() {
-    alert("Needs update");
-    if (this.needsUpdate()) {
-      super.updateFromGui();
-    }
-  }
-  defaultGuiSettings() {
-    const r = {
-      ...super.defaultGuiSettings(),
-      heightMap: "HeigthMap2",
-      heightMaps: ["HeigthMap1", "HeigthMap2"],
-      sampleSize: 100,
-      sampleSizeMin: 10,
-      sampleSizeMax: 100,
-      sampleSizeStep: 5,
-      mapHeight: 5,
-      mapHeightMin: 1,
-      mapHeightMax: 25,
-      mapHeightStep: 1
-    };
-    return r;
-  }
-  createWorld(asettings) {
-    this.buildWorld(
-      "./assets/img/png/" + asettings.heightMap + ".png",
-      asettings.sampleSize,
-      asettings.sampleSize,
-      100,
-      asettings.mapHeight,
-      100
-    );
-  }
-  buildWorld(aimageResourceUrl, awidthXDivisions, adepthZDivisions, awidthX, aheightY, adepthZ) {
+  #createWorld(asettings) {
+    const pngResourceUrl = "./assets/img/png/" + asettings.heightMap + ".png";
     const image = this.simulator.document.createElement("img");
-    image.src = aimageResourceUrl;
+    image.src = pngResourceUrl;
     image.onload = () => {
-      const pixels = this.sampleImagePixels(image, awidthXDivisions, adepthZDivisions);
+      const pixels = this.#sampleImagePixels(image, asettings.sampleSize, asettings.sampleSize);
       const heightMap = this.generateHeightMap(
-        awidthXDivisions,
-        adepthZDivisions,
-        awidthX,
-        aheightY,
-        adepthZ,
+        asettings.sampleSize,
+        asettings.sampleSize,
+        100,
+        asettings.mapHeight,
+        100,
         pixels
       );
       const heightMap1 = this.generateRandomHeightMap(
         "Pippo",
-        awidthXDivisions,
-        adepthZDivisions,
-        awidthX,
-        aheightY / 2,
-        adepthZ
+        asettings.sampleSize,
+        asettings.sampleSize,
+        100,
+        asettings.mapHeight,
+        100
       );
-      const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
-      const platformBody = this.world.createRigidBody(platformBodyDesc);
+      const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
+      const groundBody = this.world.createRigidBody(groundBodyDesc);
       const groundColliderDesc = RAPIER.ColliderDesc.trimesh(heightMap.vertices, heightMap.indices);
-      this.world.createCollider(groundColliderDesc, platformBody);
-      this.buildDynamicColliders();
+      this.world.createCollider(groundColliderDesc, groundBody);
+      this.#buildDynamicColliders();
       this.simulator.addWorld(this.world);
       if (!this.params.restart) {
-        const cameraPosition = {
-          eye: { x: -80, y: 50, z: -80 },
-          target: { x: 0, y: 0, z: 0 }
-        };
-        this.simulator.resetCamera(cameraPosition);
+        this.simulator.resetCamera(asettings.cameraPosition);
       } else {
         this.params.restart = false;
       }
@@ -90,42 +49,37 @@ export class ApgRprSimPngTerrain extends ApgRprSim_Base {
       });
     };
   }
-  sampleImagePixels(image, awidthXDivisions, adepthZDivisions) {
-    const r = [];
+  #sampleImagePixels(image, awidthXDivisions, adepthZDivisions) {
+    const pixels = [];
     const canvas = this.simulator.document.createElement("canvas");
-    canvas.width = image.width;
-    canvas.height = image.height;
+    this.simulator.document.body.appendChild(canvas);
+    canvas.width = awidthXDivisions + 1;
+    canvas.height = adepthZDivisions + 1;
     const context = canvas.getContext("2d");
     context.drawImage(
       image,
       0,
       0,
       +canvas.width,
-      +canvas.height,
-      0,
-      0,
-      +canvas.width,
       +canvas.height
+      //         0, 0, +image.width, +image.height,
     );
-    const imageData = context.getImageData(0, 0, +canvas.width, +canvas.height);
-    const widthSamples = +canvas.width / awidthXDivisions;
-    const depthSamples = +canvas.height / adepthZDivisions;
-    for (let i = 0; i < awidthXDivisions; i++) {
-      for (let j = 0; j < adepthZDivisions; j++) {
-        const xpixel = Math.round(i * widthSamples);
-        const zpixel = Math.round(j * depthSamples);
-        const startIndex = (xpixel * +canvas.width + zpixel) * 4;
-        const pixelRedComponent = imageData.data[startIndex];
-        const pixelGreenComponent = imageData.data[startIndex + 1];
-        const pixelBlueComponent = imageData.data[startIndex + 2];
-        const _pixelAlphaComponent = imageData.data[startIndex + 3];
-        const pixelWhiteComponent = (pixelRedComponent + pixelGreenComponent + pixelBlueComponent) / 3;
-        r.push(pixelWhiteComponent / 255);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const i = x + y * canvas.width * 4;
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+        const _a = imageData[i + 3];
+        const white = (r + g + b) / 3;
+        const height = white / 255;
+        pixels.push(height);
       }
     }
-    return r;
+    return pixels;
   }
-  buildDynamicColliders() {
+  #buildDynamicColliders() {
     const num = 4;
     const numy = 10;
     const rad = 1;
@@ -169,19 +123,44 @@ export class ApgRprSimPngTerrain extends ApgRprSim_Base {
       offset -= 0.05 * rad * (num - 1);
     }
   }
+  updateFromGui() {
+    if (this.needsUpdate()) {
+      super.updateFromGui();
+    }
+  }
+  defaultGuiSettings() {
+    const r = {
+      ...super.defaultGuiSettings(),
+      heightMap: "HeigthMap1",
+      heightMaps: ["HeigthMap1", "HeigthMap2"],
+      sampleSize: 50,
+      sampleSizeMMS: {
+        min: 10,
+        max: 100,
+        step: 5
+      },
+      mapHeight: 5,
+      mapHeightMMS: {
+        min: 1,
+        max: 25,
+        step: 1
+      }
+    };
+    return r;
+  }
 }
-export class ApgRprSimPngTerrainGuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  build() {
+  buildHtml() {
     const latticeGroupControl = this.#buildLatticeGroupControl();
-    const simControls = super.build();
+    const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       "ApgRprSimPngTerrainSettingsPanel",
-      eApgRpr_SimulationName.G_PNG_MESH_TERRAIN,
+      ApgRpr_eSimulationName.G_PNG_MESH_TERRAIN,
       [
         latticeGroupControl,
         simControls
@@ -211,9 +190,9 @@ export class ApgRprSimPngTerrainGuiBuilder extends ApgRprSim_GuiBuilder {
       SAMPLES_SIZE_CNT,
       "Samples",
       this.guiSettings.sampleSize,
-      this.guiSettings.sampleSizeMin,
-      this.guiSettings.sampleSizeMax,
-      this.guiSettings.sampleSizeStep,
+      this.guiSettings.sampleSizeMMS.min,
+      this.guiSettings.sampleSizeMMS.max,
+      this.guiSettings.sampleSizeMMS.step,
       () => {
         const range = this.gui.controls.get(SAMPLES_SIZE_CNT).element;
         this.guiSettings.sampleSize = parseFloat(range.value);
@@ -226,9 +205,9 @@ export class ApgRprSimPngTerrainGuiBuilder extends ApgRprSim_GuiBuilder {
       MAP_HEIGHT_CNT,
       "Height",
       this.guiSettings.mapHeight,
-      this.guiSettings.mapHeightMin,
-      this.guiSettings.mapHeightMax,
-      this.guiSettings.mapHeightStep,
+      this.guiSettings.mapHeightMMS.min,
+      this.guiSettings.mapHeightMMS.max,
+      this.guiSettings.mapHeightMMS.step,
       () => {
         const range = this.gui.controls.get(MAP_HEIGHT_CNT).element;
         this.guiSettings.mapHeight = parseFloat(range.value);
@@ -237,6 +216,7 @@ export class ApgRprSimPngTerrainGuiBuilder extends ApgRprSim_GuiBuilder {
       }
     );
     const r = this.buildGroupControl(
+      "samplingGroupControl",
       "Sampling:",
       [
         simulationSelectControl,
