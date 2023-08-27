@@ -19,8 +19,10 @@ enum eApgRprCollidersColorPalette {
     KINEMATIC = 1,
     DYNAMIC = 2,
     CCD_ENABLED = 3,
-    HIGHLIGHTED = 4
+    SENSOR = 4,
+    HIGHLIGHTED = 5
 }
+
 
 export class ApgRprThreeViewer {
 
@@ -79,11 +81,12 @@ export class ApgRprThreeViewer {
         this.document = adocument;
 
         const viewerHeight = `${this.window.innerHeight * 0.95}px`;
-
+        
         this.container = this.document.getElementById('ApgRprViewerContainer');
         this.container.style.width = "80%";
         this.container.style.height = viewerHeight;
-
+        
+        // @DONE We want to add the rendered to a defined div -- APG 20230812/20230815 
         this.canvas = this.document.createElement('canvas') as IApgDomCanvas;
         this.canvas.id = 'ApgWglRprViewerCanvas';
         this.container.appendChild(this.canvas);
@@ -102,21 +105,17 @@ export class ApgRprThreeViewer {
 
         this.colorPalette = new Map();
         this.colorPalette.set(eApgRprCollidersColorPalette.FIXED, { colors: [0xffd480], offset: 0 });
-        // this.colorPalette.set(eApgRprCollidersColorPalette.STATIC, [0xf3d9b1]);
         this.colorPalette.set(eApgRprCollidersColorPalette.KINEMATIC, { colors: [0x4040bf], offset: 1 });
-        // this.colorPalette.set(eApgRprCollidersColorPalette.DYNAMIC, [0x98c1d9, 0x053c5e, 0x1f7a8c, 0x6743ff]);
         this.colorPalette.set(eApgRprCollidersColorPalette.DYNAMIC, { colors: [0x17334f, 0x295989, 0x4e8cca, 0xc4d9ed], offset: 2 });
         this.colorPalette.set(eApgRprCollidersColorPalette.CCD_ENABLED, { colors: [0xffff00], offset: 6 });
-        this.colorPalette.set(eApgRprCollidersColorPalette.HIGHLIGHTED, { colors: [0xff0000], offset: 7 });
+        this.colorPalette.set(eApgRprCollidersColorPalette.SENSOR, { colors: [0x00ff00], offset: 7 });
+        this.colorPalette.set(eApgRprCollidersColorPalette.HIGHLIGHTED, { colors: [0xff0000], offset: 8 });
 
         this.scene = new THREE.Scene();
 
-        // const aspectRatio = this.window.innerWidth / this.window.innerHeight;
         const aspectRatio = this.container.clientWidth / this.container.clientHeight;
-        this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 10000);
+        this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 1000);
 
-        // this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        // this.renderer.setSize(this.window.innerWidth, this.window.innerWidth);
         this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
@@ -127,10 +126,6 @@ export class ApgRprThreeViewer {
             ? Math.min(this.window.devicePixelRatio, 1.5)
             : 1;
         this.renderer.setPixelRatio(pixelRatio);
-
-        /** DONE change this we want to add the rendered to a defined div -- APG 20230812/20230815 */
-        // this.document.body.appendChild(this.renderer.domElement);
-        this.container.appendChild(this.renderer.domElement);
 
         const ambientLight = new THREE.AmbientLight(0x606060);
         this.scene.add(ambientLight);
@@ -154,7 +149,7 @@ export class ApgRprThreeViewer {
             this.scene.add(this.lines);
         }
 
-        this.window.addEventListener("resize", this.resize, false);
+        this.window.addEventListener("resize", () => { this.resize() }, false);
 
         this.controls = new THREE_OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
@@ -168,11 +163,11 @@ export class ApgRprThreeViewer {
 
     resize() {
         if (this.camera) {
+            const viewerHeight = `${this.window.innerHeight * 0.95}px`;
+            this.container.style.height = viewerHeight;
             this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
-            // this.camera.aspect = this.window.innerWidth / this.window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-            // this.renderer.setSize(this.window.innerWidth, this.window.innerHeight);
         }
     }
 
@@ -209,13 +204,13 @@ export class ApgRprThreeViewer {
                 geometry = new THREE.SphereGeometry(1.0);
                 break;
             case eApgRprInstancedMeshesGroup.CYLINDERS:
-                geometry = new THREE.CylinderGeometry(1.0, 1.0);
+                geometry = new THREE.CylinderGeometry(1.0, 1.0, 1.0);
                 break;
             case eApgRprInstancedMeshesGroup.CONES:
                 geometry = new THREE.ConeGeometry(1.0, 1.0);
                 break;
             case eApgRprInstancedMeshesGroup.CAPSULES:
-                geometry = new THREE.CapsuleGeometry(1.0, 1.0);
+                geometry = new THREE.CapsuleGeometry(1.0, 1.0, 4, 16);
                 break;
         }
 
@@ -223,7 +218,7 @@ export class ApgRprThreeViewer {
             for (const color of this.colorPalette.get(type)!.colors) {
                 const material = new THREE.MeshPhongMaterial({
                     color: color,
-                    flatShading: true,
+                    flatShading: false,
                 });
                 const instancedMesh = new THREE.InstancedMesh(geometry, material, this.MAX_INSTANCES);
                 group.push(instancedMesh);

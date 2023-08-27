@@ -55,11 +55,6 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
     this.simulator.viewer.addCollider(collider);
     this.currentCube++;
   }
-  updateFromGui() {
-    if (this.needsUpdate()) {
-      super.updateFromGui();
-    }
-  }
   defaultGuiSettings() {
     const r = {
       ...super.defaultGuiSettings(),

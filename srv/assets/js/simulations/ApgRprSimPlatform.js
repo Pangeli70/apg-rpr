@@ -28,7 +28,7 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
     const scales = new RAPIER.Vector3(40, 4, 40);
     const kinematicBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
     this.platformBody = this.world.createRigidBody(kinematicBodyDesc);
-    const randomHeightField = this.generateRandomField("Platform", numberOfColumns, numberOfRows);
+    const randomHeightField = this.generateRandomHeightFieldArray("Platform", numberOfColumns, numberOfRows);
     const groundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfRows, numberOfRows, randomHeightField, scales);
     this.world.createCollider(groundColliderDesc, this.platformBody);
     const num = 4;

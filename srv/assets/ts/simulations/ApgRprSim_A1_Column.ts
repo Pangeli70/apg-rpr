@@ -121,18 +121,6 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
 
 
 
-    override updateFromGui() {
-
-        if (this.needsUpdate()) {
-
-            // TODO implement Pyramid settings
-
-            super.updateFromGui();
-        }
-
-    }
-
-
     override defaultGuiSettings() {
 
         const r: ApgRprSim_Column_IGuiSettings = {

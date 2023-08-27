@@ -6,7 +6,8 @@ var eApgRprCollidersColorPalette = /* @__PURE__ */ ((eApgRprCollidersColorPalett
   eApgRprCollidersColorPalette2[eApgRprCollidersColorPalette2["KINEMATIC"] = 1] = "KINEMATIC";
   eApgRprCollidersColorPalette2[eApgRprCollidersColorPalette2["DYNAMIC"] = 2] = "DYNAMIC";
   eApgRprCollidersColorPalette2[eApgRprCollidersColorPalette2["CCD_ENABLED"] = 3] = "CCD_ENABLED";
-  eApgRprCollidersColorPalette2[eApgRprCollidersColorPalette2["HIGHLIGHTED"] = 4] = "HIGHLIGHTED";
+  eApgRprCollidersColorPalette2[eApgRprCollidersColorPalette2["SENSOR"] = 4] = "SENSOR";
+  eApgRprCollidersColorPalette2[eApgRprCollidersColorPalette2["HIGHLIGHTED"] = 5] = "HIGHLIGHTED";
   return eApgRprCollidersColorPalette2;
 })(eApgRprCollidersColorPalette || {});
 export class ApgRprThreeViewer {
@@ -67,16 +68,16 @@ export class ApgRprThreeViewer {
     this.colorPalette.set(1 /* KINEMATIC */, { colors: [4210879], offset: 1 });
     this.colorPalette.set(2 /* DYNAMIC */, { colors: [1520463, 2709897, 5147850, 12900845], offset: 2 });
     this.colorPalette.set(3 /* CCD_ENABLED */, { colors: [16776960], offset: 6 });
-    this.colorPalette.set(4 /* HIGHLIGHTED */, { colors: [16711680], offset: 7 });
+    this.colorPalette.set(4 /* SENSOR */, { colors: [65280], offset: 7 });
+    this.colorPalette.set(5 /* HIGHLIGHTED */, { colors: [16711680], offset: 8 });
     this.scene = new THREE.Scene();
     const aspectRatio = this.container.clientWidth / this.container.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 1e4);
+    this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 1e3);
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.setClearColor(2697513, 1);
     const pixelRatio = this.window.devicePixelRatio ? Math.min(this.window.devicePixelRatio, 1.5) : 1;
     this.renderer.setPixelRatio(pixelRatio);
-    this.container.appendChild(this.renderer.domElement);
     const ambientLight = new THREE.AmbientLight(6316128);
     this.scene.add(ambientLight);
     this.light = new THREE.PointLight(16777215, 1, 1e3);
@@ -93,7 +94,9 @@ export class ApgRprThreeViewer {
       this.lines = new THREE.LineSegments(geometry, material);
       this.scene.add(this.lines);
     }
-    this.window.addEventListener("resize", this.resize, false);
+    this.window.addEventListener("resize", () => {
+      this.resize();
+    }, false);
     this.controls = new THREE_OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.2;
@@ -103,6 +106,8 @@ export class ApgRprThreeViewer {
   }
   resize() {
     if (this.camera) {
+      const viewerHeight = `${this.window.innerHeight * 0.95}px`;
+      this.container.style.height = viewerHeight;
       this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
@@ -134,20 +139,20 @@ export class ApgRprThreeViewer {
         geometry = new THREE.SphereGeometry(1);
         break;
       case eApgRprInstancedMeshesGroup.CYLINDERS:
-        geometry = new THREE.CylinderGeometry(1, 1);
+        geometry = new THREE.CylinderGeometry(1, 1, 1);
         break;
       case eApgRprInstancedMeshesGroup.CONES:
         geometry = new THREE.ConeGeometry(1, 1);
         break;
       case eApgRprInstancedMeshesGroup.CAPSULES:
-        geometry = new THREE.CapsuleGeometry(1, 1);
+        geometry = new THREE.CapsuleGeometry(1, 1, 4, 16);
         break;
     }
     for (const type of this.colorPalette.keys()) {
       for (const color of this.colorPalette.get(type).colors) {
         const material = new THREE.MeshPhongMaterial({
           color,
-          flatShading: true
+          flatShading: false
         });
         const instancedMesh = new THREE.InstancedMesh(geometry, material, this.MAX_INSTANCES);
         group.push(instancedMesh);

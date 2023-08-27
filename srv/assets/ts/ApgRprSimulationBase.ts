@@ -55,18 +55,23 @@ export interface IApgRprSim_Params {
 
 export class ApgRprSim_Base {
 
-    /** */
+    /** The Rapier world*/
     protected world: RAPIER.World;
 
-    /** */
+    /** The Apg Rapier simulator */
     protected simulator: ApgRpr_Simulator;
 
-    /** */
+    /** Current simulation params and settings */
     protected params: IApgRprSim_Params;
-    /** */
+    /** Stored for comparison params and settings */
     protected prevParams!: IApgRprSim_Params;
 
 
+    /**
+     * Creates a new simulation and a new world for the Rapier simulator
+     * @param asimulator 
+     * @param aparams 
+     */
     constructor(
         asimulator: ApgRpr_Simulator,
         aparams: IApgRprSim_Params
@@ -88,12 +93,16 @@ export class ApgRprSim_Base {
             this.params.guiSettings = this.defaultGuiSettings();
         }
 
-        this.savePrevParams();
+        this.saveParams();
 
         this.world = new RAPIER.World(this.params.gravity!);
     }
 
 
+    /**
+     * Create the Gui for the current simulation
+     * @param aguiBuilderType The class derived from the standard GuiBuilder
+     */
     protected buildGui(
         aguiBuilderType: typeof ApgRprSim_GuiBuilder,
 
@@ -110,7 +119,28 @@ export class ApgRprSim_Base {
     }
 
 
+    /** 
+     * Update the simulation params accordingly with the Gui settings. This method 
+     * can be overridden and extended by derived classes to manage the settings 
+     * specific of the single simulation that need immediate and not restar updating. 
+     */
     protected updateFromGui() {
+
+        if (this.needsUpdate()) {
+
+            this.updateSimulatorFromGui();
+
+            this.saveParams();
+        }
+
+    }
+
+
+    /** 
+     * Update the Rapier simulator params from the Gui setting. This function should
+     * not be overridden.
+     */
+    protected updateSimulatorFromGui() {
 
         if (this.params.restart) {
             this.simulator.setSimulation(this.params);
@@ -132,11 +162,13 @@ export class ApgRprSim_Base {
             this.simulator.slowdown = this.params.guiSettings!.slowdown
         }
 
-        this.savePrevParams();
-
     }
 
 
+    /** 
+     * Set up the default Gui settings for the simulator. This method can be overridden 
+     * and extended by derived classes to add more settings specific of the single simulation. 
+     */
     protected defaultGuiSettings() {
 
         const r: ApgRprSim_IGuiSettings = {
@@ -179,7 +211,13 @@ export class ApgRprSim_Base {
     }
 
 
+    /** 
+     * Raw verification of the current params and gui settings. If something was changed 
+     * from the previous saved data or if a restart command was issued the result is true. 
+     * False otherwise
+     */
     protected needsUpdate() {
+
         const r = false;
 
         if (this.params.restart) {
@@ -200,7 +238,11 @@ export class ApgRprSim_Base {
     }
 
 
-    protected savePrevParams() {
+    /**
+     * Save the params for later comparison in order to detect changes due
+     * to the user's interaction
+     */
+    protected saveParams() {
         if (!this.prevParams) {
             this.prevParams = {
                 simulation: this.params.simulation
@@ -211,6 +253,73 @@ export class ApgRprSim_Base {
         }
         this.prevParams.guiSettings = JSON.parse(JSON.stringify(this.params.guiSettings));
     }
+
+
+    /**
+     * WARNING: The number of columns and rows generates a list of vertices
+     * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
+     * @param anumberOfColumns 
+     * @param anumberOfRows 
+     * @returns An array of Float32Array heights one per vertex
+     */
+    protected generateSlopedHeightFieldArray(
+        anumberOfColumns: number,
+        anumberOfRows: number,
+    ) {
+
+        const heights: number[] = [];
+        const deltaSlope = 1 / anumberOfRows;
+
+        for (let column = 0; column < (anumberOfColumns + 1); column++) {
+
+            const h = column * deltaSlope;
+
+            for (let row = 0; row < (anumberOfRows + 1); row++) {
+
+                heights.push(h);
+
+            }
+
+        }
+
+        return new Float32Array(heights);
+
+    }
+
+
+    /**
+     * WARNING: The number of columns and rows generates a list of vertices
+     * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
+     * @param aseed 
+     * @param anumberOfColumns 
+     * @param anumberOfRows 
+     * @returns An array of Float32Array heights one per vertex
+     */
+    protected generateRandomHeightFieldArray(
+        aseed: string,
+        anumberOfColumns: number,
+        anumberOfRows: number,
+    ) {
+
+        const rng = new PRANDO(aseed);
+        const heights: number[] = [];
+
+        for (let column = 0; column < (anumberOfColumns + 1); column++) {
+
+
+            for (let row = 0; row < (anumberOfRows + 1); row++) {
+
+                const h = rng.next();
+                heights.push(h);
+
+            }
+
+        }
+
+        return new Float32Array(heights);
+
+    }
+
 
 
     protected generateRandomTrimshHeightMap(
@@ -243,73 +352,6 @@ export class ApgRprSim_Base {
 
         return r;
     }
-
-
-
-    /**
-     * WARNING: The number of columns and rows generates a list of vertices
-     * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
-     * @param anumberOfColumns 
-     * @param anumberOfRows 
-     * @returns An array of Float32Array heights one per vertex
-     */
-    protected generateSlopedField(
-        anumberOfColumns: number,
-        anumberOfRows: number,
-    ) {
-
-        const heights: number[] = [];
-        const deltaSlope = 1 / anumberOfRows;
-
-        for (let column = 0; column < (anumberOfColumns + 1); column++) {
-
-            const h = column * deltaSlope;
-
-            for (let row = 0; row < (anumberOfRows + 1); row++) {
-
-                heights.push(h);
-
-            }
-
-        }
-
-        return new Float32Array(heights);
-
-    }
-
-    /**
-     * WARNING: The number of columns and rows generates a list of vertices
-     * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
-     * @param aseed 
-     * @param anumberOfColumns 
-     * @param anumberOfRows 
-     * @returns An array of Float32Array heights one per vertex
-     */
-    protected generateRandomField(
-        aseed: string,
-        anumberOfColumns: number,
-        anumberOfRows: number,
-    ) {
-
-        const rng = new PRANDO(aseed);
-        const heights: number[] = [];
-
-        for (let column = 0; column < (anumberOfColumns + 1); column++) {
-
-
-            for (let row = 0; row < (anumberOfRows + 1); row++) {
-
-                const h = rng.next();
-                heights.push(h);
-
-            }
-
-        }
-
-        return new Float32Array(heights);
-
-    }
-
 
 
     protected generateTrimeshHeightMap(

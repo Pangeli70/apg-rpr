@@ -1,13 +1,18 @@
 import { RAPIER, PRANDO } from "./ApgRprDeps.ts";
 export class ApgRprSim_Base {
-  /** */
+  /** The Rapier world*/
   world;
-  /** */
+  /** The Apg Rapier simulator */
   simulator;
-  /** */
+  /** Current simulation params and settings */
   params;
-  /** */
+  /** Stored for comparison params and settings */
   prevParams;
+  /**
+   * Creates a new simulation and a new world for the Rapier simulator
+   * @param asimulator 
+   * @param aparams 
+   */
   constructor(asimulator, aparams) {
     this.simulator = asimulator;
     this.params = {
@@ -22,9 +27,13 @@ export class ApgRprSim_Base {
     if (this.params.guiSettings == void 0) {
       this.params.guiSettings = this.defaultGuiSettings();
     }
-    this.savePrevParams();
+    this.saveParams();
     this.world = new RAPIER.World(this.params.gravity);
   }
+  /**
+   * Create the Gui for the current simulation
+   * @param aguiBuilderType The class derived from the standard GuiBuilder
+   */
   buildGui(aguiBuilderType) {
     const guiBuilder = new aguiBuilderType(
       this.simulator.gui,
@@ -35,7 +44,22 @@ export class ApgRprSim_Base {
     guiBuilder.bindControls();
     this.simulator.gui.log("Sim Gui built", true);
   }
+  /** 
+   * Update the simulation params accordingly with the Gui settings. This method 
+   * can be overridden and extended by derived classes to manage the settings 
+   * specific of the single simulation that need immediate and not restar updating. 
+   */
   updateFromGui() {
+    if (this.needsUpdate()) {
+      this.updateSimulatorFromGui();
+      this.saveParams();
+    }
+  }
+  /** 
+   * Update the Rapier simulator params from the Gui setting. This function should
+   * not be overridden.
+   */
+  updateSimulatorFromGui() {
     if (this.params.restart) {
       this.simulator.setSimulation(this.params);
     }
@@ -51,8 +75,11 @@ export class ApgRprSim_Base {
     if (this.prevParams.guiSettings.slowdown != this.params.guiSettings.slowdown) {
       this.simulator.slowdown = this.params.guiSettings.slowdown;
     }
-    this.savePrevParams();
   }
+  /** 
+   * Set up the default Gui settings for the simulator. This method can be overridden 
+   * and extended by derived classes to add more settings specific of the single simulation. 
+   */
   defaultGuiSettings() {
     const r = {
       name: this.params.simulation,
@@ -83,6 +110,11 @@ export class ApgRprSim_Base {
     };
     return r;
   }
+  /** 
+   * Raw verification of the current params and gui settings. If something was changed 
+   * from the previous saved data or if a restart command was issued the result is true. 
+   * False otherwise
+   */
   needsUpdate() {
     const r = false;
     if (this.params.restart) {
@@ -98,7 +130,11 @@ export class ApgRprSim_Base {
     }
     return r;
   }
-  savePrevParams() {
+  /**
+   * Save the params for later comparison in order to detect changes due
+   * to the user's interaction
+   */
+  saveParams() {
     if (!this.prevParams) {
       this.prevParams = {
         simulation: this.params.simulation
@@ -108,24 +144,6 @@ export class ApgRprSim_Base {
     }
     this.prevParams.guiSettings = JSON.parse(JSON.stringify(this.params.guiSettings));
   }
-  generateRandomTrimshHeightMap(arandomSeed, axNumVertices, azNumVertices, axScale, ayScale, azScale) {
-    const rng = new PRANDO(arandomSeed);
-    const randomHeights = [];
-    for (let i = 0; i < axNumVertices + 1; i++) {
-      for (let j = 0; j < azNumVertices + 1; j++) {
-        randomHeights.push(rng.next());
-      }
-    }
-    const r = this.generateTrimeshHeightMap(
-      axNumVertices,
-      azNumVertices,
-      axScale,
-      ayScale,
-      azScale,
-      randomHeights
-    );
-    return r;
-  }
   /**
    * WARNING: The number of columns and rows generates a list of vertices
    * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
@@ -133,7 +151,7 @@ export class ApgRprSim_Base {
    * @param anumberOfRows 
    * @returns An array of Float32Array heights one per vertex
    */
-  generateSlopedField(anumberOfColumns, anumberOfRows) {
+  generateSlopedHeightFieldArray(anumberOfColumns, anumberOfRows) {
     const heights = [];
     const deltaSlope = 1 / anumberOfRows;
     for (let column = 0; column < anumberOfColumns + 1; column++) {
@@ -152,7 +170,7 @@ export class ApgRprSim_Base {
    * @param anumberOfRows 
    * @returns An array of Float32Array heights one per vertex
    */
-  generateRandomField(aseed, anumberOfColumns, anumberOfRows) {
+  generateRandomHeightFieldArray(aseed, anumberOfColumns, anumberOfRows) {
     const rng = new PRANDO(aseed);
     const heights = [];
     for (let column = 0; column < anumberOfColumns + 1; column++) {
@@ -162,6 +180,24 @@ export class ApgRprSim_Base {
       }
     }
     return new Float32Array(heights);
+  }
+  generateRandomTrimshHeightMap(arandomSeed, axNumVertices, azNumVertices, axScale, ayScale, azScale) {
+    const rng = new PRANDO(arandomSeed);
+    const randomHeights = [];
+    for (let i = 0; i < axNumVertices + 1; i++) {
+      for (let j = 0; j < azNumVertices + 1; j++) {
+        randomHeights.push(rng.next());
+      }
+    }
+    const r = this.generateTrimeshHeightMap(
+      axNumVertices,
+      azNumVertices,
+      axScale,
+      ayScale,
+      azScale,
+      randomHeights
+    );
+    return r;
   }
   generateTrimeshHeightMap(axVertexesNum, azVertexesNum, axScale, ayScale, azScale, aheights) {
     const xSize = axScale / axVertexesNum;

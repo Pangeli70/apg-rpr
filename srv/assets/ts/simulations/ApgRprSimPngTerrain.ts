@@ -81,11 +81,11 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
                 image, numberOfColumns, numberOfRows
             );
 
-            const heightsRandom = this.generateRandomField(
+            const heightsRandom = this.generateRandomHeightFieldArray(
                 'PNG Terrain', numberOfColumns, numberOfRows
             );
 
-            const heightsSlope = this.generateSlopedField(
+            const heightsSlope = this.generateSlopedHeightFieldArray(
                 numberOfColumns, numberOfRows
             )
 

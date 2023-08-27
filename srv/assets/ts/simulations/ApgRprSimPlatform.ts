@@ -63,7 +63,7 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
         // Create Heigtfield kinematic collider as platform
         const kinematicBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
         this.platformBody = this.world.createRigidBody(kinematicBodyDesc);
-        const randomHeightField = this.generateRandomField('Platform', numberOfColumns, numberOfRows);
+        const randomHeightField = this.generateRandomHeightFieldArray('Platform', numberOfColumns, numberOfRows);
         const groundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfRows, numberOfRows, randomHeightField, scales);
         this.world.createCollider(groundColliderDesc, this.platformBody);
         //<< End_Relevant_Code

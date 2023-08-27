@@ -54,7 +54,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
       const numberOfColumns = 5;
       const numberOfRows = 5;
       const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2);
-      const field = this.generateSlopedField(numberOfColumns, numberOfRows);
+      const field = this.generateSlopedHeightFieldArray(numberOfColumns, numberOfRows);
       const heightFieldGroundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfColumns, numberOfRows, field, scalesVector).setTranslation(0, -rad / 20, 0);
       this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
     }
@@ -62,7 +62,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
       const numberOfColumns = 20;
       const numberOfRows = 20;
       const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2);
-      const field = this.generateRandomField("fountain", numberOfColumns, numberOfRows);
+      const field = this.generateRandomHeightFieldArray("fountain", numberOfColumns, numberOfRows);
       const heightFieldGroundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfColumns, numberOfRows, field, scalesVector).setTranslation(0, -rad / 20, 0);
       this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
     }
