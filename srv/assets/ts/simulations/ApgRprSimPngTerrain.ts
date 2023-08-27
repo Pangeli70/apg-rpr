@@ -55,9 +55,9 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
 
         this.buildGui(ApgRprSim_PngTerrain_GuiBuilder);
 
+        // @NOTE from this point we are asyncronous since we depend from load image
         this.#createWorld(settings);
 
-        // @NOTE from this point we are asyncronous since we depend from load image
         // TODO Manage asyncronicity from the beginning using async -- APG 20230819
     }
 
