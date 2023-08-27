@@ -4,8 +4,10 @@ import {
 } from "./ApgDom.ts";
 export class ApgGui_Builder {
   gui;
-  constructor(agui) {
+  name;
+  constructor(agui, aname) {
     this.gui = agui;
+    this.name = aname;
   }
   #addControl(aId, acontrol) {
     if (this.gui.controls.has(aId)) {
@@ -15,6 +17,10 @@ export class ApgGui_Builder {
     }
     this.gui.controls.set(aId, acontrol);
   }
+  /**
+   * 
+   * @param acontainer 
+   */
   buildHtml(acontainer) {
     const r = "Override the ApgGuiBuilder.build() method to get the GUI";
     acontainer.innerHTML = r;
@@ -225,6 +231,11 @@ export class ApgGui_Builder {
         `;
     return r;
   }
+  /**
+   * After the dinamic insertion of the ApgGui controls in the DOM as elements 
+   * this method binds each control with its element and if provided adds to the
+   * element the appropriate event listeners.
+   */
   bindControls() {
     for (const id of this.gui.controls.keys()) {
       const control = this.gui.controls.get(id);

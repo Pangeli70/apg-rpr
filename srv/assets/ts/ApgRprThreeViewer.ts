@@ -346,6 +346,12 @@ export class ApgRprThreeViewer {
             this.scene.remove(mesh);
         });
 
+        // while (this.scene.children.length > 0) {
+        //     this.scene.remove(this.scene.children[0]);
+        //     console.log('Orphaned object removed')
+        // }
+
+
         this.meshesByColliderHandleMap = new Map();
         this.instancedMeshDescByColliderHandleMap = new Map();
         this.collidersByRigidBodyHandleMap = new Map();

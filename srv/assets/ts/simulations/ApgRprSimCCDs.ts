@@ -11,7 +11,6 @@ import {
 } from "../ApgDom.ts";
 import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { IApgRpr_Point3D } from "../ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
@@ -238,8 +237,8 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSimCcdSettingsPanel",
-            ApgRpr_eSimulationName.J_CCDs,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 projectileGroupControl,
                 wallsGroupControl,

@@ -1,5 +1,4 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -124,8 +123,8 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
     const wallsGroupControl = this.#buildWallsGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
-      "ApgRprSimCcdSettingsPanel",
-      ApgRpr_eSimulationName.J_CCDs,
+      `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+      this.guiSettings.name,
       [
         projectileGroupControl,
         wallsGroupControl,

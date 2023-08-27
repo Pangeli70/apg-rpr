@@ -1,5 +1,4 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -24,10 +23,13 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
     });
   }
   #createWorld(asettings) {
-    const platformBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
-    this.platformBody = this.world.createRigidBody(platformBodyDesc);
-    const randomHeightMap = this.generateRandomHeightMap("Platform", 10, 10, 50, 5, 50);
-    const groundColliderDesc = RAPIER.ColliderDesc.trimesh(randomHeightMap.vertices, randomHeightMap.indices);
+    const numberOfColumns = 10;
+    const numberOfRows = 10;
+    const scales = new RAPIER.Vector3(40, 4, 40);
+    const kinematicBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
+    this.platformBody = this.world.createRigidBody(kinematicBodyDesc);
+    const randomHeightField = this.generateRandomField("Platform", numberOfColumns, numberOfRows);
+    const groundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfRows, numberOfRows, randomHeightField, scales);
     this.world.createCollider(groundColliderDesc, this.platformBody);
     const num = 4;
     const numy = 10;
@@ -102,8 +104,8 @@ export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
   buildHtml() {
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
-      "ApgRprSim_Platform_PanelControl",
-      ApgRpr_eSimulationName.I_PLATFORM,
+      `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+      this.guiSettings.name,
       [
         simControls
       ]

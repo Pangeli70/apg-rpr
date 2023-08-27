@@ -9,6 +9,7 @@ export type HTMLCanvasElement = /*unresolved*/ any;
 export type TApgDomEventCallback = (aevent: any) => void;
 
 
+
 export enum eApgDomFormElementType {
 
     PARAGRAPH = 'paragraph',
@@ -112,6 +113,7 @@ export interface IApgDomElement {
     addEventListener(aevent: string, acallback: TApgDomEventCallback, auseCapture?: boolean): void;
 }
 
+export type TApgDomKeyboardEventCallback = (aaevent: IApgDomKeyboardEvent) => void;
 
 export interface IApgDomDocument extends IApgDomElement {
 
@@ -119,6 +121,9 @@ export interface IApgDomDocument extends IApgDomElement {
 
     createElement(atag: string): IApgDomElement;
     createTextNode(atext: string): IApgDomElement;
+
+    onkeydown: TApgDomKeyboardEventCallback;
+    onkeyup: TApgDomKeyboardEventCallback;
 
     body: IApgDomBody
 
@@ -273,4 +278,9 @@ export interface IApgDomMouseEvent extends IApgDomEvent {
     clientY: number;
 
     preventDefault(): void;
+}
+
+export interface IApgDomKeyboardEvent extends IApgDomEvent {
+    key: string;
+
 }

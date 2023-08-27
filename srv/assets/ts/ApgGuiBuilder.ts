@@ -20,12 +20,15 @@ import { ApgGui, ApgGui_IControl } from "./ApgGui.ts";
 
 export class ApgGui_Builder {
 
-  gui: ApgGui
+  gui: ApgGui;
+  name: string;
 
   constructor(
-    agui: ApgGui
+    agui: ApgGui,
+    aname: string
   ) {
     this.gui = agui;
+    this.name = aname;
   }
 
 
@@ -41,6 +44,10 @@ export class ApgGui_Builder {
   }
 
 
+  /**
+   * 
+   * @param acontainer 
+   */
   buildHtml(acontainer: IApgDomElement) {
 
     const r = "Override the ApgGuiBuilder.build() method to get the GUI";
@@ -67,6 +74,7 @@ export class ApgGui_Builder {
     return r;
   }
 
+
   buildDivControl(
     aId: string,
     acontent: string,
@@ -91,6 +99,7 @@ export class ApgGui_Builder {
     return r;
   }
 
+
   buildRangeControl(
     aId: string,
     acaption: string,
@@ -100,6 +109,7 @@ export class ApgGui_Builder {
     astep: number,
     ainputCallback: TApgDomEventCallback
   ) {
+
     const rangeControl: ApgGui_IControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
@@ -112,7 +122,6 @@ export class ApgGui_Builder {
       element: null,
       type: eApgDomFormElementType.OUTPUT,
     };
-
     this.#addControl(`${aId}Value`, outputControl);
     const r = `
         <p style="margin-bottom: 0.25rem">
@@ -141,6 +150,7 @@ export class ApgGui_Builder {
     return r;
   }
 
+
   buildButtonControl(
     aId: string,
     acaption: string,
@@ -164,6 +174,7 @@ export class ApgGui_Builder {
         `;
     return r;
   }
+
 
   buildCheckBoxControl(
     aId: string,
@@ -195,6 +206,7 @@ export class ApgGui_Builder {
     return r;
   }
 
+
   buildFieldSetControl(
     acaption: string,
     acontrols: string[]
@@ -207,6 +219,7 @@ export class ApgGui_Builder {
         `;
     return r;
   }
+
 
   buildGroupControl(
     aId: string,
@@ -226,7 +239,7 @@ export class ApgGui_Builder {
         <details 
           id="${aId}"
           style="padding: 0.5rem; margin-bottom: 0px"
-          ${ aopened ? 'open':''}
+          ${aopened ? 'open' : ''}
         >
             <summary>${acaption}</summary>
             ${acontrols.join("\n")}
@@ -234,6 +247,7 @@ export class ApgGui_Builder {
         `;
     return r;
   }
+
 
   buildPanelControl(
     aid: string,
@@ -253,6 +267,7 @@ export class ApgGui_Builder {
         `;
     return r;
   }
+
 
   buildSelectControl(
     aId: string,
@@ -294,6 +309,7 @@ export class ApgGui_Builder {
     return r;
   }
 
+
   buildDialogControl(
     aId: string,
     acaption: string,
@@ -323,6 +339,12 @@ export class ApgGui_Builder {
     return r;
   }
 
+
+  /**
+   * After the dinamic insertion of the ApgGui controls in the DOM as elements 
+   * this method binds each control with its element and if provided adds to the
+   * element the appropriate event listeners.
+   */
   bindControls() {
     for (const id of this.gui.controls.keys()) {
 
@@ -331,7 +353,7 @@ export class ApgGui_Builder {
 
       control.element = element;
 
-      if (control.type == eApgDomFormElementType.DIV) { 
+      if (control.type == eApgDomFormElementType.DIV) {
         if (control.injected) {
           element.appendChild(control.injected);
         }
@@ -359,23 +381,28 @@ export class ApgGui_Builder {
               //alert(`${control.element.id} Checkbox bound`);
               break;
             }
+
           }
+
         }
 
         if (control.type == eApgDomFormElementType.DETAILS) {
           (element as IApgDomButton).addEventListener('toggle', control.callback as TApgDomEventCallback);
           //alert(`${control.element.id} Details group bound`);
         }
+
       }
 
       if (control.type == eApgDomFormElementType.BUTTON) {
         (element as IApgDomButton).addEventListener('click', control.callback as TApgDomEventCallback);
         //alert(`${control.element.id} Button bound`);
       }
+
       if (control.type == eApgDomFormElementType.SELECT) {
         (element as IApgDomInput).addEventListener('change', control.callback as TApgDomEventCallback);
         //alert(`${control.element.id} Select bound`);
       }
+
     }
   }
 }

@@ -15,10 +15,13 @@ export class ApgRprSim_Base {
       restart: aparams.restart || false,
       simulation: aparams.simulation,
       simulations: Array.from(this.simulator.simulations.keys()),
-      guiSettings: aparams.guiSettings || this.defaultGuiSettings(),
+      guiSettings: aparams.guiSettings,
       stats: this.simulator.stats,
       debugInfo: this.simulator.debugInfo
     };
+    if (this.params.guiSettings == void 0) {
+      this.params.guiSettings = this.defaultGuiSettings();
+    }
     this.savePrevParams();
     this.world = new RAPIER.World(this.params.gravity);
   }
@@ -52,6 +55,7 @@ export class ApgRprSim_Base {
   }
   defaultGuiSettings() {
     const r = {
+      name: this.params.simulation,
       isSimulationGroupOpened: false,
       velocityIterations: this.simulator.DEFAULT_VELOCITY_ITERATIONS,
       velocityIterationsMMS: {
@@ -104,17 +108,17 @@ export class ApgRprSim_Base {
     }
     this.prevParams.guiSettings = JSON.parse(JSON.stringify(this.params.guiSettings));
   }
-  generateRandomHeightMap(arandomSeed, axNum, azNum, axScale, ayScale, azScale) {
+  generateRandomTrimshHeightMap(arandomSeed, axNumVertices, azNumVertices, axScale, ayScale, azScale) {
     const rng = new PRANDO(arandomSeed);
     const randomHeights = [];
-    for (let i = 0; i < axNum + 1; i++) {
-      for (let j = 0; j < azNum + 1; j++) {
+    for (let i = 0; i < axNumVertices + 1; i++) {
+      for (let j = 0; j < azNumVertices + 1; j++) {
         randomHeights.push(rng.next());
       }
     }
-    const r = this.generateHeightMap(
-      axNum,
-      azNum,
+    const r = this.generateTrimeshHeightMap(
+      axNumVertices,
+      azNumVertices,
       axScale,
       ayScale,
       azScale,
@@ -122,15 +126,52 @@ export class ApgRprSim_Base {
     );
     return r;
   }
-  generateHeightMap(axNum, azNum, axScale, ayScale, azScale, aheights) {
-    const xSize = axScale / axNum;
-    const zSize = azScale / azNum;
+  /**
+   * WARNING: The number of columns and rows generates a list of vertices
+   * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
+   * @param anumberOfColumns 
+   * @param anumberOfRows 
+   * @returns An array of Float32Array heights one per vertex
+   */
+  generateSlopedField(anumberOfColumns, anumberOfRows) {
+    const heights = [];
+    const deltaSlope = 1 / anumberOfRows;
+    for (let column = 0; column < anumberOfColumns + 1; column++) {
+      const h = column * deltaSlope;
+      for (let row = 0; row < anumberOfRows + 1; row++) {
+        heights.push(h);
+      }
+    }
+    return new Float32Array(heights);
+  }
+  /**
+   * WARNING: The number of columns and rows generates a list of vertices
+   * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
+   * @param aseed 
+   * @param anumberOfColumns 
+   * @param anumberOfRows 
+   * @returns An array of Float32Array heights one per vertex
+   */
+  generateRandomField(aseed, anumberOfColumns, anumberOfRows) {
+    const rng = new PRANDO(aseed);
+    const heights = [];
+    for (let column = 0; column < anumberOfColumns + 1; column++) {
+      for (let row = 0; row < anumberOfRows + 1; row++) {
+        const h = rng.next();
+        heights.push(h);
+      }
+    }
+    return new Float32Array(heights);
+  }
+  generateTrimeshHeightMap(axVertexesNum, azVertexesNum, axScale, ayScale, azScale, aheights) {
+    const xSize = axScale / axVertexesNum;
+    const zSize = azScale / azVertexesNum;
     const xHalf = axScale / 2;
     const zHalf = azScale / 2;
     const vertices = [];
-    for (let iz = 0; iz < azNum + 1; iz++) {
-      for (let ix = 0; ix < axNum + 1; ix++) {
-        const index = ix + iz * axNum;
+    for (let iz = 0; iz < azVertexesNum; iz++) {
+      for (let ix = 0; ix < axVertexesNum; ix++) {
+        const index = ix + iz * axVertexesNum;
         const x = ix * xSize - xHalf;
         const y = aheights[index] * ayScale;
         const z = iz * zSize - zHalf;
@@ -138,10 +179,10 @@ export class ApgRprSim_Base {
       }
     }
     const indices = [];
-    for (let z = 0; z < azNum; z++) {
-      for (let x = 0; x < axNum; x++) {
-        const i1 = x + z * (axNum + 1);
-        const i2 = x + (z + 1) * (axNum + 1);
+    for (let z = 0; z < azVertexesNum - 1; z++) {
+      for (let x = 0; x < axVertexesNum; x++) {
+        const i1 = x + z * axVertexesNum;
+        const i2 = x + (z + 1) * axVertexesNum;
         const i3 = i1 + 1;
         const i4 = i2 + 1;
         indices.push(i1, i2, i3);

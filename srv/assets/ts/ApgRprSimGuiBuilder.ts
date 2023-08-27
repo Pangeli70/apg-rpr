@@ -10,27 +10,41 @@ import {
   IApgDomDialog, IApgDomElement,
   IApgDomRange, IApgDomSelect
 } from "./ApgDom.ts";
-import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
 import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
 import { ApgRprSimStatsGuiBuilder } from "./ApgRprSimStatsGuiBuilder.ts";
 import { ApgRprSimDebugGuiBuilder } from "./ApgRprSimDebugGuiBuilder.ts";
 import { ApgGui } from "./ApgGui.ts";
+import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 
+
+
+/**
+ * This is the basic simulation gui Builder that contains the elements shared by
+ * all the simulations. It prepares the controls that allows to change the simulation, 
+ * to tweak the simulation settings, to create the stats panels and the the credits 
+ * dialog
+ */
 export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
 
   params: IApgRprSim_Params;
+
 
   readonly CREDITS_DIALOG_CNT = 'creditsDialogControl';
 
   constructor(
     agui: ApgGui,
-    aparams: IApgRprSim_Params
+    aparams: IApgRprSim_Params,
   ) {
-    super(agui);
+    super(agui, aparams.simulation);
 
     this.params = aparams;
   }
 
+
+  /**
+   * 
+   * @returns 
+   */
   override buildHtml() {
 
     const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params)
@@ -149,6 +163,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     );
     return r;
   }
+
 
   #buildCreditsDialogControl() {
     const footer = this.gui.document.getElementById('footer');

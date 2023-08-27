@@ -5,10 +5,8 @@
  * -----------------------------------------------------------------------
 */
 
-import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
-import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
+import { ApgGui } from "../ApgGui.ts";
 import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
@@ -54,12 +52,15 @@ export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
         const groudBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const groundBody = this.world.createRigidBody(groudBodyDesc);
 
-        const heightMap = this.generateRandomHeightMap('Convex Polyhedron 1', 20, 20, 40.0, 4.0, 40.0);
-        const groundColliderDesc = RAPIER.ColliderDesc.trimesh(
-            heightMap.vertices,
-            heightMap.indices
-        );
-        this.world.createCollider(groundColliderDesc, groundBody);
+        const rad = 20;
+        const numberOfColumns = 20;
+        const numberOfRows = 20;
+        const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2)
+        const field = this.generateRandomField('fountain', numberOfColumns, numberOfRows);
+        const heightFieldGroundColliderDesc = RAPIER.ColliderDesc
+            .heightfield(numberOfColumns, numberOfRows, field, scalesVector)
+            .setTranslation(0.0, -rad / 20, 0.0);
+        this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
 
         /*
          * Create the polyhedra
@@ -104,41 +105,6 @@ export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
         }
     }
 
-    #pipo(nsubdivs: number, wx: number, wy: number, wz: number) {
-        let vertices = [];
-        let indices = [];
-
-        let elementWidth = 1.0 / nsubdivs;
-        let rng = new PRANDO("trimesh");
-
-        let i, j;
-        for (i = 0; i <= nsubdivs; ++i) {
-            for (j = 0; j <= nsubdivs; ++j) {
-                let x = (j * elementWidth - 0.5) * wx;
-                let y = rng.next() * wy;
-                let z = (i * elementWidth - 0.5) * wz;
-
-                vertices.push(x, y, z);
-            }
-        }
-
-        for (i = 0; i < nsubdivs; ++i) {
-            for (j = 0; j < nsubdivs; ++j) {
-                let i1 = (i + 0) * (nsubdivs + 1) + (j + 0);
-                let i2 = (i + 0) * (nsubdivs + 1) + (j + 1);
-                let i3 = (i + 1) * (nsubdivs + 1) + (j + 0);
-                let i4 = (i + 1) * (nsubdivs + 1) + (j + 1);
-
-                indices.push(i1, i3, i2);
-                indices.push(i3, i4, i2);
-            }
-        }
-
-        return {
-            vertices: new Float32Array(vertices),
-            indices: new Uint32Array(indices),
-        };
-    }
 
     override updateFromGui() {
 
@@ -185,8 +151,8 @@ export class ApgRprSim_ConvexPolyhedrons_GuiBuilder extends ApgRprSim_GuiBuilder
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSim_ConvexPolyHedron_SettingsPanel",
-            ApgRpr_eSimulationName.A_PYRAMID,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 simControls
             ]

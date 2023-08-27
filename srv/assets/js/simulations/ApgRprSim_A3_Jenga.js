@@ -1,13 +1,14 @@
-import { RAPIER } from "../ApgRprDeps.ts";
+import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
-export class ApgRprSim_Pyramid extends ApgRprSim_Base {
+export class ApgRprSim_Jenga extends ApgRprSim_Base {
+  currentCube = 0;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     const settings = this.params.guiSettings;
-    this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
+    this.buildGui(ApgRprSim_Jenga_GuiBuilder);
     this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -16,32 +17,48 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
       this.params.restart = false;
     }
     this.simulator.setPreStepAction(() => {
+      this.#spawnBall();
       this.updateFromGui();
     });
   }
   #createWorld(asettings) {
+    const rng = new PRANDO(asettings.name);
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groundBodyDesc);
     const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30, 0.1, 30);
     this.world.createCollider(groundColliderDesc, groundBody);
-    const cubeRadious = 0.5;
-    const baseSize = asettings.size;
-    const shift = cubeRadious * 2.5;
-    const center = baseSize * cubeRadious;
-    const height = 8;
-    for (let i = 0; i < baseSize; ++i) {
-      for (let j = i; j < baseSize; ++j) {
-        for (let k = i; k < baseSize; ++k) {
-          const x = i * shift / 2 + (k - i) * shift - height * cubeRadious - center;
-          const y = i * shift * 1.25 + height;
-          const z = i * shift / 2 + (j - i) * shift - height * cubeRadious - center;
-          const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
-          const boxBody = this.world.createRigidBody(boxBodyDesc);
-          const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, cubeRadious, cubeRadious);
-          this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cubesRestitution);
+    const piecesPerRow = 3;
+    const levels = 3;
+    const shift = 1;
+    const pieceWidth = 1;
+    const pieceHeight = pieceWidth / 2;
+    const pieceDepth = piecesPerRow;
+    const pieceGap = pieceWidth / 20;
+    const pieceTolerance = pieceHeight / 40;
+    const totalRowWidth = pieceWidth * piecesPerRow + pieceGap * (piecesPerRow - 1);
+    const halfRowCenter = (totalRowWidth - pieceWidth) / 2;
+    for (let j = 0; j < levels; j++) {
+      const y = shift + j * (pieceHeight + pieceGap);
+      for (let i = 0; i < piecesPerRow; i++) {
+        let x, z, w;
+        if (j % 2 == 0) {
+          x = pieceWidth * (i + 1) + pieceGap * i - halfRowCenter;
+          z = 0;
+          w = { w: 0, x: 0, y: 1, z: 0 };
+        } else {
+          x = 0;
+          z = pieceWidth * (i + 1) + pieceGap * i - halfRowCenter;
+          w = { w: 0.1, x: 0, y: 1, z: 0 };
         }
+        const rotation = new RAPIER.Quaternion(0, 1, 0, w);
+        const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setRotation(w).setTranslation(x, y, z);
+        const boxBody = this.world.createRigidBody(boxBodyDesc);
+        const boxColliderDesc = RAPIER.ColliderDesc.cuboid(pieceWidth / 2, pieceHeight / 2, pieceDepth / 2);
+        this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cubesRestitution);
       }
     }
+  }
+  #spawnBall() {
   }
   updateFromGui() {
     if (this.needsUpdate()) {
@@ -52,17 +69,17 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
     const r = {
       ...super.defaultGuiSettings(),
       isCubesGroupOpened: false,
-      cubesRestitution: 0.5,
+      cubesRestitution: 0,
       cubesRestitutionMMS: {
-        min: 0.05,
-        max: 1,
+        min: 0,
+        max: 0.25,
         step: 0.05
       },
-      size: 8,
-      sizeMMS: {
-        min: 5,
-        max: 12,
-        step: 1
+      blockHeight: 0.1,
+      blockHeightMMS: {
+        min: 0.05,
+        max: 2,
+        step: 0.05
       }
     };
     r.cameraPosition.eye.x = -30;
@@ -71,7 +88,7 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
     return r;
   }
 }
-export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
@@ -106,18 +123,18 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
         output.innerHTML = range.value;
       }
     );
-    const PYR_SIZE_CNT = "pyramidSizeControl";
-    const pyramidSizeControl = this.buildRangeControl(
-      PYR_SIZE_CNT,
-      "Size",
-      this.guiSettings.size,
-      this.guiSettings.sizeMMS.min,
-      this.guiSettings.sizeMMS.max,
-      this.guiSettings.sizeMMS.step,
+    const COL_BLK_HGT_CNT = "columnCubeHeightControl";
+    const columnBlockHeightControl = this.buildRangeControl(
+      COL_BLK_HGT_CNT,
+      "Block height",
+      this.guiSettings.blockHeight,
+      this.guiSettings.blockHeightMMS.min,
+      this.guiSettings.blockHeightMMS.max,
+      this.guiSettings.blockHeightMMS.step,
       () => {
-        const range = this.gui.controls.get(PYR_SIZE_CNT).element;
-        this.guiSettings.size = parseFloat(range.value);
-        const output = this.gui.controls.get(`${PYR_SIZE_CNT}Value`).element;
+        const range = this.gui.controls.get(COL_BLK_HGT_CNT).element;
+        this.guiSettings.blockHeight = parseFloat(range.value);
+        const output = this.gui.controls.get(`${COL_BLK_HGT_CNT}Value`).element;
         output.innerHTML = range.value;
       }
     );
@@ -126,7 +143,7 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
       "Cubes:",
       [
         cubesRestitutionControl,
-        pyramidSizeControl
+        columnBlockHeightControl
       ],
       this.guiSettings.isCubesGroupOpened,
       () => {

@@ -5,14 +5,8 @@
  * -----------------------------------------------------------------------
 */
 
-import {
-    IApgDomCheckBox,
-    IApgDomElement, IApgDomRange
-} from "../ApgDom.ts";
 import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base,
@@ -32,7 +26,7 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
 
         // Custom +Z gravity on this simulation
         super(asimulator, {
-            simulation: ApgRpr_eSimulationName.D_DAMPING,
+            simulation: aparams.simulation,
             gravity: (aparams != undefined && aparams.gravity != undefined) ? aparams.gravity : new RAPIER.Vector3(0, 0, +9.81),
             restart: (aparams != undefined && aparams.restart != undefined) ? aparams.restart : false
         });
@@ -137,8 +131,8 @@ export class ApgRprSim_Damping_GuiBuilder extends ApgRprSim_GuiBuilder {
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSim_Damping_PanelControl",
-            ApgRpr_eSimulationName.D_DAMPING,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 simControls
             ]

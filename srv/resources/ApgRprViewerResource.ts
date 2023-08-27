@@ -4,7 +4,6 @@
  * @version 0.9.8 [APG 2023/08/09]
  * -----------------------------------------------------------------------
  */
-import { version } from "https://cdn.skypack.dev/@dimforge/rapier3d-compat";
 import { Edr, Dir, Tng } from "../deps.ts";
 
 /** Resource to deliver the page that contains the various Rapier tests */

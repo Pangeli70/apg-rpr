@@ -5,20 +5,14 @@
  * -----------------------------------------------------------------------
 */
 
-import {
-    IApgDomCheckBox,
-    IApgDomElement, IApgDomRange
-} from "../ApgDom.ts";
 import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
-
 
 
 export interface ApgRprSim_Platform_IGuiSettings extends ApgRprSim_IGuiSettings {
@@ -61,12 +55,18 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
 
     #createWorld(asettings: ApgRprSim_Platform_IGuiSettings) {
 
-        // Create Trimesh  collider as platform
-        const platformBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
-        this.platformBody = this.world.createRigidBody(platformBodyDesc);
-        const randomHeightMap = this.generateRandomHeightMap('Platform', 10, 10, 50.0, 5, 50.0);
-        const groundColliderDesc = RAPIER.ColliderDesc.trimesh(randomHeightMap.vertices, randomHeightMap.indices);
+        //>> Begin_Relevant_Code
+        const numberOfColumns = 10;
+        const numberOfRows = 10;
+        const scales = new RAPIER.Vector3(40, 4, 40);
+
+        // Create Heigtfield kinematic collider as platform
+        const kinematicBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased();
+        this.platformBody = this.world.createRigidBody(kinematicBodyDesc);
+        const randomHeightField = this.generateRandomField('Platform', numberOfColumns, numberOfRows);
+        const groundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfRows, numberOfRows, randomHeightField, scales);
         this.world.createCollider(groundColliderDesc, this.platformBody);
+        //<< End_Relevant_Code
 
         // Dynamic colliders.
         const num = 4;
@@ -101,11 +101,16 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
                             colliderDesc = RAPIER.ColliderDesc.cone(rad, rad);
                             break;
                         case 4:
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad / 2.0, rad / 2.0, rad / 2.0);
+                            colliderDesc = RAPIER.ColliderDesc
+                                .cuboid(rad / 2.0, rad / 2.0, rad / 2.0);
                             this.world.createCollider(colliderDesc, body);
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad / 2.0, rad, rad / 2.0).setTranslation(rad, 0.0, 0.0);
+                            colliderDesc = RAPIER.ColliderDesc
+                                .cuboid(rad / 2.0, rad, rad / 2.0)
+                                .setTranslation(rad, 0.0, 0.0);
                             this.world.createCollider(colliderDesc, body);
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad / 2.0, rad, rad / 2.0).setTranslation(-rad, 0.0, 0.0);
+                            colliderDesc = RAPIER.ColliderDesc
+                                .cuboid(rad / 2.0, rad, rad / 2.0)
+                                .setTranslation(-rad, 0.0, 0.0);
                             break;
                     }
                     this.world.createCollider(colliderDesc, body);
@@ -173,8 +178,8 @@ export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSim_Platform_PanelControl",
-            ApgRpr_eSimulationName.I_PLATFORM,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 simControls
             ]

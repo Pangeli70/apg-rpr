@@ -8,7 +8,6 @@
 import { IApgDomElement, IApgDomRange, IApgDomSelect } from "../ApgDom.ts";
 import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
 import { PRANDO, RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
@@ -22,7 +21,8 @@ enum ApgRprSim_Fountain_eGroundType {
     CYL = 'Cylinder',
     CONE = 'Cone',
     CUB = 'Cuboid',
-    TRM = 'Trimesh'
+    SHF = 'Sloped heightfield',
+    RHF = 'Random heightfield',
 }
 
 
@@ -60,7 +60,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
         this.rng = new PRANDO('Fountain');
         this.spawnCounter = 0;
 
-        const settings = this.params.guiSettings! as ApgRprSim_Fountain_IGuiSettings;
+        const settings = this.params.guiSettings as ApgRprSim_Fountain_IGuiSettings;
 
         const guiBuilder = new ApgRprSim_Fountain_GuiBuilder(this.simulator.gui, this.params);
         const html = guiBuilder.buildHtml();
@@ -105,16 +105,26 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
             this.world.createCollider(cylGroundColliderDesc, groundBody);
         }
 
-        if (asettings.groundType == ApgRprSim_Fountain_eGroundType.TRM) {
-            const heightMap = this.generateRandomHeightMap('Fountain', rad, rad, 2 * rad, rad / 10, 2 * rad);
-            //const heightMap = this.generateRandomHeightMap('Fountain', 2, 2, 2 * rad, 10, 2 * rad);
-            const trimeshGroundColliderDesc = RAPIER.ColliderDesc
-                .trimesh(
-                    heightMap.vertices,
-                    heightMap.indices
-                )
+        if (asettings.groundType == ApgRprSim_Fountain_eGroundType.SHF) {
+            const numberOfColumns = 5;
+            const numberOfRows = 5;
+            const scalesVector = new RAPIER.Vector3(rad*2, rad/10, rad*2)
+            const field = this.generateSlopedField(numberOfColumns, numberOfRows);
+            const heightFieldGroundColliderDesc = RAPIER.ColliderDesc
+                .heightfield(numberOfColumns, numberOfRows, field, scalesVector)
                 .setTranslation(0.0, -rad / 20, 0.0);
-            this.world.createCollider(trimeshGroundColliderDesc, groundBody);
+            this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
+        }
+
+        if (asettings.groundType == ApgRprSim_Fountain_eGroundType.RHF) {
+            const numberOfColumns = 20;
+            const numberOfRows = 20;
+            const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2)
+            const field = this.generateRandomField('fountain', numberOfColumns, numberOfRows);
+            const heightFieldGroundColliderDesc = RAPIER.ColliderDesc
+                .heightfield(numberOfColumns, numberOfRows, field, scalesVector)
+                .setTranslation(0.0, -rad / 20, 0.0);
+            this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
         }
 
         const coneRad = (asettings.groundType == ApgRprSim_Fountain_eGroundType.CONE) ?
@@ -130,7 +140,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
 
     #spawnRandomBody(asimulator: ApgRpr_Simulator) {
 
-        const settings = this.params.guiSettings! as ApgRprSim_Fountain_IGuiSettings;
+        const settings = this.params.guiSettings as ApgRprSim_Fountain_IGuiSettings;
 
         if (this.spawnCounter < this.SPAWN_EVERY_N_STEPS) {
             this.spawnCounter++;
@@ -250,8 +260,8 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSimFountainSettingsPanel",
-            ApgRpr_eSimulationName.B_FOUNTAIN,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 bodiesGroupControl,
                 groundGroupControl,

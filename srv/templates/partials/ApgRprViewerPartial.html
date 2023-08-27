@@ -25,10 +25,10 @@
 
   import { RAPIER } from "./assets/ts/ApgRprDeps.ts";
   import { ApgRpr_Simulator } from "./assets/ts/ApgRpr_Simulator.ts";
-  import { ApgRpr_Simulations } from "./assets/ts/ApgRpr_Simulations.ts";
+  import { ApgRprSim_Get } from "./assets/ts/ApgRpr_Simulations.ts";
 
   await RAPIER.init();
-  const simulator = new ApgRpr_Simulator(window, document, ApgRpr_Simulations);
+  const simulator = new ApgRpr_Simulator(window, document, ApgRprSim_Get());
   simulator.run();
 
 </script>

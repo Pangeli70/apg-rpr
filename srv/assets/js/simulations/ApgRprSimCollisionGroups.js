@@ -1,5 +1,4 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -78,8 +77,8 @@ export class ApgRprSim_CollisionGroups_GuiBuilder extends ApgRprSim_GuiBuilder {
   buildHtml() {
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
-      "ApgRprSim_CollisionGroups_PanelControl",
-      ApgRpr_eSimulationName.E_COLLISION_GROUPS,
+      `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+      this.guiSettings.name,
       [
         simControls
       ]

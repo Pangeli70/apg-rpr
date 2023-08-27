@@ -5,7 +5,7 @@ import {
   ApgGui_Stats
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from "./ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import { ApgRprThreeViewer } from "./ApgRprThreeViewer.ts";
 export class ApgRpr_Simulator {
   /** Used to interact with the browser we don't like global variables */

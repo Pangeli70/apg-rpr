@@ -1,5 +1,4 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -23,7 +22,7 @@ export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
   #createWorld(asettings) {
     const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const platformBody = this.world.createRigidBody(platformBodyDesc);
-    const heightMap = this.generateRandomHeightMap("Trimesh Height map", 20, 20, 70, 4, 70);
+    const heightMap = this.generateRandomTrimshHeightMap("Trimesh Height map", 21, 21, 70, 4, 70);
     const groundColliderDesc = RAPIER.ColliderDesc.trimesh(heightMap.vertices, heightMap.indices);
     this.world.createCollider(groundColliderDesc, platformBody);
     const num = 4;
@@ -90,8 +89,8 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
   buildHtml() {
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
-      "ApgRprSim_TrimesgTerrain_SettingsPanel",
-      ApgRpr_eSimulationName.A_PYRAMID,
+      `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+      this.guiSettings.name,
       [
         simControls
       ]

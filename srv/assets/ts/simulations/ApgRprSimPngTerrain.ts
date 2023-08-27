@@ -12,7 +12,6 @@ import {
 } from "../ApgDom.ts";
 import { ApgGui_IMinMaxStep, ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
@@ -23,6 +22,8 @@ import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
 export interface ApgRprSim_PngTerrain_IGuiSettings extends ApgRprSim_IGuiSettings {
+
+    isSamplingGroupOpened: boolean;
 
     heightMap: string;
     heightMaps: string[];
@@ -64,27 +65,32 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
         const image = this.simulator.document.createElement('img') as IApgDomImage;
         image.src = pngResourceUrl;
 
+
+
         image.onload = () => {
 
-            const pixels = this.#sampleImagePixels(image, asettings.sampleSize, asettings.sampleSize);
+            const numberOfColumns = asettings.sampleSize;
+            const numberOfRows = asettings.sampleSize;
+            const scale = new RAPIER.Vector3(200, asettings.mapHeight, 200);
 
-            const heightMap = this.generateHeightMap(
-                asettings.sampleSize, asettings.sampleSize,
-                100, asettings.mapHeight, 100,
-                pixels
+            const heightsPixels = this.#sampleImagePixels(
+                image, numberOfColumns, numberOfRows
             );
 
-            const heightMap1 = this.generateRandomHeightMap(
-                'Pippo',
-                asettings.sampleSize, asettings.sampleSize,
-                100, asettings.mapHeight, 100,
+            const heightsRandom = this.generateRandomField(
+                'PNG Terrain', numberOfColumns, numberOfRows
+            );
+
+            const heightsSlope = this.generateSlopedField(
+                numberOfColumns, numberOfRows
             )
 
-            // Create Trimesh ground
+            // Create heightfield ground
             const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
             const groundBody = this.world.createRigidBody(groundBodyDesc);
             const groundColliderDesc = RAPIER.ColliderDesc
-                .trimesh(heightMap.vertices, heightMap.indices);
+                .heightfield(numberOfColumns, numberOfRows, heightsSlope, scale)
+                .setTranslation(0, -asettings.mapHeight / 2, 0)
             this.world.createCollider(groundColliderDesc, groundBody);
 
             this.#buildDynamicColliders();
@@ -108,28 +114,28 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
     }
 
 
-    #sampleImagePixels(image: IApgDomImage, awidthXDivisions: number, adepthZDivisions: number) {
+    #sampleImagePixels(image: IApgDomImage, anumberOfComumns: number, anumberOfRows: number) {
 
         const pixels: number[] = [];
         const canvas = this.simulator.document.createElement('canvas') as IApgDomCanvas;
         this.simulator.document.body.appendChild(canvas);
 
-        canvas.width = awidthXDivisions + 1;
-        canvas.height = adepthZDivisions + 1;
+        canvas.width = anumberOfComumns + 1;
+        canvas.height = anumberOfRows + 1;
 
         const context = canvas.getContext('2d');
         context.drawImage(image as unknown as IApgDomCanvas,
-            0, 0, +canvas.width, +canvas.height,
-   //         0, 0, +image.width, +image.height,
+            0, 0, canvas.width, canvas.height,
+
         );
 
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height).data;
 
-        for (let y = 0; y < canvas.height; y++) {
+        for (let column = 0; column < canvas.width; column++) {
 
-            for (let x = 0; x < canvas.width; x++) {
+            for (let row = 0; row < canvas.height; row++) {
 
-                const i = x + (y * canvas.width) * 4;
+                const i = ((column * canvas.height) + row) * 4;
 
                 const r = imageData[i];
                 const g = imageData[i + 1];
@@ -143,7 +149,7 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
             }
 
         }
-        return pixels;
+        return new Float32Array(pixels);
     }
 
 
@@ -151,7 +157,7 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
         const num = 4;
         const numy = 10;
         const rad = 1.0;
-        const shift = rad * 2.0 + rad;
+        const shift = rad * 4.0 + rad;
         const centery = shift / 2.0;
         let offset = -num * (rad * 2.0 + rad) * 0.5;
         let i, j, k;
@@ -164,29 +170,8 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
                     // Create dynamic collider body.
                     const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
                     const body = this.world.createRigidBody(bodyDesc);
-                    let colliderDesc;
-                    switch (j % 5) {
-                        case 0:
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad, rad, rad);
-                            break;
-                        case 1:
-                            colliderDesc = RAPIER.ColliderDesc.ball(rad);
-                            break;
-                        case 2:
-                            //colliderDesc = RAPIER.ColliderDesc.roundCylinder(rad, rad, rad / 10.0);
-                            colliderDesc = RAPIER.ColliderDesc.cylinder(rad, rad);
-                            break;
-                        case 3:
-                            colliderDesc = RAPIER.ColliderDesc.cone(rad, rad);
-                            break;
-                        case 4:
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad / 2.0, rad / 2.0, rad / 2.0);
-                            this.world.createCollider(colliderDesc, body);
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad / 2.0, rad, rad / 2.0).setTranslation(rad, 0.0, 0.0);
-                            this.world.createCollider(colliderDesc, body);
-                            colliderDesc = RAPIER.ColliderDesc.cuboid(rad / 2.0, rad, rad / 2.0).setTranslation(-rad, 0.0, 0.0);
-                            break;
-                    }
+
+                    const colliderDesc = RAPIER.ColliderDesc.ball(rad);
                     this.world.createCollider(colliderDesc, body);
                 }
             }
@@ -213,17 +198,19 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
 
             ...super.defaultGuiSettings(),
 
-            heightMap: 'HeigthMap1',
-            heightMaps: ['HeigthMap1', 'HeigthMap2'],
+            isSamplingGroupOpened: false,
 
-            sampleSize: 50,
+            heightMap: 'HeigthMap4',
+            heightMaps: ['HeigthMap1', 'HeigthMap2', 'HeigthMap3', 'HeigthMap4'],
+
+            sampleSize: 100,
             sampleSizeMMS: {
                 min: 10,
-                max: 100,
+                max: 200,
                 step: 5
             },
 
-            mapHeight: 5,
+            mapHeight: 10,
             mapHeightMMS: {
                 min: 1,
                 max: 25,
@@ -254,13 +241,13 @@ export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
-        const latticeGroupControl = this.#buildLatticeGroupControl();
+        const latticeGroupControl = this.#buildSampligGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSimPngTerrainSettingsPanel",
-            ApgRpr_eSimulationName.G_PNG_MESH_TERRAIN,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 latticeGroupControl,
                 simControls
@@ -272,7 +259,7 @@ export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
     }
 
 
-    #buildLatticeGroupControl() {
+    #buildSampligGroupControl() {
         const keyValues = new Map<string, string>();
         for (const map of this.guiSettings.heightMaps) {
             keyValues.set(map, map);
@@ -334,7 +321,14 @@ export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
                 simulationSelectControl,
                 samplesSizeControl,
                 mapHeightControl,
-            ]
+            ],
+            this.guiSettings.isSamplingGroupOpened,
+            () => {
+                if (!this.gui.isRefreshing) {
+                    this.guiSettings.isSamplingGroupOpened = !this.guiSettings.isSamplingGroupOpened;
+                    this.gui.log('Sampling group toggled')
+                }
+            }
 
         );
         return r;

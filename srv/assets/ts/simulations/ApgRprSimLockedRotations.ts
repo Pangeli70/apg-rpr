@@ -5,27 +5,20 @@
  * -----------------------------------------------------------------------
 */
 
-import {
-    IApgDomCheckBox,
-    IApgDomElement, IApgDomRange
-} from "../ApgDom.ts";
 import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
-import { IApgRpr_CameraPosition } from "../ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
-    ApgRprSim_Base,
-    ApgRprSim_IGuiSettings,
+    ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
-
 export interface IApgRprSim_LockedRotations_GuiSettings extends ApgRprSim_IGuiSettings {
 
 }
+
 
 export class ApgRprSim_LockedRotations extends ApgRprSim_Base {
 
@@ -136,8 +129,8 @@ export class ApgRprSim_LockedRotations_GuiBuilder extends ApgRprSim_GuiBuilder {
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSim_LockedRotations_PanelControl",
-            ApgRpr_eSimulationName.C_LOCKED_ROTATIONS,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 simControls
             ]

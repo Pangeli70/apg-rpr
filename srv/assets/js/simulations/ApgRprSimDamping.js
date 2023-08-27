@@ -1,5 +1,4 @@
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -7,7 +6,7 @@ import {
 export class ApgRprSim_Damping extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, {
-      simulation: ApgRpr_eSimulationName.D_DAMPING,
+      simulation: aparams.simulation,
       gravity: aparams != void 0 && aparams.gravity != void 0 ? aparams.gravity : new RAPIER.Vector3(0, 0, 9.81),
       restart: aparams != void 0 && aparams.restart != void 0 ? aparams.restart : false
     });
@@ -65,8 +64,8 @@ export class ApgRprSim_Damping_GuiBuilder extends ApgRprSim_GuiBuilder {
   buildHtml() {
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
-      "ApgRprSim_Damping_PanelControl",
-      ApgRpr_eSimulationName.D_DAMPING,
+      `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+      this.guiSettings.name,
       [
         simControls
       ]

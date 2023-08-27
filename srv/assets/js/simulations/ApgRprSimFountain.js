@@ -1,5 +1,4 @@
 import { PRANDO, RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -8,7 +7,8 @@ var ApgRprSim_Fountain_eGroundType = /* @__PURE__ */ ((ApgRprSim_Fountain_eGroun
   ApgRprSim_Fountain_eGroundType2["CYL"] = "Cylinder";
   ApgRprSim_Fountain_eGroundType2["CONE"] = "Cone";
   ApgRprSim_Fountain_eGroundType2["CUB"] = "Cuboid";
-  ApgRprSim_Fountain_eGroundType2["TRM"] = "Trimesh";
+  ApgRprSim_Fountain_eGroundType2["SHF"] = "Sloped heightfield";
+  ApgRprSim_Fountain_eGroundType2["RHF"] = "Random heightfield";
   return ApgRprSim_Fountain_eGroundType2;
 })(ApgRprSim_Fountain_eGroundType || {});
 export class ApgRprSim_Fountain extends ApgRprSim_Base {
@@ -50,13 +50,21 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
       const cylGroundColliderDesc = RAPIER.ColliderDesc.cylinder(1, rad).setTranslation(0, -0.5, 0);
       this.world.createCollider(cylGroundColliderDesc, groundBody);
     }
-    if (asettings.groundType == "Trimesh" /* TRM */) {
-      const heightMap = this.generateRandomHeightMap("Fountain", rad, rad, 2 * rad, rad / 10, 2 * rad);
-      const trimeshGroundColliderDesc = RAPIER.ColliderDesc.trimesh(
-        heightMap.vertices,
-        heightMap.indices
-      ).setTranslation(0, -rad / 20, 0);
-      this.world.createCollider(trimeshGroundColliderDesc, groundBody);
+    if (asettings.groundType == "Sloped heightfield" /* SHF */) {
+      const numberOfColumns = 5;
+      const numberOfRows = 5;
+      const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2);
+      const field = this.generateSlopedField(numberOfColumns, numberOfRows);
+      const heightFieldGroundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfColumns, numberOfRows, field, scalesVector).setTranslation(0, -rad / 20, 0);
+      this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
+    }
+    if (asettings.groundType == "Random heightfield" /* RHF */) {
+      const numberOfColumns = 20;
+      const numberOfRows = 20;
+      const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2);
+      const field = this.generateRandomField("fountain", numberOfColumns, numberOfRows);
+      const heightFieldGroundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfColumns, numberOfRows, field, scalesVector).setTranslation(0, -rad / 20, 0);
+      this.world.createCollider(heightFieldGroundColliderDesc, groundBody);
     }
     const coneRad = asettings.groundType == "Cone" /* CONE */ ? rad : rad / 10;
     const coneGroundColliderDesc = RAPIER.ColliderDesc.cone(4, coneRad).setTranslation(0, 4, 0);
@@ -139,8 +147,8 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
     const groundGroupControl = this.#buildGrounGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
-      "ApgRprSimFountainSettingsPanel",
-      ApgRpr_eSimulationName.B_FOUNTAIN,
+      `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+      this.guiSettings.name,
       [
         bodiesGroupControl,
         groundGroupControl,

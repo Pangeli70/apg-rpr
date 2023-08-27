@@ -8,7 +8,7 @@
 import { ApgGui_IMinMaxStep } from "./ApgGui.ts";
 import { ApgGui_Stats } from "./ApgGuiStats.ts";
 import { RAPIER, PRANDO } from './ApgRprDeps.ts';
-import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import { IApgRprDebugInfo, IApgRpr_CameraPosition } from "./ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "./ApgRprSimGuiBuilder.ts";
 import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
@@ -17,6 +17,8 @@ import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
 
 
 export interface ApgRprSim_IGuiSettings {
+
+    name: ApgRpr_eSimulationName,
 
     isSimulationGroupOpened: boolean;
 
@@ -76,9 +78,14 @@ export class ApgRprSim_Base {
             restart: aparams.restart || false,
             simulation: aparams.simulation,
             simulations: Array.from(this.simulator.simulations.keys()),
-            guiSettings: aparams.guiSettings || this.defaultGuiSettings(),
+            guiSettings: aparams.guiSettings,
             stats: this.simulator.stats,
             debugInfo: this.simulator.debugInfo,
+        }
+
+        // @WARNING This must remain here! after the params creation
+        if (this.params.guiSettings == undefined) {
+            this.params.guiSettings = this.defaultGuiSettings();
         }
 
         this.savePrevParams();
@@ -88,7 +95,8 @@ export class ApgRprSim_Base {
 
 
     protected buildGui(
-        aguiBuilderType: typeof ApgRprSim_GuiBuilder
+        aguiBuilderType: typeof ApgRprSim_GuiBuilder,
+
     ) {
         const guiBuilder = new aguiBuilderType(
             this.simulator.gui,
@@ -104,12 +112,10 @@ export class ApgRprSim_Base {
 
     protected updateFromGui() {
 
-        // TODO move everything coming from the gui in the guiSettings -- APG 20230817
         if (this.params.restart) {
             this.simulator.setSimulation(this.params);
         }
 
-        // TODO move everything coming from the gui in the guiSettings -- APG 20230817
         if (this.prevParams.simulation != this.params.simulation) {
             this.simulator.setSimulation({ simulation: this.params.simulation })
         }
@@ -134,6 +140,8 @@ export class ApgRprSim_Base {
     protected defaultGuiSettings() {
 
         const r: ApgRprSim_IGuiSettings = {
+
+            name: this.params.simulation,
 
             isSimulationGroupOpened: false,
 
@@ -205,10 +213,10 @@ export class ApgRprSim_Base {
     }
 
 
-    protected generateRandomHeightMap(
+    protected generateRandomTrimshHeightMap(
         arandomSeed: string | number,
-        axNum: number,
-        azNum: number,
+        axNumVertices: number,
+        azNumVertices: number,
         axScale: number,
         ayScale: number,
         azScale: number,
@@ -218,9 +226,9 @@ export class ApgRprSim_Base {
 
         const randomHeights: number[] = [];
 
-        for (let i = 0; i < (axNum + 1); i++) {
+        for (let i = 0; i < (axNumVertices + 1); i++) {
 
-            for (let j = 0; j < (azNum + 1); j++) {
+            for (let j = 0; j < (azNumVertices + 1); j++) {
 
                 randomHeights.push(rng.next());
 
@@ -228,8 +236,8 @@ export class ApgRprSim_Base {
 
         }
 
-        const r = this.generateHeightMap(
-            axNum, azNum,
+        const r = this.generateTrimeshHeightMap(
+            axNumVertices, azNumVertices,
             axScale, ayScale, azScale,
             randomHeights);
 
@@ -237,17 +245,84 @@ export class ApgRprSim_Base {
     }
 
 
-    protected generateHeightMap(
-        axNum: number,
-        azNum: number,
+
+    /**
+     * WARNING: The number of columns and rows generates a list of vertices
+     * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
+     * @param anumberOfColumns 
+     * @param anumberOfRows 
+     * @returns An array of Float32Array heights one per vertex
+     */
+    protected generateSlopedField(
+        anumberOfColumns: number,
+        anumberOfRows: number,
+    ) {
+
+        const heights: number[] = [];
+        const deltaSlope = 1 / anumberOfRows;
+
+        for (let column = 0; column < (anumberOfColumns + 1); column++) {
+
+            const h = column * deltaSlope;
+
+            for (let row = 0; row < (anumberOfRows + 1); row++) {
+
+                heights.push(h);
+
+            }
+
+        }
+
+        return new Float32Array(heights);
+
+    }
+
+    /**
+     * WARNING: The number of columns and rows generates a list of vertices
+     * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
+     * @param aseed 
+     * @param anumberOfColumns 
+     * @param anumberOfRows 
+     * @returns An array of Float32Array heights one per vertex
+     */
+    protected generateRandomField(
+        aseed: string,
+        anumberOfColumns: number,
+        anumberOfRows: number,
+    ) {
+
+        const rng = new PRANDO(aseed);
+        const heights: number[] = [];
+
+        for (let column = 0; column < (anumberOfColumns + 1); column++) {
+
+
+            for (let row = 0; row < (anumberOfRows + 1); row++) {
+
+                const h = rng.next();
+                heights.push(h);
+
+            }
+
+        }
+
+        return new Float32Array(heights);
+
+    }
+
+
+
+    protected generateTrimeshHeightMap(
+        axVertexesNum: number,
+        azVertexesNum: number,
         axScale: number,
         ayScale: number,
         azScale: number,
         aheights: number[],
     ) {
 
-        const xSize = axScale / axNum;
-        const zSize = azScale / azNum;
+        const xSize = axScale / axVertexesNum;
+        const zSize = azScale / azVertexesNum;
 
         const xHalf = axScale / 2;
         const zHalf = azScale / 2;
@@ -255,11 +330,11 @@ export class ApgRprSim_Base {
         // create vertices lattice
         const vertices: number[] = [];
 
-        for (let iz = 0; iz < (azNum + 1); iz++) {
+        for (let iz = 0; iz < azVertexesNum; iz++) {
 
-            for (let ix = 0; ix < (axNum + 1); ix++) {
+            for (let ix = 0; ix < axVertexesNum; ix++) {
 
-                const index = ix + (iz * axNum);
+                const index = ix + (iz * axVertexesNum);
                 const x = (ix * xSize) - xHalf;
                 const y = aheights[index] * ayScale;
                 const z = (iz * zSize) - zHalf;
@@ -272,12 +347,12 @@ export class ApgRprSim_Base {
         // create triangle indexes 
         const indices: number[] = [];
 
-        for (let z = 0; z < azNum; z++) {
+        for (let z = 0; z < (azVertexesNum - 1); z++) {
 
-            for (let x = 0; x < axNum; x++) {
+            for (let x = 0; x < (axVertexesNum); x++) {
 
-                const i1 = x + (z * (axNum + 1));
-                const i2 = x + ((z + 1) * (axNum + 1));
+                const i1 = x + (z * (axVertexesNum));
+                const i2 = x + ((z + 1) * (axVertexesNum));
                 const i3 = i1 + 1;
                 const i4 = i2 + 1;
 

@@ -15,7 +15,7 @@ import {
     ApgGui_Stats
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from './ApgRprDeps.ts';
-import { ApgRpr_eSimulationName } from "./ApgRprEnums.ts";
+import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import {
     IApgRpr_CameraPosition, IApgRprDebugInfo,
     IApgRprPoint2D
@@ -265,7 +265,7 @@ export class ApgRpr_Simulator {
         }
 
 
-        // @NOTE Were is the main loop of the simulation !!!
+        // @NOTE Here is the main loop of the simulation !!!
         this.window.requestAnimationFrame((frame: number) => {
 
             if (this.lastBrowserFrame !== -1) {

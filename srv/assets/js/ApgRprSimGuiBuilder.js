@@ -5,9 +5,13 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
   params;
   CREDITS_DIALOG_CNT = "creditsDialogControl";
   constructor(agui, aparams) {
-    super(agui);
+    super(agui, aparams.simulation);
     this.params = aparams;
   }
+  /**
+   * 
+   * @returns 
+   */
   buildHtml() {
     const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params).buildHtml();
     const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo).buildHtml();

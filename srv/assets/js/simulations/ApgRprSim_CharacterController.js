@@ -3,11 +3,17 @@ import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
-export class ApgRprSim_Pyramid extends ApgRprSim_Base {
+export class ApgRprSim_CharacterController extends ApgRprSim_Base {
+  character;
+  characterCollider;
+  characterController;
+  movementDirection;
+  characterGravity = 0.1;
+  characterSpeed = 0.1;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     const settings = this.params.guiSettings;
-    this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
+    this.buildGui(ApgRprSim_CharacterController_GuiBuilder);
     this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -17,6 +23,7 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
     }
     this.simulator.setPreStepAction(() => {
       this.updateFromGui();
+      this.updateCharacter();
     });
   }
   #createWorld(asettings) {
@@ -24,24 +31,71 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
     const groundBody = this.world.createRigidBody(groundBodyDesc);
     const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30, 0.1, 30);
     this.world.createCollider(groundColliderDesc, groundBody);
-    const cubeRadious = 0.5;
-    const baseSize = asettings.size;
-    const shift = cubeRadious * 2.5;
-    const center = baseSize * cubeRadious;
-    const height = 8;
-    for (let i = 0; i < baseSize; ++i) {
-      for (let j = i; j < baseSize; ++j) {
-        for (let k = i; k < baseSize; ++k) {
-          const x = i * shift / 2 + (k - i) * shift - height * cubeRadious - center;
-          const y = i * shift * 1.25 + height;
-          const z = i * shift / 2 + (j - i) * shift - height * cubeRadious - center;
-          const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
-          const boxBody = this.world.createRigidBody(boxBodyDesc);
-          const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, cubeRadious, cubeRadious);
-          this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cubesRestitution);
+    const rad = 0.5;
+    const num = 5;
+    const shift = rad * 2.5;
+    const center = num * rad;
+    const height = 5;
+    for (let i = 0; i < num; i++) {
+      for (let j = i; j < num; j++) {
+        for (let k = i; k < num; k++) {
+          const x = i * shift / 2 + (k - i) * shift - center;
+          const y = i * shift / 2 + height;
+          const z = i * shift / 2 + (j - i) * shift - center;
+          const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
+          const body = this.world.createRigidBody(bodyDesc);
+          const colliderDesc = RAPIER.ColliderDesc.cuboid(rad, rad / 2, rad);
+          this.world.createCollider(colliderDesc, body);
         }
       }
     }
+    const characterDesc = RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(-10, 4, -10);
+    this.character = this.world.createRigidBody(characterDesc);
+    const characterColliderDesc = RAPIER.ColliderDesc.cylinder(1.2, 0.6);
+    this.characterCollider = this.world.createCollider(
+      characterColliderDesc,
+      this.character
+    );
+    this.characterController = this.world.createCharacterController(0.1);
+    this.characterController.enableAutostep(0.7, 0.3, true);
+    this.characterController.enableSnapToGround(0.7);
+    this.movementDirection = { x: 0, y: -this.characterGravity, z: 0 };
+    this.simulator.document.onkeydown = (event) => {
+      if (event.key == "ArrowUp" || event.key == "w")
+        this.movementDirection.x = this.characterSpeed;
+      if (event.key == "ArrowDown" || event.key == "s")
+        this.movementDirection.x = -this.characterSpeed;
+      if (event.key == "ArrowLeft" || event.key == "a")
+        this.movementDirection.z = -this.characterSpeed;
+      if (event.key == "ArrowRight" || event.key == "d")
+        this.movementDirection.z = this.characterSpeed;
+      if (event.key == " ")
+        this.movementDirection.y = this.characterGravity;
+    };
+    this.simulator.document.onkeyup = (event) => {
+      if (event.key == "ArrowUp" || event.key == "w")
+        this.movementDirection.x = 0;
+      if (event.key == "ArrowDown" || event.key == "s")
+        this.movementDirection.x = 0;
+      if (event.key == "ArrowLeft" || event.key == "a")
+        this.movementDirection.z = 0;
+      if (event.key == "ArrowRight" || event.key == "d")
+        this.movementDirection.z = 0;
+      if (event.key == " ")
+        this.movementDirection.y = -this.characterGravity;
+    };
+  }
+  updateCharacter() {
+    this.characterController.computeColliderMovement(
+      this.characterCollider,
+      this.movementDirection
+    );
+    const movement = this.characterController.computedMovement();
+    const newPos = this.character.translation();
+    newPos.x += movement.x;
+    newPos.y += movement.y;
+    newPos.z += movement.z;
+    this.character.setNextKinematicTranslation(newPos);
   }
   updateFromGui() {
     if (this.needsUpdate()) {
@@ -65,13 +119,13 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
         step: 1
       }
     };
-    r.cameraPosition.eye.x = -30;
+    r.cameraPosition.eye.x = -40;
     r.cameraPosition.eye.y = 20;
-    r.cameraPosition.eye.z = -30;
+    r.cameraPosition.eye.z = 0;
     return r;
   }
 }
-export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
+export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);

@@ -5,10 +5,8 @@
  * -----------------------------------------------------------------------
 */
 
-import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
-import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
+import { ApgGui } from "../ApgGui.ts";
 import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "../ApgRprEnums.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
@@ -53,7 +51,7 @@ export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
         // Create Trimesh platform collider.
         const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const platformBody = this.world.createRigidBody(platformBodyDesc);
-        const heightMap = this.generateRandomHeightMap('Trimesh Height map', 20, 20, 70.0, 4.0, 70.0);
+        const heightMap = this.generateRandomTrimshHeightMap('Trimesh Height map', 21, 21, 70.0, 4.0, 70.0);
         const groundColliderDesc = RAPIER.ColliderDesc.trimesh(heightMap.vertices, heightMap.indices);
         this.world.createCollider(groundColliderDesc, platformBody);
 
@@ -151,8 +149,8 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
-            "ApgRprSim_TrimesgTerrain_SettingsPanel",
-            ApgRpr_eSimulationName.A_PYRAMID,
+            `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
+            this.guiSettings.name,
             [
                 simControls
             ]
