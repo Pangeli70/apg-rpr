@@ -89,7 +89,7 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
             const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
             const groundBody = this.world.createRigidBody(groundBodyDesc);
             const groundColliderDesc = RAPIER.ColliderDesc
-                .heightfield(numberOfColumns, numberOfRows, heightsSlope, scale)
+                .heightfield(numberOfColumns, numberOfRows, heightsPixels, scale)
                 .setTranslation(0, -asettings.mapHeight / 2, 0)
             this.world.createCollider(groundColliderDesc, groundBody);
 
