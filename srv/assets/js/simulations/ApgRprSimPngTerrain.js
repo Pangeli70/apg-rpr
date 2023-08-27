@@ -1,11 +1,13 @@
-import { RAPIER } from "../ApgRprDeps.ts";
+import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
 export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
+  rng;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
+    this.rng = new PRANDO(aparams.simulation);
     const settings = this.params.guiSettings;
     this.buildGui(ApgRprSim_PngTerrain_GuiBuilder);
     this.#createWorld(settings);
@@ -34,9 +36,18 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
       );
       const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
       const groundBody = this.world.createRigidBody(groundBodyDesc);
-      const groundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfColumns, numberOfRows, heightsPixels, scale).setTranslation(0, -asettings.mapHeight / 2, 0);
+      const groundColliderDesc = RAPIER.ColliderDesc.heightfield(numberOfColumns, numberOfRows, heightsPixels, scale).setTranslation(0, -asettings.mapHeight * 2, 0);
       this.world.createCollider(groundColliderDesc, groundBody);
-      this.#buildDynamicColliders();
+      this.#buildDynamicColliders(
+        40,
+        1,
+        -asettings.sampleSize / 2,
+        asettings.sampleSize / 2,
+        30,
+        50,
+        -asettings.sampleSize / 2,
+        asettings.sampleSize / 2
+      );
       this.simulator.addWorld(this.world);
       if (!this.params.restart) {
         this.simulator.resetCamera(asettings.cameraPosition);
@@ -77,27 +88,18 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
     }
     return new Float32Array(pixels);
   }
-  #buildDynamicColliders() {
-    const num = 4;
-    const numy = 10;
-    const rad = 1;
-    const shift = rad * 4 + rad;
-    const centery = shift / 2;
-    let offset = -num * (rad * 2 + rad) * 0.5;
-    let i, j, k;
-    for (j = 0; j < numy; ++j) {
-      for (i = 0; i < num; ++i) {
-        for (k = 0; k < num; ++k) {
-          const x = i * shift + offset;
-          const y = j * shift + centery + 3;
-          const z = k * shift + offset;
-          const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
-          const body = this.world.createRigidBody(bodyDesc);
-          const colliderDesc = RAPIER.ColliderDesc.ball(rad);
-          this.world.createCollider(colliderDesc, body);
-        }
-      }
-      offset -= 0.05 * rad * (num - 1);
+  #buildDynamicColliders(anum, arad, aminX, amaxX, aminY, amaxY, aminZ, amaxZ) {
+    const deltaX = amaxX - aminX;
+    const deltaY = amaxY - aminY;
+    const deltaZ = amaxZ - aminZ;
+    for (let i = 0; i < anum; i++) {
+      const x = this.rng.next() * deltaX + aminX;
+      const y = this.rng.next() * deltaY + aminY + arad;
+      const z = this.rng.next() * deltaZ + aminZ;
+      const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
+      const body = this.world.createRigidBody(bodyDesc);
+      const colliderDesc = RAPIER.ColliderDesc.ball(arad);
+      this.world.createCollider(colliderDesc, body);
     }
   }
   updateFromGui() {

@@ -11,7 +11,7 @@ import {
     IApgDomSelect
 } from "../ApgDom.ts";
 import { ApgGui_IMinMaxStep, ApgGui } from "../ApgGui.ts";
-import { RAPIER } from "../ApgRprDeps.ts";
+import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
@@ -40,12 +40,16 @@ export interface ApgRprSim_PngTerrain_IGuiSettings extends ApgRprSim_IGuiSetting
 
 export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
 
+    rng: PRANDO;
+
     constructor(
         asimulator: ApgRpr_Simulator,
         aparams: IApgRprSim_Params
     ) {
 
         super(asimulator, aparams);
+
+        this.rng = new PRANDO(aparams.simulation);
 
         const settings = this.params.guiSettings! as ApgRprSim_PngTerrain_IGuiSettings;
 
@@ -90,10 +94,14 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
             const groundBody = this.world.createRigidBody(groundBodyDesc);
             const groundColliderDesc = RAPIER.ColliderDesc
                 .heightfield(numberOfColumns, numberOfRows, heightsPixels, scale)
-                .setTranslation(0, -asettings.mapHeight / 2, 0)
+                .setTranslation(0, -asettings.mapHeight * 2, 0)
             this.world.createCollider(groundColliderDesc, groundBody);
 
-            this.#buildDynamicColliders();
+            this.#buildDynamicColliders(40, 1,
+                -asettings.sampleSize / 2, asettings.sampleSize / 2,
+                30, 50,
+                -asettings.sampleSize / 2, asettings.sampleSize / 2,
+                );
 
 
             // @NOTE From here is the usual syncronous flow 
@@ -153,31 +161,33 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
     }
 
 
-    #buildDynamicColliders() {
-        const num = 4;
-        const numy = 10;
-        const rad = 1.0;
-        const shift = rad * 4.0 + rad;
-        const centery = shift / 2.0;
-        let offset = -num * (rad * 2.0 + rad) * 0.5;
-        let i, j, k;
-        for (j = 0; j < numy; ++j) {
-            for (i = 0; i < num; ++i) {
-                for (k = 0; k < num; ++k) {
-                    const x = i * shift + offset;
-                    const y = j * shift + centery + 3.0;
-                    const z = k * shift + offset;
-                    // Create dynamic collider body.
-                    const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
-                    const body = this.world.createRigidBody(bodyDesc);
+    #buildDynamicColliders(
+        anum: number, arad: number,
+        aminX: number, amaxX: number,
+        aminY: number, amaxY: number,
+        aminZ: number, amaxZ: number,
+    ) {
 
-                    const colliderDesc = RAPIER.ColliderDesc.ball(rad);
-                    this.world.createCollider(colliderDesc, body);
-                }
-            }
-            offset -= 0.05 * rad * (num - 1.0);
+        const deltaX = amaxX - aminX;
+        const deltaY = amaxY - aminY;
+        const deltaZ = amaxZ - aminZ;
+
+        for (let i = 0; i < anum; i++) {
+            const x = this.rng.next() * deltaX + aminX;
+            const y = this.rng.next() * deltaY + aminY + arad;
+            const z = this.rng.next() * deltaZ + aminZ;
+
+            // Create dynamic collider body.
+            const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+                .setTranslation(x, y, z);
+            const body = this.world.createRigidBody(bodyDesc);
+
+            const colliderDesc = RAPIER.ColliderDesc.ball(arad);
+            this.world.createCollider(colliderDesc, body);
         }
+
     }
+
 
 
     override updateFromGui() {
