@@ -3,10 +3,19 @@
  * @author [APG] ANGELI Paolo Giusto
  * @version 0.9.8 [APG 2023/08/11]
  * -----------------------------------------------------------------------
- * 
-*/import { RAPIER } from './ApgRprDeps.ts';
+*/
+import { RAPIER } from './ApgRprDeps.ts';
 
 export class ApgRprUtils {
+
+    static Round(anum: number, aprecision: number) { 
+
+        const t = 10 ** (-1 * aprecision);
+        const v = anum * t; 
+        const r = Math.round(v) / t;
+        return r;
+
+    }
 
     static GetHeightfieldGeometryDataByHeightFieldColliderData(collider: RAPIER.Collider) {
 

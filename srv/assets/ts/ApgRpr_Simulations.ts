@@ -8,7 +8,7 @@
 import { ApgRprSim_Base } from './ApgRprSimulationBase.ts';
 
 
-import { ApgRprSim_Pyramid } from "./simulations/ApgRprSimPyramid.ts";
+import { ApgRprSim_Pyramid } from "./simulations/ApgRprSim_A0_Pyramid.ts";
 import { ApgRprSim_Column } from "./simulations/ApgRprSim_A1_Column.ts";
 import { ApgRprSim_Domino } from "./simulations/ApgRprSim_A2_Domino.ts";
 import { ApgRprSim_Jenga } from "./simulations/ApgRprSim_A3_Jenga.ts";
@@ -28,7 +28,7 @@ import { ApgRprSim_CharacterController } from "./simulations/ApgRprSim_Character
 
 
 export enum ApgRpr_eSimulationName {
-    A_PYRAMID = 'Pyramid',
+    A0_PYRAMID = 'Pyramid',
     A1_COLUMN = 'Column',
     A2_DOMINO = 'Domino',
     A3_JENGA = 'Jenga',
@@ -51,7 +51,7 @@ export enum ApgRpr_eSimulationName {
 export function ApgRprSim_Get() {
     const simulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base> = new Map();
 
-    simulations.set(ApgRpr_eSimulationName.A_PYRAMID, ApgRprSim_Pyramid);
+    simulations.set(ApgRpr_eSimulationName.A0_PYRAMID, ApgRprSim_Pyramid);
     simulations.set(ApgRpr_eSimulationName.A1_COLUMN, ApgRprSim_Column);
     simulations.set(ApgRpr_eSimulationName.A2_DOMINO, ApgRprSim_Domino);
     simulations.set(ApgRpr_eSimulationName.A3_JENGA, ApgRprSim_Jenga);

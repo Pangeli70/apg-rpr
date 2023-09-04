@@ -30,23 +30,30 @@ export class ApgRpr_Simulator {
   world = null;
   /** Hook to interact with the simulation before each step*/
   preStepAction = null;
-  /** The current simulation step */
-  stepId = 0;
-  /** The current simulation step */
+  /** This is used to count the number of times is called and to manage the slow down */
   runCall = 0;
-  /** The simulation slowdown factor: 1 means run continuously */
+  /** The simulation slowdown factor: 1 means run continuously. 
+   * When set to MAX_SLOWDOWN the simulation is stopped */
   slowdown = 1;
+  /** Used to keep track of requestAnimationFrame timings and 
+   * make the simulation time indipendent */
+  lastBrowserFrame = -1;
+  /** We run the simulation only if the document has the focus */
+  documentHasFocus = false;
   /** The simulation is in debug mode so we collect additional data */
   isInDebugMode = false;
+  /** The current debug info contain the simulation step counter */
+  debugInfo;
   /** The last snapshot collected to be eventually stored or transmitted */
   snapshot;
   /** The simulation step of the snapshot */
   snapshotStepId = 0;
-  /** Used to make the simulation time indipendent */
-  lastBrowserFrame = -1;
-  debugInfo;
   DEFAULT_VELOCITY_ITERATIONS = 4;
-  DEFAULT_FRICTION_ITERATIONS = 4;
+  DEFAULT_FRICTION_ITERATIONS = 7;
+  DEFAULT_STABILIZATION_ITERATIONS = 1;
+  DEFAULT_LINEAR_ERROR = 1e-3;
+  DEFAULT_ERR_REDUCTION_RATIO = 0.8;
+  DEFAULT_FRAME_RATE = 1 / 50;
   MAX_SLOWDOWN = 20;
   constructor(awindow, adocument, asimulations) {
     this.window = awindow;
@@ -65,7 +72,7 @@ export class ApgRpr_Simulator {
       this.mouse.x = event.clientX / this.window.innerWidth * 2 - 1;
       this.mouse.y = 1 - event.clientY / this.window.innerHeight * 2;
     });
-    this.setSimulation({ simulation: ApgRpr_eSimulationName.A_PYRAMID });
+    this.setSimulation({ simulation: ApgRpr_eSimulationName.A0_PYRAMID });
   }
   #initStats() {
     const pixelRatio = this.window.devicePixelRatio;
@@ -88,18 +95,33 @@ export class ApgRpr_Simulator {
   addWorld(aworld) {
     this.preStepAction = null;
     this.world = aworld;
-    this.world.maxVelocityIterations = this.DEFAULT_VELOCITY_ITERATIONS;
-    this.stepId = 0;
     this.stepStatsPanel.begin();
     this.collidersStatsPanel.begin();
+    this.debugInfo.stepId = 0;
+    this.debugInfo.integrationParams = this.world.integrationParameters;
     this.world.forEachCollider((coll) => {
       this.viewer.addCollider(coll);
     });
     this.gui.log("RAPIER world added", true);
   }
+  /** 
+   * This method is called to allow the DOM to refresh when is changed diamically.
+   * It delays the event loop calling setTimeout
+   */
   updateViewerPanel(ahtml) {
     this.gui.isRefreshing = true;
-    this.viewer.panels.innerHTML = ahtml;
+    this.viewer.panel.innerHTML = ahtml;
+    setTimeout(() => {
+      this.gui.isRefreshing = false;
+    }, 0);
+  }
+  /** 
+   * This method is called to allow the DOM to refresh when is changed diamically.
+   * It delays the event loop calling setTimeout
+   */
+  updateViewerHud(ahtml) {
+    this.gui.isRefreshing = true;
+    this.viewer.panel.innerHTML = ahtml;
     setTimeout(() => {
       this.gui.isRefreshing = false;
     }, 0);
@@ -124,14 +146,14 @@ export class ApgRpr_Simulator {
   takeSnapshot() {
     if (this.world) {
       this.snapshot = this.world.takeSnapshot();
-      this.snapshotStepId = this.stepId;
+      this.snapshotStepId = this.debugInfo.stepId;
     }
   }
   restoreSnapshot() {
     if (this.world && this.snapshot) {
       this.world.free();
       this.world = RAPIER.World.restoreSnapshot(this.snapshot);
-      this.stepId = this.snapshotStepId;
+      this.debugInfo.stepId = this.snapshotStepId;
     }
   }
   run() {
@@ -143,16 +165,15 @@ export class ApgRpr_Simulator {
         canRun = true;
       }
     }
-    if (this.preStepAction) {
-      this.preStepAction();
-    }
     if (this.world && canRun) {
+      if (this.preStepAction) {
+        this.preStepAction();
+      }
       this.stepStatsPanel.begin();
       this.world.step(this.events);
-      this.stepId++;
+      this.debugInfo.stepId++;
       this.stepStatsPanel.end();
       this.collidersStatsPanel.update(this.world.colliders.len());
-      this.debugInfo.stepId = this.stepId;
       if (this.world) {
         this.stats.begin();
         this.viewer.render(this.world, this.isInDebugMode);
@@ -160,8 +181,28 @@ export class ApgRpr_Simulator {
       }
       this.#collectDebugInfo();
     }
-    this.window.requestAnimationFrame((frame) => {
+    this.window.requestAnimationFrame(() => {
+      const frame = performance.now();
+      const deltaTime1 = (frame - this.lastBrowserFrame) / 1e3;
+      const deltaTime2 = this.debugInfo.integrationParams.dt;
+      if (this.world) {
+        if (!this.document.hasFocus()) {
+          this.world.integrationParameters.dt = 0;
+          if (this.documentHasFocus != false) {
+            this.gui.log("Document lost focus: sim. paused");
+            this.documentHasFocus = false;
+          }
+        } else {
+          this.world.integrationParameters.dt = this.DEFAULT_FRAME_RATE;
+          if (this.documentHasFocus != true) {
+            this.gui.log("Document has focus: sim. active");
+            this.documentHasFocus = true;
+          }
+        }
+      }
       if (this.lastBrowserFrame !== -1) {
+        if (this.world) {
+        }
       }
       this.lastBrowserFrame = frame;
       this.run();
@@ -173,7 +214,7 @@ export class ApgRpr_Simulator {
         /*this.settings.isTakingSnapshots*/
         true
       ) {
-        this.snapshotStepId = this.stepId;
+        this.snapshotStepId = this.debugInfo.stepId;
         let t0 = (performance || Date).now();
         const snapshot = this.world.takeSnapshot();
         let t1 = (performance || Date).now();

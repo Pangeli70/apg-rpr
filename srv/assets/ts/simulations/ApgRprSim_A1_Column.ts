@@ -5,14 +5,15 @@
  * -----------------------------------------------------------------------
 */
 
-import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
+import { IApgDomElement, IApgDomKeyboardEvent, IApgDomRange } from "../ApgDom.ts";
 import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
-import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
+import { RAPIER } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
 } from "../ApgRprSimulationBase.ts";
+
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
@@ -20,19 +21,34 @@ export interface ApgRprSim_Column_IGuiSettings extends ApgRprSim_IGuiSettings {
 
     isCubesGroupOpened: boolean;
 
-    cubesRestitution: number;
-    cubesRestitutionMMS: ApgGui_IMinMaxStep;
+    blocksRestitution: number;
+    blocksRestitutionMMS: ApgGui_IMinMaxStep;
+
+
+    blocksFriction: number;
+    blocksFrictionMMS: ApgGui_IMinMaxStep;
+
+    numBlocks: number;
+    numBlocksMMS: ApgGui_IMinMaxStep;
 
     blockHeight: number;
     blockHeightMMS: ApgGui_IMinMaxStep;
+
+    addBlockPressed: boolean;
+
 
 }
 
 
 export class ApgRprSim_Column extends ApgRprSim_Base {
 
-    currentCube = 0;
-    rng: PRANDO;
+
+    private _currentRotation = -1;
+    private _rotationDelta = 0;
+
+    private _currentBlock = 0;
+    private _maxBlocks = 0;
+
 
     constructor(
         asimulator: ApgRpr_Simulator,
@@ -41,12 +57,9 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        this.rng = new PRANDO(this.params.simulation);
-
-        const settings = this.params.guiSettings as ApgRprSim_Column_IGuiSettings;
-
         this.buildGui(ApgRprSim_Column_GuiBuilder);
 
+        const settings = this.params.guiSettings as ApgRprSim_Column_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -57,8 +70,13 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
             this.params.restart = false;
         }
 
+        this.simulator.document.onkeyup = (event: IApgDomKeyboardEvent) => {
+            if (event.key == " ") {
+                this.#spawnNextBlock();
+            }
+        };
+
         this.simulator.setPreStepAction(() => {
-            this.#spawnNextCube();
             this.updateFromGui();
         });
     }
@@ -66,59 +84,80 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
 
     #createWorld(asettings: ApgRprSim_Column_IGuiSettings) {
 
+        this._rotationDelta = 2 / asettings.numBlocks;
+        this._maxBlocks = asettings.numBlocks;
+
         // Create Ground.
         const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const groundBody = this.world.createRigidBody(groundBodyDesc);
         const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30.0, 0.1, 30.0);
         this.world.createCollider(groundColliderDesc, groundBody);
 
+        //this.#spawnNextBlock();
     }
 
 
-    #spawnNextCube() {
-
-
-        const maxHeight = 800.0;
-        if (this.currentCube >= maxHeight) {
-            this.currentCube = maxHeight;
-            return;
-        }
-
-        if (this.currentCube % 10 != 0) {
-            this.currentCube++;
-            return;
-        }
-
+    #spawnNextBlock() {
         const settings = this.params.guiSettings as ApgRprSim_Column_IGuiSettings;
 
-        // Dynamic cubes layered on top of each other.
-        const cubeRadious = 1
+        if (this._currentBlock >= this._maxBlocks) {
+            alert('Maximum height reached. If you want more change the parmeters and restart')
+            this._currentBlock = this._maxBlocks;
+            return;
+        }
+
+        // Dynamic blocks layered on top of each other.
+        const cubeRadious = 0.5;
         const initial = 4 * settings.blockHeight;
 
         const x = 0;
-        const y = initial + ((this.currentCube / 10) * 2 * settings.blockHeight)
+        const y = initial + (settings.blockHeight * this._currentBlock);
         const z = 0;
         const w = this.rng.next() - 0.5;
+        // const w = ApgRprUtils.Round(this._currentRotation, -3);
+        if (Math.abs(w) > 1) {
+            const message = 'Rotation of quaternion greater than 1! In Rapier this is not allowed!';
+            alert(message);
+            throw new Error(message);
+        }
+        // this.simulator.gui.log(`Rot:${w.toFixed(3)}`);
+        this.simulator.gui.log(`Added block n°:${this._currentBlock}`);
 
         // Create dynamic cube.
         const boxBodyDesc = RAPIER.RigidBodyDesc
             .dynamic()
-
-        const boxBody = this.world.createRigidBody(boxBodyDesc);
-        const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, settings.blockHeight, cubeRadious)
-            .setTranslation(x, y, z)
             .setRotation({ x: 0, y: 1, z: 0, w })
 
-        const collider = this.world.createCollider(boxColliderDesc, boxBody);
-        collider.setRestitution(settings.cubesRestitution);
-        collider.setFriction(10);
+        const boxBody = this.world.createRigidBody(boxBodyDesc);
+        const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, settings.blockHeight / 2, cubeRadious)
+            .setTranslation(x, y, z)
+            .setFriction(settings.blocksFriction)
 
 
+        const collider = this.world.createCollider(boxColliderDesc, boxBody)
+        collider.setRestitution(settings.blocksRestitution);
         this.simulator.viewer.addCollider(collider);
-        this.currentCube++;
+
+        this._currentBlock++;
+        this._currentRotation += this._rotationDelta;
 
     }
 
+
+    override updateFromGui() {
+        const settings = this.params.guiSettings as ApgRprSim_Column_IGuiSettings;
+
+        if (this.needsUpdate()) {
+
+            if (settings.addBlockPressed) { 
+                this.#spawnNextBlock();
+                settings.addBlockPressed = false;
+            }
+
+            super.updateFromGui();
+        }
+
+    }
 
 
     override defaultGuiSettings() {
@@ -129,11 +168,25 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
 
             isCubesGroupOpened: false,
 
-            cubesRestitution: 0,
-            cubesRestitutionMMS: {
-                min: 0.0,
+            blocksRestitution: 0.05,
+            blocksRestitutionMMS: {
+                min: 0.025,
                 max: 0.25,
-                step: 0.05
+                step: 0.025
+            },
+
+            blocksFriction: 1,
+            blocksFrictionMMS: {
+                min: 0.0,
+                max: 2,
+                step: 0.25
+            },
+
+            numBlocks: 20,
+            numBlocksMMS: {
+                min: 10,
+                max: 100,
+                step: 1
             },
 
             blockHeight: 0.1,
@@ -142,6 +195,8 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
                 max: 2,
                 step: 0.05
             },
+
+            addBlockPressed: false,
 
         }
 
@@ -152,13 +207,13 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
         return r;
     }
 
+
 }
 
 
-export class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
+class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     guiSettings: ApgRprSim_Column_IGuiSettings;
-
 
     constructor(
         agui: ApgGui,
@@ -172,14 +227,18 @@ export class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const cubesGroupControl = this.#buildCubesGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 cubesGroupControl,
                 simControls
             ]
@@ -191,27 +250,74 @@ export class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
 
 
     #buildCubesGroupControl() {
-        const CUBES_REST_CNT = 'cubesRestitutionControl';
-        const cubesRestitutionControl = this.buildRangeControl(
-            CUBES_REST_CNT,
+
+        const ADD_BLOCK_BTN = 'addBlockControl';
+        const addBlockControl = this.buildButtonControl(
+            ADD_BLOCK_BTN,
+            'Add block',
+            () => { 
+                this.guiSettings.addBlockPressed = true;
+            }
+        )
+
+
+        const BLOCKS_REST_CNT = 'blocksRestitutionControl';
+        const blocksRestitutionControl = this.buildRangeControl(
+            BLOCKS_REST_CNT,
             'Restitution',
-            this.guiSettings.cubesRestitution,
-            this.guiSettings.cubesRestitutionMMS.min,
-            this.guiSettings.cubesRestitutionMMS.max,
-            this.guiSettings.cubesRestitutionMMS.step,
+            this.guiSettings.blocksRestitution,
+            this.guiSettings.blocksRestitutionMMS.min,
+            this.guiSettings.blocksRestitutionMMS.max,
+            this.guiSettings.blocksRestitutionMMS.step,
             () => {
-                const range = this.gui.controls.get(CUBES_REST_CNT)!.element as IApgDomRange;
-                this.guiSettings.cubesRestitution = parseFloat(range.value);
-                const output = this.gui.controls.get(`${CUBES_REST_CNT}Value`)!.element as IApgDomElement;
+                const range = this.gui.controls.get(BLOCKS_REST_CNT)!.element as IApgDomRange;
+                this.guiSettings.blocksRestitution = parseFloat(range.value);
+                const output = this.gui.controls.get(`${BLOCKS_REST_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
         );
 
+        const BLOCKS_FRIC_CNT = 'blocksFrictionControl';
+        const blocksFrictionControl = this.buildRangeControl(
+            BLOCKS_FRIC_CNT,
+            'Friction',
+            this.guiSettings.blocksFriction,
+            this.guiSettings.blocksFrictionMMS.min,
+            this.guiSettings.blocksFrictionMMS.max,
+            this.guiSettings.blocksFrictionMMS.step,
+            () => {
+                const range = this.gui.controls.get(BLOCKS_FRIC_CNT)!.element as IApgDomRange;
+                this.guiSettings.blocksFriction = parseFloat(range.value);
+                const output = this.gui.controls.get(`${BLOCKS_FRIC_CNT}Value`)!.element as IApgDomElement;
+                output.innerHTML = range.value;
+                //alert(range.value);
+            }
+        );
+
+
+        const COL_NUM_BLKS_CNT = 'columnNumBlocksControl';
+        const columnNumBlocksControl = this.buildRangeControl(
+            COL_NUM_BLKS_CNT,
+            'Number',
+            this.guiSettings.numBlocks,
+            this.guiSettings.numBlocksMMS.min,
+            this.guiSettings.numBlocksMMS.max,
+            this.guiSettings.numBlocksMMS.step,
+            () => {
+                const range = this.gui.controls.get(COL_NUM_BLKS_CNT)!.element as IApgDomRange;
+                this.guiSettings.numBlocks = parseFloat(range.value);
+                const output = this.gui.controls.get(`${COL_NUM_BLKS_CNT}Value`)!.element as IApgDomElement;
+                output.innerHTML = range.value;
+                //alert(range.value);
+            }
+        );
+
+
         const COL_BLK_HGT_CNT = 'columnCubeHeightControl';
         const columnBlockHeightControl = this.buildRangeControl(
             COL_BLK_HGT_CNT,
-            'Block height',
+            'Height',
             this.guiSettings.blockHeight,
             this.guiSettings.blockHeightMMS.min,
             this.guiSettings.blockHeightMMS.max,
@@ -227,17 +333,20 @@ export class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
 
 
         const r = this.buildGroupControl(
-            "cubesGroupControl",
-            "Cubes:",
+            "blocksGroupControl",
+            "Blocks:",
             [
-                cubesRestitutionControl,
-                columnBlockHeightControl,
+                addBlockControl,
+                blocksRestitutionControl,
+                blocksFrictionControl,
+                columnNumBlocksControl,
+                columnBlockHeightControl
             ],
             this.guiSettings.isCubesGroupOpened,
             () => {
                 if (!this.gui.isRefreshing) {
                     this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
-                    this.gui.log('Cubes group toggled')
+                    this.gui.log('Blocks group toggled')
                 }
             }
 

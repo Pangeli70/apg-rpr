@@ -3,7 +3,7 @@ export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
   params;
   stats;
   constructor(agui, aparams) {
-    super(agui);
+    super(agui, aparams.simulation);
     this.params = aparams;
     this.stats = this.params.stats;
   }

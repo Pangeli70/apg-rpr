@@ -6,8 +6,8 @@ import {
 export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    const settings = this.params.guiSettings;
     this.buildGui(ApgRprSim_ConvexPolyhedrons_GuiBuilder);
+    const settings = this.params.guiSettings;
     this.#createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -79,11 +79,14 @@ export class ApgRprSim_ConvexPolyhedrons_GuiBuilder extends ApgRprSim_GuiBuilder
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         simControls
       ]
     );

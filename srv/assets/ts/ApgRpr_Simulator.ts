@@ -17,8 +17,8 @@ import {
 import { RAPIER, md5 } from './ApgRprDeps.ts';
 import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import {
-    IApgRpr_CameraPosition, IApgRprDebugInfo,
-    IApgRprPoint2D
+    IApgRpr_CameraPosition, IApgRpr_DebugInfo,
+    IApgRpr_Point2D
 } from "./ApgRprInterfaces.ts";
 import {
     ApgRprSim_Base, IApgRprSim_Params
@@ -48,7 +48,7 @@ export class ApgRpr_Simulator {
     viewer: ApgRprThreeViewer;
 
     /** Eventually used for picking objects with a raycaster */
-    mouse: IApgRprPoint2D;
+    mouse: IApgRpr_Point2D;
 
     /** We don't know yet ??? */
     events: RAPIER.EventQueue;
@@ -59,31 +59,43 @@ export class ApgRpr_Simulator {
     /** Hook to interact with the simulation before each step*/
     preStepAction: Function | null = null;
 
-    /** The current simulation step */
-    stepId = 0;
 
-    /** The current simulation step */
+    /** This is used to count the number of times is called and to manage the slow down */
     runCall = 0;
 
-    /** The simulation slowdown factor: 1 means run continuously */
+    /** The simulation slowdown factor: 1 means run continuously. 
+     * When set to MAX_SLOWDOWN the simulation is stopped */
     slowdown = 1;
+
+    /** Used to keep track of requestAnimationFrame timings and 
+     * make the simulation time indipendent */
+    lastBrowserFrame = -1;
+
+    /** We run the simulation only if the document has the focus */
+    documentHasFocus = false;
+
 
     /** The simulation is in debug mode so we collect additional data */
     isInDebugMode = false;
+    /** The current debug info contain the simulation step counter */
+    debugInfo: IApgRpr_DebugInfo;
+
 
     /** The last snapshot collected to be eventually stored or transmitted */
     snapshot?: Int8Array;
     /** The simulation step of the snapshot */
     snapshotStepId = 0;
 
-    /** Used to make the simulation time indipendent */
-    lastBrowserFrame = -1;
 
-    debugInfo: IApgRprDebugInfo;
 
     readonly DEFAULT_VELOCITY_ITERATIONS = 4;
-    readonly DEFAULT_FRICTION_ITERATIONS = 4;
+    readonly DEFAULT_FRICTION_ITERATIONS = 7;
+    readonly DEFAULT_STABILIZATION_ITERATIONS = 1;
+    readonly DEFAULT_LINEAR_ERROR = 0.001;
+    readonly DEFAULT_ERR_REDUCTION_RATIO = 0.8;
+    readonly DEFAULT_FRAME_RATE = 1 / 50;
     readonly MAX_SLOWDOWN = 20;
+    
 
     constructor(
         awindow: IApgDomBrowserWindow,
@@ -117,7 +129,7 @@ export class ApgRpr_Simulator {
         });
 
         // Set the first simulation
-        this.setSimulation({ simulation: ApgRpr_eSimulationName.A_PYRAMID });
+        this.setSimulation({ simulation: ApgRpr_eSimulationName.A0_PYRAMID });
     }
 
 
@@ -135,7 +147,7 @@ export class ApgRpr_Simulator {
         this.collidersStatsPanel = new ApgRpr_Colliders_StatsPanel(this.document, pixelRatio, statsPanelWidth);
         this.collidersStatsPanel.updateInMainLoop = false;
         this.stats.addPanel(this.collidersStatsPanel);
-        
+
     }
 
 
@@ -155,13 +167,12 @@ export class ApgRpr_Simulator {
         // @MAYBE  we should delete the old stuff explicitly-- APG 20230814
         this.world = aworld;
 
-        this.world.maxVelocityIterations = this.DEFAULT_VELOCITY_ITERATIONS;
-
-        this.stepId = 0;
 
         // @MAYBE  these are too hidden side effect change name -- APG 20230814
         this.stepStatsPanel.begin();
         this.collidersStatsPanel.begin();
+        this.debugInfo.stepId = 0;
+        this.debugInfo.integrationParams = this.world.integrationParameters;
 
         // @NOTE This means that all the colliders are already in place
         this.world.forEachCollider((coll: RAPIER.Collider) => {
@@ -172,13 +183,39 @@ export class ApgRpr_Simulator {
         this.gui.log('RAPIER world added', true);
     }
 
+
+    /** 
+     * This method is called to allow the DOM to refresh when is changed diamically.
+     * It delays the event loop calling setTimeout
+     */
     updateViewerPanel(ahtml: string) {
+
         this.gui.isRefreshing = true;
-        this.viewer.panels.innerHTML = ahtml;
+
+        this.viewer.panel.innerHTML = ahtml;
+
         setTimeout(() => {
             this.gui.isRefreshing = false;
         }, 0);
     }
+
+
+    /** 
+     * This method is called to allow the DOM to refresh when is changed diamically.
+     * It delays the event loop calling setTimeout
+     */
+    updateViewerHud(ahtml: string) {
+
+        this.gui.isRefreshing = true;
+
+        this.viewer.panel.innerHTML = ahtml;
+
+        setTimeout(() => {
+            this.gui.isRefreshing = false;
+        }, 0);
+    }
+
+
 
     /** If we call this it means that the camera is locked */
     resetCamera(acameraPosition: IApgRpr_CameraPosition) {
@@ -212,7 +249,7 @@ export class ApgRpr_Simulator {
     takeSnapshot() {
         if (this.world) {
             this.snapshot = this.world.takeSnapshot();
-            this.snapshotStepId = this.stepId;
+            this.snapshotStepId = this.debugInfo.stepId;
         }
     }
 
@@ -221,7 +258,7 @@ export class ApgRpr_Simulator {
         if (this.world && this.snapshot) {
             this.world.free();
             this.world = RAPIER.World.restoreSnapshot(this.snapshot);
-            this.stepId = this.snapshotStepId;
+            this.debugInfo.stepId = this.snapshotStepId;
         }
     }
 
@@ -229,30 +266,29 @@ export class ApgRpr_Simulator {
     run() {
         this.runCall++;
 
-        let canRun = false; 
-        if (this.runCall % this.slowdown == 0) { 
+        let canRun = false;
+        if (this.runCall % this.slowdown == 0) {
             this.runCall = 0;
-            if (this.slowdown != this.MAX_SLOWDOWN) { 
+            if (this.slowdown != this.MAX_SLOWDOWN) {
                 canRun = true;
             }
         }
 
-        if (this.preStepAction) {
-            // @MAYBE  And if we want to pass some arguments?? -- APG 20230812
-            // @WARNING be a aware that in a game all the simulation logic has to run here -- APG 20230814 
-            this.preStepAction();
-        }
-        
+
         if (this.world && canRun) {
+
+            if (this.preStepAction) {
+                // @MAYBE  And if we want to pass some arguments?? -- APG 20230812
+                // @WARNING be a aware that in a game all the simulation logic has to run here -- APG 20230814 
+                this.preStepAction();
+            }
 
             // @NOTE Here we update the RAPIER world!!!!
             this.stepStatsPanel.begin();
             this.world.step(this.events); // WTF ???
-            this.stepId++;
+            this.debugInfo.stepId++;
             this.stepStatsPanel.end();
             this.collidersStatsPanel.update(this.world.colliders.len());
-
-            this.debugInfo.stepId = this.stepId;
 
             // @NOTE Here we update THREE.js only when the world changes!!! 
             if (this.world) {
@@ -266,16 +302,44 @@ export class ApgRpr_Simulator {
 
 
         // @NOTE Here is the main loop of the simulation !!!
-        this.window.requestAnimationFrame((frame: number) => {
+        this.window.requestAnimationFrame(() => {
+            //setTimeout(() => {
+
+            const frame = performance.now();
+            const deltaTime1 = (frame - this.lastBrowserFrame) / 1000;
+            const deltaTime2 = this.debugInfo.integrationParams!.dt;
+
+            if (this.world) {
+                if (!this.document.hasFocus()) {
+
+                    this.world!.integrationParameters.dt = 0;
+                    if (this.documentHasFocus != false) {
+                        this.gui.log('Document lost focus: sim. paused');
+                        this.documentHasFocus = false;
+                    }
+                }
+                else {
+                    this.world!.integrationParameters.dt = this.DEFAULT_FRAME_RATE;
+                    if (this.documentHasFocus != true) {
+                        this.gui.log('Document has focus: sim. active');
+                        this.documentHasFocus = true;
+                    }
+                }
+            }
+
 
             if (this.lastBrowserFrame !== -1) {
                 // TODO make the animation time independent -- APG 20230814
-                // this.world?.step(frame - this.lastBrowserStep);
+                if (this.world) {
+                    //this.world.timestep = deltaTime1;
+                    // console.log(deltaTime1.toFixed(5), deltaTime2.toFixed(5));
+                }
             }
             this.lastBrowserFrame = frame;
 
             this.run();
-        })
+            //}, 20);
+        });
 
     }
 
@@ -287,7 +351,7 @@ export class ApgRpr_Simulator {
             // TODO move all this stuff under a dedicated takeSnapshot flag -- APG 20230814
             if ( /*this.settings.isTakingSnapshots*/ true) {
 
-                this.snapshotStepId = this.stepId;
+                this.snapshotStepId = this.debugInfo.stepId;
 
                 let t0 = (performance || Date).now();
                 const snapshot = this.world.takeSnapshot();
@@ -306,8 +370,6 @@ export class ApgRpr_Simulator {
 
             }
 
-            // TODO restore this -- APG 20230817
-            // this.stats.setDebugInfos(debugInfos);
         }
     }
 }

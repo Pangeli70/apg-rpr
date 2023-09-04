@@ -1,4 +1,4 @@
-import { ApgRprSim_Pyramid } from "./simulations/ApgRprSimPyramid.ts";
+import { ApgRprSim_Pyramid } from "./simulations/ApgRprSim_A0_Pyramid.ts";
 import { ApgRprSim_Column } from "./simulations/ApgRprSim_A1_Column.ts";
 import { ApgRprSim_Domino } from "./simulations/ApgRprSim_A2_Domino.ts";
 import { ApgRprSim_Jenga } from "./simulations/ApgRprSim_A3_Jenga.ts";
@@ -14,7 +14,7 @@ import { ApgRprSim_CCDs } from "./simulations/ApgRprSimCCDs.ts";
 import { ApgRprSim_Joints } from "./simulations/ApgRprSimJoints.ts";
 import { ApgRprSim_CharacterController } from "./simulations/ApgRprSim_CharacterController.ts";
 export var ApgRpr_eSimulationName = /* @__PURE__ */ ((ApgRpr_eSimulationName2) => {
-  ApgRpr_eSimulationName2["A_PYRAMID"] = "Pyramid";
+  ApgRpr_eSimulationName2["A0_PYRAMID"] = "Pyramid";
   ApgRpr_eSimulationName2["A1_COLUMN"] = "Column";
   ApgRpr_eSimulationName2["A2_DOMINO"] = "Domino";
   ApgRpr_eSimulationName2["A3_JENGA"] = "Jenga";
@@ -34,7 +34,7 @@ export var ApgRpr_eSimulationName = /* @__PURE__ */ ((ApgRpr_eSimulationName2) =
 })(ApgRpr_eSimulationName || {});
 export function ApgRprSim_Get() {
   const simulations = /* @__PURE__ */ new Map();
-  simulations.set("Pyramid" /* A_PYRAMID */, ApgRprSim_Pyramid);
+  simulations.set("Pyramid" /* A0_PYRAMID */, ApgRprSim_Pyramid);
   simulations.set("Column" /* A1_COLUMN */, ApgRprSim_Column);
   simulations.set("Domino" /* A2_DOMINO */, ApgRprSim_Domino);
   simulations.set("Jenga" /* A3_JENGA */, ApgRprSim_Jenga);

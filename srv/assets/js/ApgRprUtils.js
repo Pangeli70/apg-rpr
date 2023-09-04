@@ -1,4 +1,10 @@
 export class ApgRprUtils {
+  static Round(anum, aprecision) {
+    const t = 10 ** (-1 * aprecision);
+    const v = anum * t;
+    const r = Math.round(v) / t;
+    return r;
+  }
   static GetHeightfieldGeometryDataByHeightFieldColliderData(collider) {
     const heights = collider.heightfieldHeights();
     const nrows = collider.heightfieldNRows();

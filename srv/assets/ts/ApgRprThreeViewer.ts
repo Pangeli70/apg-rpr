@@ -9,8 +9,8 @@ import { ApgRprUtils } from "./ApgRprUtils.ts";
 import {
     IApgDomBrowserWindow, IApgDomCanvas, IApgDomDocument, IApgDomElement
 } from './ApgDom.ts'
-import { IApgRpr_CameraPosition, IApgRprInstanceDesc } from "./ApgRprInterfaces.ts";
-import { eApgRprInstancedMeshesGroup } from "./ApgRprEnums.ts";
+import { IApgRpr_CameraPosition, IApgRpr_InstanceDesc } from "./ApgRprInterfaces.ts";
+import { eApgRpr_InstancedMeshesGroup } from "./ApgRprEnums.ts";
 
 
 
@@ -32,16 +32,18 @@ export class ApgRprThreeViewer {
     document: IApgDomDocument;
 
     /** Dom objects for THREE.js */
-    container: IApgDomElement;
+    viewer: IApgDomElement;
     canvas: IApgDomCanvas;
-    toolbar: IApgDomElement;
-    panels: IApgDomElement;
+
+
+    gui: IApgDomElement;
+    panel: IApgDomElement;
 
     // Maximum count of mesh instances
     readonly MAX_INSTANCES = 250;
 
     /** Collections used to relate colliders with meshes */
-    instancedMeshDescByColliderHandleMap: Map<number, IApgRprInstanceDesc>;
+    instancedMeshDescByColliderHandleMap: Map<number, IApgRpr_InstanceDesc>;
     meshesByColliderHandleMap: Map<number, THREE.InstancedMesh | THREE.Mesh>;
     collidersByRigidBodyHandleMap: Map<number, RAPIER.Collider[]>;
 
@@ -71,7 +73,7 @@ export class ApgRprThreeViewer {
     highlightedCollider: number;
 
     /** Set of reusable meshes used to represent the standard colliders */
-    instancedMeshesGroups: Map<eApgRprInstancedMeshesGroup, THREE.InstancedMesh[]>;
+    instancedMeshesGroups: Map<eApgRpr_InstancedMeshesGroup, THREE.InstancedMesh[]>;
 
     constructor(
         awindow: IApgDomBrowserWindow,
@@ -80,22 +82,16 @@ export class ApgRprThreeViewer {
         this.window = awindow;
         this.document = adocument;
 
-        const viewerHeight = `${this.window.innerHeight * 0.95}px`;
-        
-        this.container = this.document.getElementById('ApgRprViewerContainer');
-        this.container.style.width = "80%";
-        this.container.style.height = viewerHeight;
-        
+        this.gui = this.document.getElementById('ApgRprGui');
+
+        this.viewer = this.document.getElementById('ApgRprViewer');
+
         // @DONE We want to add the rendered to a defined div -- APG 20230812/20230815 
         this.canvas = this.document.createElement('canvas') as IApgDomCanvas;
-        this.canvas.id = 'ApgWglRprViewerCanvas';
-        this.container.appendChild(this.canvas);
+        this.canvas.id = 'ApgRprViewerCanvas';
+        this.viewer.appendChild(this.canvas);
 
-        this.toolbar = this.document.getElementById('ApgRprViewerToolbar');
-        this.toolbar.style.width = "20%";
-        this.toolbar.style.height = viewerHeight;
-
-        this.panels = this.document.getElementById('ApgRprViewerToolbarPanels');
+        this.panel = this.document.getElementById('ApgRprGuiPanel');
 
         this.rng = new PRANDO('ApgRprThreeViewer');
 
@@ -113,11 +109,11 @@ export class ApgRprThreeViewer {
 
         this.scene = new THREE.Scene();
 
-        const aspectRatio = this.container.clientWidth / this.container.clientHeight;
+        const aspectRatio = this.viewer.clientWidth / this.viewer.clientHeight;
         this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 1000);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
-        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.renderer.setSize(this.viewer.clientWidth, this.viewer.clientHeight);
 
         this.renderer.setClearColor(0x292929, 1);
 
@@ -164,21 +160,21 @@ export class ApgRprThreeViewer {
     resize() {
         if (this.camera) {
             const viewerHeight = `${this.window.innerHeight * 0.95}px`;
-            this.container.style.height = viewerHeight;
-            this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+            this.viewer.style.height = viewerHeight;
+            this.camera.aspect = this.viewer.clientWidth / this.viewer.clientHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            this.renderer.setSize(this.viewer.clientWidth, this.viewer.clientHeight);
         }
     }
 
 
     initInstancesByGroupAndPalette() {
 
-        this.buildInstancesByPalette(eApgRprInstancedMeshesGroup.BOXES);
-        this.buildInstancesByPalette(eApgRprInstancedMeshesGroup.BALLS);
-        this.buildInstancesByPalette(eApgRprInstancedMeshesGroup.CYLINDERS);
-        this.buildInstancesByPalette(eApgRprInstancedMeshesGroup.CONES);
-        this.buildInstancesByPalette(eApgRprInstancedMeshesGroup.CAPSULES);
+        this.buildInstancesByPalette(eApgRpr_InstancedMeshesGroup.BOXES);
+        this.buildInstancesByPalette(eApgRpr_InstancedMeshesGroup.BALLS);
+        this.buildInstancesByPalette(eApgRpr_InstancedMeshesGroup.CYLINDERS);
+        this.buildInstancesByPalette(eApgRpr_InstancedMeshesGroup.CONES);
+        this.buildInstancesByPalette(eApgRpr_InstancedMeshesGroup.CAPSULES);
 
         this.instancedMeshesGroups.forEach((group) => {
             group.forEach((instance) => {
@@ -191,25 +187,25 @@ export class ApgRprThreeViewer {
     }
 
 
-    buildInstancesByPalette(agroup: eApgRprInstancedMeshesGroup) {
+    buildInstancesByPalette(agroup: eApgRpr_InstancedMeshesGroup) {
         const group: THREE.InstancedMesh[] = [];
 
         let geometry;
 
         switch (agroup) {
-            case eApgRprInstancedMeshesGroup.BOXES:
+            case eApgRpr_InstancedMeshesGroup.BOXES:
                 geometry = new THREE.BoxGeometry(2.0, 2.0, 2.0);
                 break;
-            case eApgRprInstancedMeshesGroup.BALLS:
+            case eApgRpr_InstancedMeshesGroup.BALLS:
                 geometry = new THREE.SphereGeometry(1.0);
                 break;
-            case eApgRprInstancedMeshesGroup.CYLINDERS:
+            case eApgRpr_InstancedMeshesGroup.CYLINDERS:
                 geometry = new THREE.CylinderGeometry(1.0, 1.0, 1.0);
                 break;
-            case eApgRprInstancedMeshesGroup.CONES:
+            case eApgRpr_InstancedMeshesGroup.CONES:
                 geometry = new THREE.ConeGeometry(1.0, 1.0);
                 break;
-            case eApgRprInstancedMeshesGroup.CAPSULES:
+            case eApgRpr_InstancedMeshesGroup.CAPSULES:
                 geometry = new THREE.CapsuleGeometry(1.0, 1.0, 4, 16);
                 break;
         }
@@ -408,7 +404,7 @@ export class ApgRprThreeViewer {
             this.collidersByRigidBodyHandleMap.set(rigidBodyParentOfCollider.handle, colliders);
         }
 
-        const instanceDesc: IApgRprInstanceDesc = {
+        const instanceDesc: IApgRpr_InstanceDesc = {
             groupId: 0,
             instanceId: this.getInstanceIdByPalette(palette),
             elementId: 0,
@@ -420,17 +416,17 @@ export class ApgRprThreeViewer {
         switch (acollider.shapeType()) {
             case RAPIER.ShapeType.Cuboid: {
                 const size = acollider.halfExtents()!;
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRprInstancedMeshesGroup.BOXES)!;
+                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroup.BOXES)!;
                 instance = instancesGroups[instanceDesc.instanceId];
-                instanceDesc.groupId = eApgRprInstancedMeshesGroup.BOXES;
+                instanceDesc.groupId = eApgRpr_InstancedMeshesGroup.BOXES;
                 instanceDesc.scale = new THREE.Vector3(size.x, size.y, size.z);
                 break;
             }
             case RAPIER.ShapeType.Ball: {
                 const radious = acollider.radius();
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRprInstancedMeshesGroup.BALLS)!;
+                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroup.BALLS)!;
                 instance = instancesGroups[instanceDesc.instanceId];
-                instanceDesc.groupId = eApgRprInstancedMeshesGroup.BALLS;
+                instanceDesc.groupId = eApgRpr_InstancedMeshesGroup.BALLS;
                 instanceDesc.scale = new THREE.Vector3(radious, radious, radious);
                 break;
             }
@@ -438,18 +434,18 @@ export class ApgRprThreeViewer {
             case RAPIER.ShapeType.RoundCylinder: {
                 const radious = acollider.radius();
                 const height = acollider.halfHeight() * 2.0;
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRprInstancedMeshesGroup.CYLINDERS)!;
+                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroup.CYLINDERS)!;
                 instance = instancesGroups[instanceDesc.instanceId];
-                instanceDesc.groupId = eApgRprInstancedMeshesGroup.CYLINDERS;
+                instanceDesc.groupId = eApgRpr_InstancedMeshesGroup.CYLINDERS;
                 instanceDesc.scale = new THREE.Vector3(radious, height, radious);
                 break;
             }
             case RAPIER.ShapeType.Cone: {
                 const radious = acollider.radius();
                 const height = acollider.halfHeight() * 2.0;
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRprInstancedMeshesGroup.CONES)!;
+                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroup.CONES)!;
                 instance = instancesGroups[instanceDesc.instanceId];
-                instanceDesc.groupId = eApgRprInstancedMeshesGroup.CONES;
+                instanceDesc.groupId = eApgRpr_InstancedMeshesGroup.CONES;
                 instanceDesc.scale = new THREE.Vector3(radious, height, radious);
                 break;
             }
@@ -457,9 +453,9 @@ export class ApgRprThreeViewer {
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight();
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRprInstancedMeshesGroup.CAPSULES)!;
+                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroup.CAPSULES)!;
                 instance = instancesGroups[instanceDesc.instanceId];
-                instanceDesc.groupId = eApgRprInstancedMeshesGroup.CAPSULES;
+                instanceDesc.groupId = eApgRpr_InstancedMeshesGroup.CAPSULES;
                 instanceDesc.scale = new THREE.Vector3(radious, height, radious);
                 break;
             }

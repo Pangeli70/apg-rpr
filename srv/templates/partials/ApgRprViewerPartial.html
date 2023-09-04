@@ -1,7 +1,10 @@
-<div style="display: flex; width: 100%; margin: 0; padding: 0; ">
-  <div id="ApgRprViewerToolbar">
+<div style="display: flex; width: 100%; height:100%; margin: 0; padding: 0; ">
+  <div
+    id="ApgRprGui"
+    style="width:20%; height: 100%; overflow-y: scroll;"
+  >
     <div
-      id="ApgRprViewerToolbarTitle"
+      id="ApgRprGuiTitle"
       style="text-align: center;"
     >
       <img
@@ -10,15 +13,16 @@
         src="https://apg-cdn.deno.dev/assets/img/png/APG-logo-2022-128px.png"
       />
       <span style="font-size: 1rem"> [: $site.name :] </span>
-      <span style="font-size: 0.4rem"> [: $site.version :] </span> <br>
-      <span style="font-size: 0.6rem"> [: $site.title :] </span>
+      <span style="font-size: 0.4rem"> [: $site.version :] </span>
     </div>
     <div
-      id="ApgRprViewerToolbarPanels"
-      style="height: 70%"
+      id="ApgRprGuiPanel"
     ></div>
   </div>
-  <div id="ApgRprViewerContainer"></div>
+  <div
+    id="ApgRprViewer"
+    style="width:80%; height:100%; background-color: rgb(0, 0, 0);"
+  ></div>
 </div>
 
 <script type="module">

@@ -59,16 +59,9 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as ApgRprSim_CCDs_IGuiSettings;
-        
-        const guiBuilder = new ApgRprSim_CCDs_GuiBuilder(
-            this.simulator.gui,
-            this.params
-        );
-        const html = guiBuilder.buildHtml();
-        this.simulator.updateViewerPanel(html);
-        guiBuilder.bindControls();
+        this.buildGui(ApgRprSim_CCDs_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_CCDs_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -113,7 +106,7 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
         this.world.createCollider(projectileColliderDesc, projectileBody);
     }
 
-    
+
     #createWall(offset: IApgRpr_Point3D, stackHeight: number, aisCcdEnabled = false) {
 
         const shiftY = 1.0;
@@ -227,8 +220,11 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         this.guiSettings = this.params.guiSettings as ApgRprSim_CCDs_IGuiSettings;
     }
 
-    
+
     override buildHtml() {
+
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
 
         const projectileGroupControl = this.#buildProjectileGroupControl();
 
@@ -238,8 +234,9 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 projectileGroupControl,
                 wallsGroupControl,
                 simControls

@@ -31,11 +31,10 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
     ) {
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as ApgRprSim_Platform_IGuiSettings;
-
         // TODO Implement this pattern in the other simulations -- APG 20230819
         this.buildGui(ApgRprSim_Platform_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_Platform_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -158,7 +157,7 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
 }
 
 
-export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
+ class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     guiSettings: ApgRprSim_Platform_IGuiSettings;
 
@@ -175,12 +174,16 @@ export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 simControls
             ]
         );

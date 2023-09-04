@@ -5,7 +5,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
   DEBUG_INFO_DIALOG_CNT = "debugInfoDialogControl";
   DEBUG_INFO_PAR_CNT = "debugInfoParagraphControl";
   constructor(agui, ainfo) {
-    super(agui);
+    super(agui, "Pippo debug");
     this.debugInfo = ainfo;
   }
   buildHtml() {
@@ -66,8 +66,15 @@ export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
     }
     const r = `
             <p>
-                RAPIER Version: ${RAPIER.version()}
-                <br/>Current step: ${this.debugInfo.stepId}
+                RAPIER engine<br/>
+                Version: ${RAPIER.version()}<br/>
+                Current step: ${this.debugInfo.stepId}<br/>
+                Delta time: ${this.debugInfo.integrationParams.dt.toFixed(5)}<br/>
+                Max velocity iter.: ${this.debugInfo.integrationParams.maxVelocityIterations}<br/>
+                Max friction iter.: ${this.debugInfo.integrationParams.maxVelocityFrictionIterations}<br/>
+                Max stabil. iter.: ${this.debugInfo.integrationParams.maxStabilizationIterations}<br/>
+                Linear error: ${this.debugInfo.integrationParams.allowedLinearError.toFixed(5)}<br/>
+                Err. reduc. param.: ${this.debugInfo.integrationParams.erp.toFixed(5)}<br/>
                 ${hashInfo}
             </p>
         `;

@@ -5,16 +5,17 @@
  * -----------------------------------------------------------------------
 */
 
-import { eApgRprInstancedMeshesGroup } from "./ApgRprEnums.ts";
+import { RAPIER } from "./ApgRprDeps.ts";
+import { eApgRpr_InstancedMeshesGroup } from "./ApgRprEnums.ts";
 
 
-export interface IApgRprPoint2D {
+export interface IApgRpr_Point2D {
     x: number;
     y: number;
 }
 
 
-export interface IApgRpr_Point3D extends IApgRprPoint2D {
+export interface IApgRpr_Point3D extends IApgRpr_Point2D {
     z: number;
 }
 
@@ -25,8 +26,9 @@ export interface IApgRpr_CameraPosition {
 }
 
 
-export interface IApgRprDebugInfo {
+export interface IApgRpr_DebugInfo {
     stepId: number;
+    integrationParams?: RAPIER.IntegrationParameters
     worldHash?: string;
     worldHashTime?: number;
     snapshotTime?: number;
@@ -34,9 +36,9 @@ export interface IApgRprDebugInfo {
 }
 
 
-export interface IApgRprInstanceDesc {
+export interface IApgRpr_InstanceDesc {
 
-    groupId: eApgRprInstancedMeshesGroup;
+    groupId: eApgRpr_InstancedMeshesGroup;
     instanceId: number;
     elementId: number;
     highlighted: boolean;

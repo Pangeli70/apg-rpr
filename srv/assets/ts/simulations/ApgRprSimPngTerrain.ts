@@ -40,8 +40,6 @@ export interface ApgRprSim_PngTerrain_IGuiSettings extends ApgRprSim_IGuiSetting
 
 export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
 
-    rng: PRANDO;
-
     constructor(
         asimulator: ApgRpr_Simulator,
         aparams: IApgRprSim_Params
@@ -49,16 +47,12 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        this.rng = new PRANDO(aparams.simulation);
-
-        const settings = this.params.guiSettings! as ApgRprSim_PngTerrain_IGuiSettings;
-
         this.buildGui(ApgRprSim_PngTerrain_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_PngTerrain_IGuiSettings;
         // @NOTE from this point we are asyncronous since we depend from load image
         this.#createWorld(settings);
-
-        // TODO Manage asyncronicity from the beginning using async -- APG 20230819
+        // TODO Manage asyncronicity from the beginning using async/await -- APG 20230819
     }
 
 
@@ -101,7 +95,7 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
                 -asettings.sampleSize / 2, asettings.sampleSize / 2,
                 30, 50,
                 -asettings.sampleSize / 2, asettings.sampleSize / 2,
-                );
+            );
 
 
             // @NOTE From here is the usual syncronous flow 
@@ -234,7 +228,7 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
 }
 
 
-export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
+class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     guiSettings: ApgRprSim_PngTerrain_IGuiSettings;
 
@@ -251,14 +245,18 @@ export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const latticeGroupControl = this.#buildSampligGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 latticeGroupControl,
                 simControls
             ]

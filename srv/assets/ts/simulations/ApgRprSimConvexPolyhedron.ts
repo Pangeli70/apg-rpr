@@ -28,10 +28,9 @@ export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
     ) {
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as ApgRprSim_ConvexPolyhedrons_IGuiSettings;
-
         this.buildGui(ApgRprSim_ConvexPolyhedrons_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_ConvexPolyhedrons_IGuiSettings;
         this.#createWorld(settings);
         asimulator.addWorld(this.world);
 
@@ -148,12 +147,16 @@ export class ApgRprSim_ConvexPolyhedrons_GuiBuilder extends ApgRprSim_GuiBuilder
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 simControls
             ]
         );

@@ -6,8 +6,10 @@ export class ApgRprSim_Base {
   simulator;
   /** Current simulation params and settings */
   params;
-  /** Stored for comparison params and settings */
+  /** Copy of params and settings stored for comparison*/
   prevParams;
+  /** General purpose pseudorandom negerator */
+  rng;
   /**
    * Creates a new simulation and a new world for the Rapier simulator
    * @param asimulator 
@@ -27,8 +29,14 @@ export class ApgRprSim_Base {
     if (this.params.guiSettings == void 0) {
       this.params.guiSettings = this.defaultGuiSettings();
     }
+    this.rng = new PRANDO(this.params.simulation);
     this.saveParams();
     this.world = new RAPIER.World(this.params.gravity);
+    this.world.maxVelocityIterations = this.params.guiSettings.velocityIterations;
+    this.world.maxVelocityFrictionIterations = this.params.guiSettings.frictionIterations;
+    this.world.maxStabilizationIterations = this.params.guiSettings.stabilizationIterations;
+    this.world.integrationParameters.allowedLinearError = this.params.guiSettings.linearError;
+    this.world.integrationParameters.erp = this.params.guiSettings.errorReductionRatio;
   }
   /**
    * Create the Gui for the current simulation
@@ -72,6 +80,15 @@ export class ApgRprSim_Base {
     if (this.prevParams.guiSettings.frictionIterations != this.params.guiSettings.frictionIterations) {
       this.simulator.world.maxVelocityFrictionIterations = this.params.guiSettings.frictionIterations;
     }
+    if (this.prevParams.guiSettings.stabilizationIterations != this.params.guiSettings.stabilizationIterations) {
+      this.simulator.world.maxStabilizationIterations = this.params.guiSettings.stabilizationIterations;
+    }
+    if (this.prevParams.guiSettings.linearError != this.params.guiSettings.linearError) {
+      this.world.integrationParameters.allowedLinearError = this.params.guiSettings.linearError;
+    }
+    if (this.prevParams.guiSettings.errorReductionRatio != this.params.guiSettings.errorReductionRatio) {
+      this.world.integrationParameters.erp = this.params.guiSettings.errorReductionRatio;
+    }
     if (this.prevParams.guiSettings.slowdown != this.params.guiSettings.slowdown) {
       this.simulator.slowdown = this.params.guiSettings.slowdown;
     }
@@ -95,6 +112,24 @@ export class ApgRprSim_Base {
         min: 1,
         max: 16,
         step: 3
+      },
+      stabilizationIterations: this.simulator.DEFAULT_STABILIZATION_ITERATIONS,
+      stabilizationIterationsMMS: {
+        min: 1,
+        max: 16,
+        step: 3
+      },
+      linearError: this.simulator.DEFAULT_LINEAR_ERROR,
+      linearErrorMMS: {
+        min: 1e-4,
+        max: 0.01,
+        step: 1e-4
+      },
+      errorReductionRatio: this.simulator.DEFAULT_ERR_REDUCTION_RATIO,
+      errorReductionRatioMMS: {
+        min: 0.05,
+        max: 1,
+        step: 0.05
       },
       slowdown: 1,
       slowdownMMS: {

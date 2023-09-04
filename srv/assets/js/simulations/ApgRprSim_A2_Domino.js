@@ -1,14 +1,22 @@
-import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
+import { RAPIER } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
+var ApgRprSim_Domino_eCardsPatterns = /* @__PURE__ */ ((ApgRprSim_Domino_eCardsPatterns2) => {
+  ApgRprSim_Domino_eCardsPatterns2["RANDOM"] = "Random";
+  ApgRprSim_Domino_eCardsPatterns2["LINEAR"] = "Linear";
+  ApgRprSim_Domino_eCardsPatterns2["STAR"] = "Star";
+  return ApgRprSim_Domino_eCardsPatterns2;
+})(ApgRprSim_Domino_eCardsPatterns || {});
 export class ApgRprSim_Domino extends ApgRprSim_Base {
-  currentCube = 0;
+  _cardWidth = 1;
+  _cardDepth = 0.5;
+  _cardHeight = 2;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    const settings = this.params.guiSettings;
     this.buildGui(ApgRprSim_Domino_GuiBuilder);
+    const settings = this.params.guiSettings;
     this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -21,30 +29,69 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     });
   }
   #createWorld(asettings) {
-    const rng = new PRANDO("Domino");
+    const WORLD_SIZE = 60;
+    const CARDS_AREA_DIAMETER = WORLD_SIZE * 0.9;
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groundBodyDesc);
-    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30, 0.1, 30);
+    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(WORLD_SIZE / 2, 0.1, WORLD_SIZE / 2);
     this.world.createCollider(groundColliderDesc, groundBody);
+    this.#createCards(asettings, CARDS_AREA_DIAMETER);
     this.simulator.document.onkeyup = (event) => {
       if (event.key == " ") {
         this.#throwBall();
       }
     };
-    const shift = 2;
-    const width = 1;
-    const depth = 0.5;
-    const height = 2;
-    const blocks = 40;
+  }
+  #createRandomCards(asettings, acardsAreaDiameter) {
+    const ashift = 2 * this._cardHeight;
+    const r = new Array();
+    for (let i = 0; i < asettings.cardsNumber; ++i) {
+      const x = (this.rng.next() - 0.5) * acardsAreaDiameter;
+      const y = ashift;
+      const z = (this.rng.next() - 0.5) * acardsAreaDiameter;
+      const w = this.rng.next() - 1;
+      const quaternion = new RAPIER.Quaternion(x, y, z, w);
+      r.push(quaternion);
+    }
+    return r;
+  }
+  #createLineCards(asettings, acardsAreaDiameter) {
+    const deltaZ = this._cardHeight * 0.75;
+    const ashift = 2 * this._cardHeight;
+    const r = new Array();
+    for (let i = 0; i < asettings.cardsNumber; ++i) {
+      const x = 0;
+      const y = ashift;
+      const z = -acardsAreaDiameter / 2 + deltaZ * i;
+      const w = 0;
+      const quaternion = new RAPIER.Quaternion(x, y, z, w);
+      r.push(quaternion);
+    }
+    return r;
+  }
+  #createCards(asettings, acardsAreaDiameter) {
+    const blocks = asettings.cardsNumber;
+    let p;
+    switch (asettings.cardsPattern) {
+      case "Random" /* RANDOM */: {
+        p = this.#createRandomCards(asettings, acardsAreaDiameter);
+        break;
+      }
+      case "Linear" /* LINEAR */: {
+        p = this.#createLineCards(asettings, acardsAreaDiameter);
+        break;
+      }
+      case "Star" /* STAR */: {
+        p = this.#createRandomCards(asettings, acardsAreaDiameter);
+        break;
+      }
+    }
     for (let i = 0; i < blocks; ++i) {
-      const x = rng.next() * 40 - 40 / 2;
-      const y = shift + height / 2;
-      const z = rng.next() * 40 - 40 / 2;
-      const w = rng.next() - 1;
+      const { x, y, z, w } = p[i];
       const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z).setRotation({ x: 0, y: 1, z: 0, w });
       const boxBody = this.world.createRigidBody(boxBodyDesc);
-      const boxColliderDesc = RAPIER.ColliderDesc.cuboid(width, height, depth);
-      this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cubesRestitution);
+      const boxColliderDesc = RAPIER.ColliderDesc.cuboid(this._cardWidth / 2, this._cardHeight / 2, this._cardDepth / 2);
+      this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cardsRestitution);
     }
   }
   #throwBall() {
@@ -64,27 +111,40 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     dist.z = Math.round(dist.z * 100) / 100;
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(source.x, source.y, source.z).setLinvel(dist.x, dist.y, dist.z).setLinearDamping(0.5);
     const body = this.world.createRigidBody(bodyDesc);
-    const colliderDesc = RAPIER.ColliderDesc.ball(1).setDensity(2);
+    const colliderDesc = RAPIER.ColliderDesc.ball(0.5).setDensity(1);
     const collider = this.world.createCollider(colliderDesc, body);
     this.simulator.viewer.addCollider(collider);
     this.simulator.gui.log(`Ball spawn s:${source.x},${source.y},${source.z} / t: ${target.x},${target.y},${target.z} / d:${dist.x},${dist.y},${dist.z}`);
   }
+  updateFromGui() {
+    const settings = this.params.guiSettings;
+    if (this.needsUpdate()) {
+      if (settings.throwBallPressed) {
+        this.#throwBall();
+        settings.throwBallPressed = false;
+      }
+      super.updateFromGui();
+    }
+  }
   defaultGuiSettings() {
     const r = {
       ...super.defaultGuiSettings(),
-      isCubesGroupOpened: false,
-      cubesRestitution: 0,
-      cubesRestitutionMMS: {
-        min: 0,
-        max: 0.25,
+      isCardsGroupOpened: false,
+      cardsPattern: "Random" /* RANDOM */,
+      patternTypes: Object.values(ApgRprSim_Domino_eCardsPatterns),
+      cardsRestitution: 0.05,
+      cardsRestitutionMMS: {
+        min: 0.1,
+        max: 0.5,
         step: 0.05
       },
-      blockHeight: 0.1,
-      blockHeightMMS: {
-        min: 0.05,
-        max: 2,
-        step: 0.05
-      }
+      cardsNumber: 30,
+      cardsNumberMMS: {
+        min: 10,
+        max: 250,
+        step: 5
+      },
+      throwBallPressed: false
     };
     r.cameraPosition.eye.x = -30;
     r.cameraPosition.eye.y = 20;
@@ -92,68 +152,97 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     return r;
   }
 }
-export class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
+class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
-    const cubesGroupControl = this.#buildCubesGroupControl();
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
+    const cubesGroupControl = this.#buildCardsGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         cubesGroupControl,
         simControls
       ]
     );
     return r;
   }
-  #buildCubesGroupControl() {
-    const CUBES_REST_CNT = "cubesRestitutionControl";
-    const cubesRestitutionControl = this.buildRangeControl(
-      CUBES_REST_CNT,
-      "Restitution",
-      this.guiSettings.cubesRestitution,
-      this.guiSettings.cubesRestitutionMMS.min,
-      this.guiSettings.cubesRestitutionMMS.max,
-      this.guiSettings.cubesRestitutionMMS.step,
+  #buildCardsGroupControl() {
+    const THROW_BALL_BTN = "throwBallControl";
+    const throwBallControl = this.buildButtonControl(
+      THROW_BALL_BTN,
+      "Throw ball",
       () => {
-        const range = this.gui.controls.get(CUBES_REST_CNT).element;
-        this.guiSettings.cubesRestitution = parseFloat(range.value);
-        const output = this.gui.controls.get(`${CUBES_REST_CNT}Value`).element;
+        this.guiSettings.throwBallPressed = true;
+      }
+    );
+    const CARDS_REST_CNT = "cardsRestitutionControl";
+    const cardsRestitutionControl = this.buildRangeControl(
+      CARDS_REST_CNT,
+      "Restitution",
+      this.guiSettings.cardsRestitution,
+      this.guiSettings.cardsRestitutionMMS.min,
+      this.guiSettings.cardsRestitutionMMS.max,
+      this.guiSettings.cardsRestitutionMMS.step,
+      () => {
+        const range = this.gui.controls.get(CARDS_REST_CNT).element;
+        this.guiSettings.cardsRestitution = parseFloat(range.value);
+        const output = this.gui.controls.get(`${CARDS_REST_CNT}Value`).element;
         output.innerHTML = range.value;
       }
     );
-    const COL_BLK_HGT_CNT = "columnCubeHeightControl";
-    const columnBlockHeightControl = this.buildRangeControl(
-      COL_BLK_HGT_CNT,
-      "Block height",
-      this.guiSettings.blockHeight,
-      this.guiSettings.blockHeightMMS.min,
-      this.guiSettings.blockHeightMMS.max,
-      this.guiSettings.blockHeightMMS.step,
+    const CARD_HGT_CNT = "cardHeightControl";
+    const cardHeightControl = this.buildRangeControl(
+      CARD_HGT_CNT,
+      "Cards number",
+      this.guiSettings.cardsNumber,
+      this.guiSettings.cardsNumberMMS.min,
+      this.guiSettings.cardsNumberMMS.max,
+      this.guiSettings.cardsNumberMMS.step,
       () => {
-        const range = this.gui.controls.get(COL_BLK_HGT_CNT).element;
-        this.guiSettings.blockHeight = parseFloat(range.value);
-        const output = this.gui.controls.get(`${COL_BLK_HGT_CNT}Value`).element;
+        const range = this.gui.controls.get(CARD_HGT_CNT).element;
+        this.guiSettings.cardsNumber = parseFloat(range.value);
+        const output = this.gui.controls.get(`${CARD_HGT_CNT}Value`).element;
         output.innerHTML = range.value;
+      }
+    );
+    const keyValues = /* @__PURE__ */ new Map();
+    for (const pattern of this.guiSettings.patternTypes) {
+      keyValues.set(pattern, pattern);
+    }
+    const PATTERN_SELECT_CNT = "patternSelectControl";
+    const patternSelectControl = this.buildSelectControl(
+      PATTERN_SELECT_CNT,
+      "Pattern",
+      this.guiSettings.cardsPattern,
+      keyValues,
+      () => {
+        const select = this.gui.controls.get(PATTERN_SELECT_CNT).element;
+        this.guiSettings.cardsPattern = select.value;
+        this.params.restart = true;
       }
     );
     const r = this.buildGroupControl(
-      "cubesGroupControl",
-      "Cubes:",
+      "cardsGroupControl",
+      "Domino Cards:",
       [
-        cubesRestitutionControl,
-        columnBlockHeightControl
+        throwBallControl,
+        cardsRestitutionControl,
+        cardHeightControl,
+        patternSelectControl
       ],
-      this.guiSettings.isCubesGroupOpened,
+      this.guiSettings.isCardsGroupOpened,
       () => {
         if (!this.gui.isRefreshing) {
-          this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
-          this.gui.log("Cubes group toggled");
+          this.guiSettings.isCardsGroupOpened = !this.guiSettings.isCardsGroupOpened;
+          this.gui.log("Cards group toggled");
         }
       }
     );

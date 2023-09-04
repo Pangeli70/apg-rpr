@@ -43,8 +43,6 @@ interface ApgRprSim_Fountain_IGuiSettings extends ApgRprSim_IGuiSettings {
 
 export class ApgRprSim_Fountain extends ApgRprSim_Base {
 
-
-    rng: PRANDO;
     spawnCounter: number;
 
     readonly SPAWN_EVERY_N_STEPS = 5;
@@ -57,16 +55,11 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        this.rng = new PRANDO('Fountain');
         this.spawnCounter = 0;
 
+        this.buildGui(ApgRprSim_Fountain_GuiBuilder);
+
         const settings = this.params.guiSettings as ApgRprSim_Fountain_IGuiSettings;
-
-        const guiBuilder = new ApgRprSim_Fountain_GuiBuilder(this.simulator.gui, this.params);
-        const html = guiBuilder.buildHtml();
-        this.simulator.updateViewerPanel(html);
-        guiBuilder.bindControls();
-
         this.#createWorld(settings);
         asimulator.addWorld(this.world);
 
@@ -108,7 +101,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
         if (asettings.groundType == ApgRprSim_Fountain_eGroundType.SHF) {
             const numberOfColumns = 5;
             const numberOfRows = 5;
-            const scalesVector = new RAPIER.Vector3(rad*2, rad/10, rad*2)
+            const scalesVector = new RAPIER.Vector3(rad * 2, rad / 10, rad * 2)
             const field = this.generateSlopedHeightFieldArray(numberOfColumns, numberOfRows);
             const heightFieldGroundColliderDesc = RAPIER.ColliderDesc
                 .heightfield(numberOfColumns, numberOfRows, field, scalesVector)
@@ -254,15 +247,19 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const bodiesGroupControl = this.#buildBodiesGroupControl();
-        const groundGroupControl = this.#buildGrounGroupControl();
+        const groundGroupControl = this.#buildGroundGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 bodiesGroupControl,
                 groundGroupControl,
                 simControls
@@ -310,12 +307,12 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
     }
 
 
-    #buildGrounGroupControl() {
+    #buildGroundGroupControl() {
         const keyValues = new Map<string, string>();
         for (const ground of this.guiSettings.groundTypes) {
             keyValues.set(ground, ground);
         }
-        const GROUND_SELECT_CNT = 'groundSelectControl';
+        const GROUND_SELECT_CNT = 'patternSelectControl';
         const groundSelectControl = this.buildSelectControl(
             GROUND_SELECT_CNT,
             'Type',

@@ -38,10 +38,9 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as ApgRprSim_Pyramid_IGuiSettings;
-
         this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_Pyramid_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -52,7 +51,9 @@ export class ApgRprSim_Pyramid extends ApgRprSim_Base {
             this.params.restart = false;
         }
 
-        this.simulator.setPreStepAction(() => { this.updateFromGui(); });
+        this.simulator.setPreStepAction(() => {
+            this.updateFromGui();
+        });
     }
 
 
@@ -155,14 +156,18 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const cubesGroupControl = this.#buildCubesGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 cubesGroupControl,
                 simControls
             ]
@@ -174,7 +179,7 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
 
 
     #buildCubesGroupControl() {
-        const CUBES_REST_CNT = 'cubesRestitutionControl';
+        const CUBES_REST_CNT = 'blocksRestitutionControl';
         const cubesRestitutionControl = this.buildRangeControl(
             CUBES_REST_CNT,
             'Restitution',

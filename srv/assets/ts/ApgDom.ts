@@ -122,6 +122,8 @@ export interface IApgDomDocument extends IApgDomElement {
     createElement(atag: string): IApgDomElement;
     createTextNode(atext: string): IApgDomElement;
 
+    hasFocus(): boolean;
+
     onkeydown: TApgDomKeyboardEventCallback;
     onkeyup: TApgDomKeyboardEventCallback;
 

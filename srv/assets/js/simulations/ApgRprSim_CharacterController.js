@@ -12,8 +12,8 @@ export class ApgRprSim_CharacterController extends ApgRprSim_Base {
   characterSpeed = 0.1;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    const settings = this.params.guiSettings;
     this.buildGui(ApgRprSim_CharacterController_GuiBuilder);
+    const settings = this.params.guiSettings;
     this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -132,12 +132,15 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
     const cubesGroupControl = this.#buildCubesGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         cubesGroupControl,
         simControls
       ]
@@ -145,7 +148,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
     return r;
   }
   #buildCubesGroupControl() {
-    const CUBES_REST_CNT = "cubesRestitutionControl";
+    const CUBES_REST_CNT = "blocksRestitutionControl";
     const cubesRestitutionControl = this.buildRangeControl(
       CUBES_REST_CNT,
       "Restitution",

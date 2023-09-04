@@ -6,7 +6,7 @@
 */
 
 
-export enum eApgRprInstancedMeshesGroup {
+export enum eApgRpr_InstancedMeshesGroup {
   BOXES = 0,
   BALLS = 1,
   CYLINDERS = 2,

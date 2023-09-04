@@ -48,10 +48,9 @@ export class ApgRprSim_CharacterController extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as ApgRprSim_CharacterController_IGuiSettings;
-
         this.buildGui(ApgRprSim_CharacterController_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_CharacterController_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -124,7 +123,6 @@ export class ApgRprSim_CharacterController extends ApgRprSim_Base {
         this.characterController.enableSnapToGround(0.7);
 
         this.movementDirection = { x: 0.0, y: -this.characterGravity, z: 0.0 };
-
 
         this.simulator.document.onkeydown = (event: IApgDomKeyboardEvent) => {
             if (event.key == "ArrowUp" || event.key == "w") this.movementDirection.x = this.characterSpeed;
@@ -223,14 +221,19 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
 
     override buildHtml() {
 
+
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const cubesGroupControl = this.#buildCubesGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 cubesGroupControl,
                 simControls
             ]
@@ -242,7 +245,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
 
 
     #buildCubesGroupControl() {
-        const CUBES_REST_CNT = 'cubesRestitutionControl';
+        const CUBES_REST_CNT = 'blocksRestitutionControl';
         const cubesRestitutionControl = this.buildRangeControl(
             CUBES_REST_CNT,
             'Restitution',

@@ -25,7 +25,7 @@ export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
         aparams: IApgRprSim_Params,
     ) {
 
-        super(agui);
+        super(agui, aparams.simulation);
 
         this.params = aparams;
         this.stats = this.params.stats!;

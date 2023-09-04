@@ -6,14 +6,8 @@ import {
 export class ApgRprSim_CCDs extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
+    this.buildGui(ApgRprSim_CCDs_GuiBuilder);
     const settings = this.params.guiSettings;
-    const guiBuilder = new ApgRprSim_CCDs_GuiBuilder(
-      this.simulator.gui,
-      this.params
-    );
-    const html = guiBuilder.buildHtml();
-    this.simulator.updateViewerPanel(html);
-    guiBuilder.bindControls();
     this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -119,13 +113,16 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
     const projectileGroupControl = this.#buildProjectileGroupControl();
     const wallsGroupControl = this.#buildWallsGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         projectileGroupControl,
         wallsGroupControl,
         simControls

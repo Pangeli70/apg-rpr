@@ -29,10 +29,9 @@ export class ApgRprSim_Joints extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings as ApgRprSim_Joints_IGuiSettings;
-
         this.buildGui(ApgRprSim_Joints_GuiBuilder);
 
+        const settings = this.params.guiSettings as ApgRprSim_Joints_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -364,12 +363,16 @@ export class ApgRprSim_Joints_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 simControls
             ]
         );

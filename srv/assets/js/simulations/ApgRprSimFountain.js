@@ -1,4 +1,4 @@
-import { PRANDO, RAPIER } from "../ApgRprDeps.ts";
+import { RAPIER } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
@@ -12,20 +12,15 @@ var ApgRprSim_Fountain_eGroundType = /* @__PURE__ */ ((ApgRprSim_Fountain_eGroun
   return ApgRprSim_Fountain_eGroundType2;
 })(ApgRprSim_Fountain_eGroundType || {});
 export class ApgRprSim_Fountain extends ApgRprSim_Base {
-  rng;
   spawnCounter;
   SPAWN_EVERY_N_STEPS = 5;
   MAX_RIGID_BODIES = 400;
   bodiesPool = [];
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    this.rng = new PRANDO("Fountain");
     this.spawnCounter = 0;
+    this.buildGui(ApgRprSim_Fountain_GuiBuilder);
     const settings = this.params.guiSettings;
-    const guiBuilder = new ApgRprSim_Fountain_GuiBuilder(this.simulator.gui, this.params);
-    const html = guiBuilder.buildHtml();
-    this.simulator.updateViewerPanel(html);
-    guiBuilder.bindControls();
     this.#createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -143,13 +138,16 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
     const bodiesGroupControl = this.#buildBodiesGroupControl();
-    const groundGroupControl = this.#buildGrounGroupControl();
+    const groundGroupControl = this.#buildGroundGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         bodiesGroupControl,
         groundGroupControl,
         simControls
@@ -189,12 +187,12 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
     );
     return r;
   }
-  #buildGrounGroupControl() {
+  #buildGroundGroupControl() {
     const keyValues = /* @__PURE__ */ new Map();
     for (const ground of this.guiSettings.groundTypes) {
       keyValues.set(ground, ground);
     }
-    const GROUND_SELECT_CNT = "groundSelectControl";
+    const GROUND_SELECT_CNT = "patternSelectControl";
     const groundSelectControl = this.buildSelectControl(
       GROUND_SELECT_CNT,
       "Type",

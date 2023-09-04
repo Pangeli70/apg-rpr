@@ -1,15 +1,13 @@
-import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
+import { RAPIER } from "../ApgRprDeps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
 import {
   ApgRprSim_Base
 } from "../ApgRprSimulationBase.ts";
 export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
-  rng;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    this.rng = new PRANDO(aparams.simulation);
-    const settings = this.params.guiSettings;
     this.buildGui(ApgRprSim_PngTerrain_GuiBuilder);
+    const settings = this.params.guiSettings;
     this.#createWorld(settings);
   }
   #createWorld(asettings) {
@@ -129,19 +127,22 @@ export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
     return r;
   }
 }
-export class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
+class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
     const latticeGroupControl = this.#buildSampligGroupControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         latticeGroupControl,
         simControls
       ]

@@ -40,10 +40,9 @@ export class ApgRprSim_Jenga extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings as ApgRprSim_Jenga_IGuiSettings;
-
         this.buildGui(ApgRprSim_Jenga_GuiBuilder);
 
+        const settings = this.params.guiSettings as ApgRprSim_Jenga_IGuiSettings;
         this.#createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -63,8 +62,6 @@ export class ApgRprSim_Jenga extends ApgRprSim_Base {
 
     #createWorld(asettings: ApgRprSim_Jenga_IGuiSettings) {
 
-        const rng = new PRANDO(asettings.name);
-
         // Create Ground.
         const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const groundBody = this.world.createRigidBody(groundBodyDesc);
@@ -72,8 +69,8 @@ export class ApgRprSim_Jenga extends ApgRprSim_Base {
         this.world.createCollider(groundColliderDesc, groundBody);
 
 
-        const piecesPerRow = 3;
-        const levels = 3;
+        const piecesPerRow = 4;
+        const levels = 16;
         const shift = 1;
 
         // In THREE world units
@@ -92,27 +89,31 @@ export class ApgRprSim_Jenga extends ApgRprSim_Base {
 
             for (let i = 0; i < piecesPerRow; i++) {
 
+                const delta = - halfRowCenter + ((pieceWidth + pieceGap) * i);
                 let x, z, w;
                 if (j % 2 == 0) {
-                    x = (pieceWidth * (i + 1)) + (pieceGap * i) - halfRowCenter;
+                    x = delta;
                     z = 0;
-                    w = { w: 0, x: 0, y: 1, z: 0 }
+                    w = 0;
                 }
                 else {
                     x = 0;
-                    z = (pieceWidth * (i + 1)) + (pieceGap * i) - halfRowCenter;
-                    w = { w: 0.1, x: 0, y: 1, z: 0 }
+                    z = delta;
+                    w = 1;
                 }
 
-                const rotation = new RAPIER.Quaternion(0, 1, 0, w);
-                //const w = rng.next() - 0.5;
                 // Create dynamic cube.
                 const boxBodyDesc = RAPIER.RigidBodyDesc
                     .dynamic()
-                    .setRotation(w)
+                    .setRotation({ x: 0, y: 1, z: 0, w })
                     .setTranslation(x, y, z)
                 const boxBody = this.world.createRigidBody(boxBodyDesc);
-                const boxColliderDesc = RAPIER.ColliderDesc.cuboid(pieceWidth / 2, pieceHeight / 2, pieceDepth / 2);
+
+                const pW = pieceWidth + this.rng.next() * pieceTolerance;
+                const pH = pieceHeight + this.rng.next() * pieceTolerance;
+                const pD = pieceDepth + this.rng.next() * pieceTolerance;
+
+                const boxColliderDesc = RAPIER.ColliderDesc.cuboid(pW / 2, pH / 2, pD / 2);
                 this.world.createCollider(boxColliderDesc, boxBody)
                     .setRestitution(asettings.cubesRestitution);
 
@@ -195,14 +196,18 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const cubesGroupControl = this.#buildCubesGroupControl();
 
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 cubesGroupControl,
                 simControls
             ]
@@ -214,7 +219,7 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
 
 
     #buildCubesGroupControl() {
-        const CUBES_REST_CNT = 'cubesRestitutionControl';
+        const CUBES_REST_CNT = 'blocksRestitutionControl';
         const cubesRestitutionControl = this.buildRangeControl(
             CUBES_REST_CNT,
             'Restitution',

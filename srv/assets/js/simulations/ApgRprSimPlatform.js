@@ -8,8 +8,8 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
   t = 0;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    const settings = this.params.guiSettings;
     this.buildGui(ApgRprSim_Platform_GuiBuilder);
+    const settings = this.params.guiSettings;
     this.#createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
@@ -95,18 +95,21 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
     return r;
   }
 }
-export class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
+class ApgRprSim_Platform_GuiBuilder extends ApgRprSim_GuiBuilder {
   guiSettings;
   constructor(agui, aparams) {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
   buildHtml() {
+    const simulationChangeControl = this.buildSimulationChangeControl();
+    const restartSimulationButtonControl = this.buildRestartButtonControl();
     const simControls = super.buildHtml();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-      this.guiSettings.name,
       [
+        simulationChangeControl,
+        restartSimulationButtonControl,
         simControls
       ]
     );

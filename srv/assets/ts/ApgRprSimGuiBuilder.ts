@@ -47,24 +47,14 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
    */
   override buildHtml() {
 
+    const simulationGroupControl = this.#buildSimulationGroupControl();
+
     const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params)
       .buildHtml();
     const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo!)
       .buildHtml();
 
-    const simulationGroupControl = this.#buildSimulationGroupControl();
-
     const creditsDialogControl = this.#buildCreditsDialogControl();
-
-    const RESTART_BTN_CNT = 'restartButtonControl';
-    const restartSimulationButtonControl = this.buildButtonControl(
-      RESTART_BTN_CNT,
-      'Restart',
-      () => {
-        this.params.restart = true;
-        this.gui.log('Restart button pressed');
-      }
-    );
 
     const CREDITS_BTN_CNT = 'creditsButtonControl';
     const creditsButtonControl = this.buildButtonControl(
@@ -78,7 +68,6 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     );
 
     const controls = [
-      restartSimulationButtonControl,
       simulationGroupControl,
       statsGroupControl,
       debugGroupControl,
@@ -92,29 +81,48 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
   }
 
 
-  #buildSimulationGroupControl() {
-
-    const keyValues = new Map<string, string>();
+  buildSimulationChangeControl() {
+    const simulationsKVs = new Map<string, string>();
     for (const panel of this.params.simulations!) {
-      keyValues.set(panel, panel);
+      simulationsKVs.set(panel, panel);
     }
     const SIM_SELECT_CNT = 'simulationSelectControl';
-    const simulationSelectControl = this.buildSelectControl(
+    const r = this.buildSelectControl(
       SIM_SELECT_CNT,
-      'Change',
+      '',
       this.params.simulation!,
-      keyValues,
+      simulationsKVs,
       () => {
         const select = this.gui.controls.get(SIM_SELECT_CNT)!.element as IApgDomSelect;
         this.params.simulation = select.value as ApgRpr_eSimulationName;
         //alert(select.value);
       }
     );
+    return r;
+  }
 
-    const SIM_VEL_ITER_CNT = 'simulationVelocityIterationControl';
-    const simulationVelocityIterationControl = this.buildRangeControl(
+
+  buildRestartButtonControl() {
+    const RESTART_BTN_CNT = 'restartButtonControl';
+    const r = this.buildButtonControl(
+      RESTART_BTN_CNT,
+      'Restart',
+      () => {
+        this.params.restart = true;
+        this.gui.log('Restart button pressed');
+      }
+    );
+
+    return r;
+  }
+
+
+  #buildSimulationGroupControl() {
+
+    const SIM_VEL_ITER_CNT = 'simulationVelocityIterationsControl';
+    const simulationVelocityIterationsControl = this.buildRangeControl(
       SIM_VEL_ITER_CNT,
-      'Precision',
+      'Velocity precision',
       this.params.guiSettings!.velocityIterations,
       this.params.guiSettings!.velocityIterationsMMS.min,
       this.params.guiSettings!.velocityIterationsMMS.max,
@@ -127,6 +135,76 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         //alert(range.value);
       }
     );
+
+    const SIM_FRIC_ITER_CNT = 'simulationFrictionIterationsControl';
+    const simulationFrictionIterationsControl = this.buildRangeControl(
+      SIM_FRIC_ITER_CNT,
+      'Friction precision',
+      this.params.guiSettings!.frictionIterations,
+      this.params.guiSettings!.frictionIterationsMMS.min,
+      this.params.guiSettings!.frictionIterationsMMS.max,
+      this.params.guiSettings!.frictionIterationsMMS.step,
+      () => {
+        const range = this.gui.controls.get(SIM_FRIC_ITER_CNT)!.element as IApgDomRange;
+        this.params.guiSettings!.frictionIterations = parseFloat(range.value);
+        const output = this.gui.controls.get(`${SIM_FRIC_ITER_CNT}Value`)!.element as IApgDomElement;
+        output.innerHTML = range.value;
+        //alert(range.value);
+      }
+    );
+
+    const SIM_STAB_ITER_CNT = 'simulationStabilizationIterationsControl';
+    const simulationStabilizationIterationsControl = this.buildRangeControl(
+      SIM_STAB_ITER_CNT,
+      'Stabilization precision',
+      this.params.guiSettings!.stabilizationIterations,
+      this.params.guiSettings!.stabilizationIterationsMMS.min,
+      this.params.guiSettings!.stabilizationIterationsMMS.max,
+      this.params.guiSettings!.stabilizationIterationsMMS.step,
+      () => {
+        const range = this.gui.controls.get(SIM_STAB_ITER_CNT)!.element as IApgDomRange;
+        this.params.guiSettings!.stabilizationIterations = parseFloat(range.value);
+        const output = this.gui.controls.get(`${SIM_STAB_ITER_CNT}Value`)!.element as IApgDomElement;
+        output.innerHTML = range.value;
+        //alert(range.value);
+      }
+    );
+
+
+    const SIM_LIN_ERR_CNT = 'simulationLinearErrorControl';
+    const simulationLinearErrorControl = this.buildRangeControl(
+      SIM_LIN_ERR_CNT,
+      'Linear error',
+      this.params.guiSettings!.linearError,
+      this.params.guiSettings!.linearErrorMMS.min,
+      this.params.guiSettings!.linearErrorMMS.max,
+      this.params.guiSettings!.linearErrorMMS.step,
+      () => {
+        const range = this.gui.controls.get(SIM_LIN_ERR_CNT)!.element as IApgDomRange;
+        this.params.guiSettings!.linearError = parseFloat(range.value);
+        const output = this.gui.controls.get(`${SIM_LIN_ERR_CNT}Value`)!.element as IApgDomElement;
+        output.innerHTML = range.value;
+        //alert(range.value);
+      }
+    );
+
+    const SIM_ERR_REDUC_RATIO_CNT = 'simulationErrorReductionRatioControl';
+    const simulationErrorReductionRatioControl = this.buildRangeControl(
+      SIM_ERR_REDUC_RATIO_CNT,
+      'Error reduction',
+      this.params.guiSettings!.errorReductionRatio,
+      this.params.guiSettings!.errorReductionRatioMMS.min,
+      this.params.guiSettings!.errorReductionRatioMMS.max,
+      this.params.guiSettings!.errorReductionRatioMMS.step,
+      () => {
+        const range = this.gui.controls.get(SIM_ERR_REDUC_RATIO_CNT)!.element as IApgDomRange;
+        this.params.guiSettings!.errorReductionRatio = parseFloat(range.value);
+        const output = this.gui.controls.get(`${SIM_ERR_REDUC_RATIO_CNT}Value`)!.element as IApgDomElement;
+        output.innerHTML = range.value;
+        //alert(range.value);
+      }
+    );
+
 
     const SIM_SPEED_CNT = 'simulationSpeedControl';
     const simulationSpeedControl = this.buildRangeControl(
@@ -149,18 +227,22 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       "simulationGroupControl",
       "Simulation:",
       [
-        simulationSelectControl,
-        simulationVelocityIterationControl,
+        simulationVelocityIterationsControl,
+        simulationFrictionIterationsControl,
+        simulationStabilizationIterationsControl,
+        simulationLinearErrorControl,
+        simulationErrorReductionRatioControl,
         simulationSpeedControl,
       ],
       this.params.guiSettings!.isSimulationGroupOpened,
       () => {
-        if (!this.gui.isRefreshing){ 
+        if (!this.gui.isRefreshing) {
           this.params.guiSettings!.isSimulationGroupOpened = !this.params.guiSettings!.isSimulationGroupOpened
           this.gui.log('Simulation group toggled');
         }
       }
     );
+
     return r;
   }
 

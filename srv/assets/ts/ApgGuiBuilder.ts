@@ -67,7 +67,10 @@ export class ApgGui_Builder {
     };
     this.#addControl(aId, paragraphControl);
     const r = `
-        <p style="${astyle || ''}">
+        <p
+          id="${aId}"
+          style="${astyle || ''}"
+        >
             ${acontent}
         </p>
         `;
@@ -249,16 +252,30 @@ export class ApgGui_Builder {
   }
 
 
+  /**
+   * Build a panel control
+   * @param aid Identificator
+   * @param acontrols List of other HTML controls inside the panel
+   * @param acaption Optional title for the panel: if empty won't be rendered
+   * @returns the full HTML of the panel ready to be injectend in the DOM with (element).appendChild
+   */
   buildPanelControl(
     aid: string,
-    acaption: string,
-    acontrols: string[]
+    acontrols: string[],
+    acaption = "",
   ) {
-    const r = `
-        <p 
+
+    let caption = '';
+
+    if (acaption != '') {
+      caption = ` <p 
             style="margin: 0.25rem; text-align: center;"
         >${acaption}</p>
-        
+        `
+    }
+
+    const r = `
+       ${caption}
         <div
             id="${aid}" 
             style="overflow-y: auto; margin:0.25rem; background-color: #fafafa" 
@@ -269,6 +286,15 @@ export class ApgGui_Builder {
   }
 
 
+  /**
+   * Build a select control
+   * @param aId Identificator
+   * @param acaption Optional title for the control, if empty won't be rendered
+   * @param avalue current value of the select element
+   * @param avalues Map of key/value pairs for the select options 
+   * @param achangeCallback A callback to be executed when the value changes
+   * @returns the full HTML of the control ready to be added to a list of other controls
+   */
   buildSelectControl(
     aId: string,
     acaption: string,
@@ -276,6 +302,17 @@ export class ApgGui_Builder {
     avalues: Map<string, string>,
     achangeCallback: TApgDomEventCallback
   ) {
+
+    let caption = '';
+
+    if (acaption != '') {
+      caption = `
+            <label
+                for="${aId}"
+                style="font-size: 0.75rem"
+            >${acaption}:</label>
+        `
+    }
 
     const selectControl: ApgGui_IControl = {
       element: null,
@@ -293,15 +330,10 @@ export class ApgGui_Builder {
 
     const r = `
         <p style="margin-bottom: 0.25rem">
-
-            <label
-                for="${aId}"
-                style="font-size: 0.75rem"
-            >${acaption}:</label>
-
+        ${caption}
             <select 
                 id="${aId}"
-                style="font-size: 0.75rem; padding: 0.25rem"
+                style="font-size: 0.75rem; padding: 0.125rem; margin: 0px;"
             >${options.join()}</select>
 
         </p>

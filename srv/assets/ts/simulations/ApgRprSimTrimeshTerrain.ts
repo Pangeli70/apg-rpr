@@ -29,10 +29,9 @@ export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
 
         super(asimulator, aparams);
 
-        const settings = this.params.guiSettings! as ApgRprSim_TrimeshTerrain_IGuiSettings;
-
         this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
 
+        const settings = this.params.guiSettings! as ApgRprSim_TrimeshTerrain_IGuiSettings;
         this.#createWorld(settings);
         asimulator.addWorld(this.world);
 
@@ -48,6 +47,7 @@ export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
 
 
     #createWorld(asettings: ApgRprSim_TrimeshTerrain_IGuiSettings) {
+        
         // Create Trimesh platform collider.
         const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
         const platformBody = this.world.createRigidBody(platformBodyDesc);
@@ -129,7 +129,7 @@ export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
 }
 
 
-export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
+class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     guiSettings: ApgRprSim_TrimeshTerrain_IGuiSettings;
 
@@ -146,12 +146,16 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 simControls
             ]
         );

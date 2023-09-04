@@ -35,7 +35,6 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
 
         const settings = this.params.guiSettings! as IApgRprSim_Damping_GuiSettings;
         this.createWorld(settings);
-
         asimulator.addWorld(this.world);
 
         if (!this.params.restart) {
@@ -128,12 +127,16 @@ export class ApgRprSim_Damping_GuiBuilder extends ApgRprSim_GuiBuilder {
 
     override buildHtml() {
 
+        const simulationChangeControl = this.buildSimulationChangeControl();
+        const restartSimulationButtonControl = this.buildRestartButtonControl();
+
         const simControls = super.buildHtml();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
-            this.guiSettings.name,
             [
+                simulationChangeControl,
+                restartSimulationButtonControl,
                 simControls
             ]
         );
