@@ -111,6 +111,8 @@ export interface IApgDomElement {
     appendChild(achild: IApgDomElement | HTMLCanvasElement): void;
 
     addEventListener(aevent: string, acallback: TApgDomEventCallback, auseCapture?: boolean): void;
+
+    requestFullscreen(): void;
 }
 
 export type TApgDomKeyboardEventCallback = (aaevent: IApgDomKeyboardEvent) => void;
@@ -130,6 +132,9 @@ export interface IApgDomDocument extends IApgDomElement {
     body: IApgDomBody
 
     fullscreenElement?: IApgDomElement;
+    exitFullscreen(): void;
+
+    documentElement: IApgDomElement;
 }
 
 

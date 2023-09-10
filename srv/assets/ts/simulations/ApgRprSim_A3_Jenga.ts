@@ -102,6 +102,7 @@ export class ApgRprSim_Jenga extends ApgRprSim_Base {
                     w = 1;
                 }
 
+
                 // Create dynamic cube.
                 const boxBodyDesc = RAPIER.RigidBodyDesc
                     .dynamic()

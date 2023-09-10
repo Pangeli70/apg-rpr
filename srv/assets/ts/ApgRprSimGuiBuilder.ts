@@ -7,6 +7,7 @@
 
 import { IApgRprSim_Params } from "./ApgRprSimulationBase.ts";
 import {
+IApgDomButton,
   IApgDomDialog, IApgDomElement,
   IApgDomRange, IApgDomSelect
 } from "./ApgDom.ts";
@@ -56,6 +57,29 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
 
     const creditsDialogControl = this.#buildCreditsDialogControl();
 
+    const FULLSCREEN_BTN_CNT = 'fullscreenButtonControl';
+    const fullscreenButtonControl = this.buildButtonControl(
+      FULLSCREEN_BTN_CNT,
+      'Go full screen',
+      () => {
+        const button = this.gui.controls.get(FULLSCREEN_BTN_CNT)!.element as IApgDomButton;
+        const docElement = this.gui.document.documentElement;
+        if (docElement.requestFullscreen) {
+          if (!this.gui.document.fullscreenElement) {
+            docElement.requestFullscreen();
+            button.innerText = 'Exit full screen';
+          }
+          else { 
+            this.gui.document.exitFullscreen();
+            button.innerText = 'Go full screen';
+          }
+        }
+        else {
+          alert('Full screen not supported');
+        }
+      }
+    );
+
     const CREDITS_BTN_CNT = 'creditsButtonControl';
     const creditsButtonControl = this.buildButtonControl(
       CREDITS_BTN_CNT,
@@ -72,6 +96,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       statsGroupControl,
       debugGroupControl,
       creditsDialogControl,
+      fullscreenButtonControl,
       creditsButtonControl
     ];
     const r = controls.join("\n");
