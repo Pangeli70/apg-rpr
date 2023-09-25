@@ -5,8 +5,10 @@
  * -----------------------------------------------------------------------
 */
 
-
-export enum eApgRpr_InstancedMeshesGroup {
+/**
+ * 
+ */
+export enum eApgRpr_InstancedMeshesGroups {
   BOXES = 0,
   BALLS = 1,
   CYLINDERS = 2,

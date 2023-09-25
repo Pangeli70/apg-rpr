@@ -11,19 +11,18 @@ import {
 } from "./ApgDom.ts";
 import { ApgGui } from "./ApgGui.ts";
 import {
-    ApgRpr_Colliders_StatsPanel, ApgRpr_Step_StatsPanel,
-    ApgGui_Stats
+    ApgGui_Stats,
+    ApgRpr_Colliders_StatsPanel, ApgRpr_Step_StatsPanel
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from './ApgRprDeps.ts';
-import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import {
-    IApgRpr_CameraPosition, IApgRpr_DebugInfo,
-    IApgRpr_Point2D
+    IApgRpr_CameraPosition, IApgRpr_DebugInfo, IApgRpr_Point2D
 } from "./ApgRprInterfaces.ts";
 import {
-    ApgRprSim_Base, IApgRprSim_Params
+    ApgRprSim_Base, ApgRprSim_IGuiSettings, IApgRprSim_Params
 } from "./ApgRprSimulationBase.ts";
-import { ApgRprThreeViewer } from "./ApgRprThreeViewer.ts";
+import { ApgRprViewer } from "./ApgRprThreeViewer.ts";
+import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 
 
 export class ApgRpr_Simulator {
@@ -35,6 +34,8 @@ export class ApgRpr_Simulator {
 
     /** The current set of simulations */
     simulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base>;
+    /** Default simulation */
+    defaultSim: ApgRpr_eSimulationName;
 
     /** Gui */
     gui: ApgGui;
@@ -45,7 +46,7 @@ export class ApgRpr_Simulator {
     collidersStatsPanel!: ApgRpr_Colliders_StatsPanel;
 
     /** The THREE viewer attached to the simulation */
-    viewer: ApgRprThreeViewer;
+    viewer: ApgRprViewer;
 
     /** Eventually used for picking objects with a raycaster */
     mouse: IApgRpr_Point2D;
@@ -86,25 +87,37 @@ export class ApgRpr_Simulator {
     /** The simulation step of the snapshot */
     snapshotStepId = 0;
 
+    readonly DEFAULT_GRAVITY = 9.81;
 
+    readonly DEFAULT_GRAVITY_X = 0;
+    readonly DEFAULT_GRAVITY_Y = -this.DEFAULT_GRAVITY;
+    readonly DEFAULT_GRAVITY_Z = 0;
 
     readonly DEFAULT_VELOCITY_ITERATIONS = 4;
     readonly DEFAULT_FRICTION_ITERATIONS = 7;
     readonly DEFAULT_STABILIZATION_ITERATIONS = 1;
     readonly DEFAULT_LINEAR_ERROR = 0.001;
     readonly DEFAULT_ERR_REDUCTION_RATIO = 0.8;
-    readonly DEFAULT_FRAME_RATE = 1 / 50;
+    readonly DEFAULT_PREDICTION_DISTANCE = 0.002;
+
+    readonly DEFAULT_SIMULATION_RATE = 1 / 60;
+
     readonly MAX_SLOWDOWN = 20;
-    
+
+    readonly LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";
+    readonly LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS = "ApgRprLocalStorage_SimulationSettingsFor_";
+
 
     constructor(
         awindow: IApgDomBrowserWindow,
         adocument: IApgDomDocument,
-        asimulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base>
+        asimulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base>,
+        adefaultSim: ApgRpr_eSimulationName
     ) {
         this.window = awindow;
         this.document = adocument;
         this.simulations = asimulations;
+        this.defaultSim = adefaultSim;
 
         this.gui = new ApgGui(this.document);
 
@@ -114,7 +127,7 @@ export class ApgRpr_Simulator {
             stepId: 0
         }
 
-        this.viewer = new ApgRprThreeViewer(this.window, this.document);
+        this.viewer = new ApgRprViewer(this.window, this.document);
         this.gui.log(`ApgRprThreeViewer created`, true);
 
         this.mouse = { x: 0, y: 0 };
@@ -128,8 +141,57 @@ export class ApgRpr_Simulator {
             this.mouse.y = 1 - (event.clientY / this.window.innerHeight) * 2;
         });
 
-        // Set the first simulation
-        this.setSimulation({ simulation: ApgRpr_eSimulationName.A0_PYRAMID });
+
+    }
+
+
+    /**
+     * Tries to get simulation parameters in the following order 1) querystring, 2) localstorage 3) revert to defaults
+     * @returns The current simulation parameters
+     */
+    getSimulationParams() {
+        let settings: ApgRprSim_IGuiSettings | null = null;
+
+        // Try to get the simulation settings from querystring
+        const querystringParams = new URLSearchParams(this.window.location.search);
+        const b64EncodedSettings = querystringParams.get('p');
+        if (b64EncodedSettings != null) {
+            try {
+                const stringifiedSettings = atob(b64EncodedSettings);
+                alert(stringifiedSettings);
+                settings = JSON.parse(stringifiedSettings);
+            }
+            catch (e) {
+                alert('Invalid querystring params: ' + e.message);
+            }
+        }
+
+        // Try to get the simulation settings from local storage
+        if (settings == null) {
+            const lastSimulation = this.window.localStorage.getItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION);
+            if (lastSimulation != undefined) {
+                const localStorageSettings = this.window.localStorage.getItem(this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + lastSimulation);
+                if (localStorageSettings != undefined) {
+                    try {
+                        settings = JSON.parse(localStorageSettings);
+                    }
+                    catch (e) {
+                        alert('Invalid local storage settings: ' + e.message);
+                    }
+                }
+            }
+        }
+
+        let params: IApgRprSim_Params;
+
+        // Simulation settings not provided so revert to default
+        if (settings === null) {
+            params = { simulation: this.defaultSim };
+        }
+        else {
+            params = { simulation: settings.name, guiSettings: settings };
+        }
+        return params;
     }
 
 
@@ -151,7 +213,9 @@ export class ApgRpr_Simulator {
     }
 
 
-    /** Hook to attach a function that will execute before the simulation step  */
+    /** 
+     * Hook to attach a function that will execute before the simulation step
+     */
     setPreStepAction(action: Function | null) {
         this.preStepAction = action;
     }
@@ -185,14 +249,29 @@ export class ApgRpr_Simulator {
 
 
     /** 
-     * This method is called to allow the DOM to refresh when is changed diamically.
+     * Called to allow the DOM to refresh when is changed diamically.
      * It delays the event loop calling setTimeout
      */
     updateViewerPanel(ahtml: string) {
 
         this.gui.isRefreshing = true;
 
-        this.viewer.panel.innerHTML = ahtml;
+        this.viewer.guiPanelElement.innerHTML = ahtml;
+
+        // @WARNING This is a hack that could be useful to allow to run everything asynchronously -- APG 20230916
+        setTimeout(() => {
+            this.gui.isRefreshing = false;
+        }, 0);
+    }
+
+
+    /** 
+     * Called to allow the DOM to refresh when is changed diamically.
+     * It delays the event loop calling setTimeout
+     */
+    updateViewerHud(ahtml: string) {
+
+        // @WARNING This is a stub we don't have a hud yet -- APG 20230916
 
         setTimeout(() => {
             this.gui.isRefreshing = false;
@@ -201,48 +280,47 @@ export class ApgRpr_Simulator {
 
 
     /** 
-     * This method is called to allow the DOM to refresh when is changed diamically.
-     * It delays the event loop calling setTimeout
+     * If we call this it means that the camera is locked
      */
-    updateViewerHud(ahtml: string) {
-
-        this.gui.isRefreshing = true;
-
-        this.viewer.panel.innerHTML = ahtml;
-
-        setTimeout(() => {
-            this.gui.isRefreshing = false;
-        }, 0);
-    }
-
-
-
-    /** If we call this it means that the camera is locked */
     resetCamera(acameraPosition: IApgRpr_CameraPosition) {
 
-        this.viewer.setCamera(acameraPosition);
+        this.viewer.setOrbControlsParams(acameraPosition);
 
     }
 
 
+    /**
+     * Allows to restart the current simulation or to change another one
+     * @param aparams
+     */
     setSimulation(aparams: IApgRprSim_Params) {
 
-        const simulation = aparams.simulation!;
+        const simulation = aparams.simulation;
         const simulationType = this.simulations.get(simulation);
         if (!simulationType) {
-            const errorMessage = `Simulation for ${simulation} is not yet available`
+            const errorMessage = `Simulation for (${simulation}) is not yet available`
             alert(errorMessage);
             throw new Error(errorMessage);
         }
 
+        // TODO this should detach the previous event listeners and remove all the elements from the dom -- APG 20230922
         this.gui.clearControls();
 
+        // TODO this should freeze ther THREE viewer updates and remove all the meshes from the scene -- APG 20230922
         this.viewer.reset();
 
         // TODO Semantically this seems not good. We should store this somewhere and
-        // dispose everyting when we change the simulation -- APG 20230812
+        // dispose everyting explicitly when we change the simulation instead than let 
+        // the garbage collector to do it on its own -- APG 20230812
         const newSimulation = new simulationType(this, aparams);
         this.gui.log(`${aparams.simulation} simulation created`, true);
+
+        // Save data to local storage
+        this.window.localStorage.setItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION, simulation);
+        const settingsKey = this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + simulation;
+        const localStorageSettings = JSON.stringify(aparams.guiSettings!, undefined, "  ");
+        this.window.localStorage.setItem(settingsKey, localStorageSettings);
+
     }
 
 
@@ -267,9 +345,10 @@ export class ApgRpr_Simulator {
         this.runCall++;
 
         let canRun = false;
-        if (this.runCall % this.slowdown == 0) {
-            this.runCall = 0;
-            if (this.slowdown != this.MAX_SLOWDOWN) {
+        // The simulation is not paused
+        if (this.slowdown != this.MAX_SLOWDOWN) {
+            if (this.runCall % this.slowdown == 0) {
+                this.runCall = 0;
                 canRun = true;
             }
         }
@@ -302,12 +381,12 @@ export class ApgRpr_Simulator {
 
 
         // @NOTE Here is the main loop of the simulation !!!
-        this.window.requestAnimationFrame(() => {
-            //setTimeout(() => {
+        // We try to run at constant speed 
+        this.window.setTimeout(() => {
 
-            const frame = performance.now();
-            const deltaTime1 = (frame - this.lastBrowserFrame) / 1000;
-            const deltaTime2 = this.debugInfo.integrationParams!.dt;
+            const frameTime = performance.now();
+            const deltaTime1 = (frameTime - this.lastBrowserFrame) / 1000;
+
 
             if (this.world) {
                 if (!this.document.hasFocus()) {
@@ -319,7 +398,7 @@ export class ApgRpr_Simulator {
                     }
                 }
                 else {
-                    this.world!.integrationParameters.dt = this.DEFAULT_FRAME_RATE;
+                    this.world!.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
                     if (this.documentHasFocus != true) {
                         this.gui.log('Document has focus: sim. active');
                         this.documentHasFocus = true;
@@ -335,11 +414,11 @@ export class ApgRpr_Simulator {
                     // console.log(deltaTime1.toFixed(5), deltaTime2.toFixed(5));
                 }
             }
-            this.lastBrowserFrame = frame;
+            this.lastBrowserFrame = frameTime;
 
             this.run();
-            //}, 20);
-        });
+
+        }, this.DEFAULT_SIMULATION_RATE);
 
     }
 

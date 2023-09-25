@@ -9,16 +9,22 @@ import { ApgGui_IMinMaxStep } from "./ApgGui.ts";
 import { ApgGui_Stats } from "./ApgGuiStats.ts";
 import { RAPIER, PRANDO } from './ApgRprDeps.ts';
 import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
-import { IApgRpr_DebugInfo, IApgRpr_CameraPosition } from "./ApgRprInterfaces.ts";
+import { IApgRpr_DebugInfo, IApgRpr_CameraPosition, ApgRpr_ISettings } from "./ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "./ApgRprSimGuiBuilder.ts";
 import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
 
 
-export interface ApgRprSim_IGuiSettings {
+
+export interface ApgRprSim_IGuiSettings extends ApgRpr_ISettings {
 
     name: ApgRpr_eSimulationName,
 
     isSimulationGroupOpened: boolean;
+
+    gravity: RAPIER.Vector3;
+    gravityXMMS: ApgGui_IMinMaxStep;
+    gravityYMMS: ApgGui_IMinMaxStep;
+    gravityZMMS: ApgGui_IMinMaxStep;
 
     velocityIterations: number;
     velocityIterationsMMS: ApgGui_IMinMaxStep;
@@ -35,23 +41,30 @@ export interface ApgRprSim_IGuiSettings {
     errorReductionRatio: number;
     errorReductionRatioMMS: ApgGui_IMinMaxStep;
 
+    predictionDistance: number;
+    predictionDistanceMMS: ApgGui_IMinMaxStep;
+
     slowdown: number;
     slowdownMMS: ApgGui_IMinMaxStep;
+
+    doResetToDefaults: boolean;
 
     isStatsGroupOpened: boolean;
 
     cameraPosition: IApgRpr_CameraPosition;
+    doResetCamera: boolean;
 
 }
 
 
 export interface IApgRprSim_Params {
-    gravity?: RAPIER.Vector3,
+
     restart?: boolean;
 
     simulation: ApgRpr_eSimulationName,
     simulations?: ApgRpr_eSimulationName[],
 
+    // TODO Can we say that is not optional? Yes if we exctract a default Rapier settings -- APG 20230916
     guiSettings?: ApgRprSim_IGuiSettings;
 
     stats?: ApgGui_Stats;
@@ -90,7 +103,6 @@ export class ApgRprSim_Base {
         this.simulator = asimulator;
 
         this.params = {
-            gravity: aparams.gravity || new RAPIER.Vector3(0, -9.81, 0),
             restart: aparams.restart || false,
             simulation: aparams.simulation,
             simulations: Array.from(this.simulator.simulations.keys()),
@@ -98,26 +110,31 @@ export class ApgRprSim_Base {
             stats: this.simulator.stats,
             debugInfo: this.simulator.debugInfo,
         }
-
-        // @WARNING This must remain here! after the params creation
+        // @WARNING I know its ugly but to avoid TS complaints this must remain here! After the this.params creation -- APG 20230916
         if (this.params.guiSettings == undefined) {
             this.params.guiSettings = this.defaultGuiSettings();
         }
+
 
         this.rng = new PRANDO(this.params.simulation);
 
         this.saveParams();
 
-        this.world = new RAPIER.World(this.params.gravity!);
+        this.world = new RAPIER.World(this.params.guiSettings!.gravity);
 
-        this.world.maxVelocityIterations = this.params.guiSettings.velocityIterations;
-        this.world.maxVelocityFrictionIterations = this.params.guiSettings.frictionIterations;
-        this.world.maxStabilizationIterations = this.params.guiSettings.stabilizationIterations;
-        this.world.integrationParameters.allowedLinearError = this.params.guiSettings.linearError;
-        this.world.integrationParameters.erp = this.params.guiSettings.errorReductionRatio;
+        this.#applyGuiSettingsToWorld();
 
     }
 
+
+    #applyGuiSettingsToWorld() {
+        this.world.maxVelocityIterations = this.params.guiSettings!.velocityIterations;
+        this.world.maxVelocityFrictionIterations = this.params.guiSettings!.frictionIterations;
+        this.world.maxStabilizationIterations = this.params.guiSettings!.stabilizationIterations;
+        this.world.integrationParameters.allowedLinearError = this.params.guiSettings!.linearError;
+        this.world.integrationParameters.erp = this.params.guiSettings!.errorReductionRatio;
+        this.world.integrationParameters.predictionDistance = this.params.guiSettings!.predictionDistance;
+    }
 
     /**
      * Create the Gui for the current simulation
@@ -140,66 +157,6 @@ export class ApgRprSim_Base {
 
 
     /** 
-     * Update the simulation params accordingly with the Gui settings. This method 
-     * can be overridden and extended by derived classes to manage the settings 
-     * specific of the single simulation that need immediate and not restar updating. 
-     */
-    protected updateFromGui() {
-
-        if (this.needsUpdate()) {
-
-            this.updateSimulatorFromGui();
-
-            this.saveParams();
-        }
-
-    }
-
-
-    /** 
-     * Update the Rapier simulator params from the Gui setting. This function should
-     * not be overridden.
-     */
-    protected updateSimulatorFromGui() {
-
-        if (this.params.restart) {
-
-            this.simulator.setSimulation(this.params);
-        }
-
-        if (this.prevParams.simulation != this.params.simulation) {
-            this.simulator.setSimulation({ simulation: this.params.simulation })
-        }
-
-        if (this.prevParams.guiSettings!.velocityIterations != this.params.guiSettings!.velocityIterations) {
-            this.simulator.world!.maxVelocityIterations = this.params.guiSettings!.velocityIterations
-        }
-
-        if (this.prevParams.guiSettings!.frictionIterations != this.params.guiSettings!.frictionIterations) {
-            this.simulator.world!.maxVelocityFrictionIterations = this.params.guiSettings!.frictionIterations
-        }
-
-        if (this.prevParams.guiSettings!.stabilizationIterations != this.params.guiSettings!.stabilizationIterations) {
-            this.simulator.world!.maxStabilizationIterations = this.params.guiSettings!.stabilizationIterations
-        }
-
-        if (this.prevParams.guiSettings!.linearError != this.params.guiSettings!.linearError) {
-            this.world.integrationParameters.allowedLinearError = this.params.guiSettings!.linearError;
-        }
-
-        if (this.prevParams.guiSettings!.errorReductionRatio != this.params.guiSettings!.errorReductionRatio) {
-            this.world.integrationParameters.erp = this.params.guiSettings!.errorReductionRatio;
-        }
-
-
-        if (this.prevParams.guiSettings!.slowdown != this.params.guiSettings!.slowdown) {
-            this.simulator.slowdown = this.params.guiSettings!.slowdown
-        }
-
-    }
-
-
-    /** 
      * Set up the default Gui settings for the simulator. This method can be overridden 
      * and extended by derived classes to add more settings specific of the single simulation. 
      */
@@ -208,8 +165,25 @@ export class ApgRprSim_Base {
         const r: ApgRprSim_IGuiSettings = {
 
             name: this.params.simulation,
-
+            
             isSimulationGroupOpened: false,
+
+            gravity: new RAPIER.Vector3(0, -9.81, 0),
+            gravityXMMS: {
+                min: -5,
+                max: 5,
+                step: 0.1
+            },
+            gravityYMMS: {
+                min: -5,
+                max: 5,
+                step: 0.1
+            },
+            gravityZMMS: {
+                min: -5,
+                max: 5,
+                step: 0.1
+            },
 
             velocityIterations: this.simulator.DEFAULT_VELOCITY_ITERATIONS,
             velocityIterationsMMS: {
@@ -246,6 +220,12 @@ export class ApgRprSim_Base {
                 step: 0.05
             },
 
+            predictionDistance: this.simulator.DEFAULT_PREDICTION_DISTANCE,
+            predictionDistanceMMS: {
+                min: 0.002,
+                max: 0.1,
+                step: 0.002
+            },
 
             slowdown: 1,
             slowdownMMS: {
@@ -254,16 +234,93 @@ export class ApgRprSim_Base {
                 step: 1
             },
 
+            doResetToDefaults: false,
+
             isStatsGroupOpened: false,
 
             cameraPosition: {
                 eye: { x: - 80, y: 10, z: 80 },
                 target: { x: 0, y: 0, z: 0 }
-            }
+            },
+
+            doResetCamera: false
 
         }
 
         return r;
+    }
+
+
+    /** 
+     * Update the simulation params accordingly with the Gui settings. This method 
+     * can be overridden and extended by derived classes to manage the settings 
+     * specific of the single simulation that need immediate and not restar updating. 
+     */
+    protected updateFromGui() {
+
+        if (this.needsUpdate()) {
+
+            this.updateSimulatorFromGui();
+
+            this.saveParams();
+        }
+
+    }
+
+
+    /** 
+     * Update the Rapier simulator params from the Gui setting. This function should
+     * not be overridden.
+     */
+    protected updateSimulatorFromGui() {
+
+        if (this.prevParams.guiSettings!.doResetToDefaults != this.params.guiSettings!.doResetToDefaults) {
+            this.params.guiSettings!.doResetToDefaults = this.prevParams.guiSettings!.doResetToDefaults;
+            this.params.guiSettings = this.defaultGuiSettings();
+            this.#applyGuiSettingsToWorld();
+            this.params.restart = true;
+        }
+
+        if (this.params.restart) {
+
+            this.simulator.setSimulation(this.params);
+        }
+
+        if (this.prevParams.simulation != this.params.simulation) {
+            this.simulator.setSimulation({ simulation: this.params.simulation })
+        }
+
+        if (this.prevParams.guiSettings!.velocityIterations != this.params.guiSettings!.velocityIterations) {
+            this.simulator.world!.maxVelocityIterations = this.params.guiSettings!.velocityIterations
+        }
+
+        if (this.prevParams.guiSettings!.frictionIterations != this.params.guiSettings!.frictionIterations) {
+            this.simulator.world!.maxVelocityFrictionIterations = this.params.guiSettings!.frictionIterations
+        }
+
+        if (this.prevParams.guiSettings!.stabilizationIterations != this.params.guiSettings!.stabilizationIterations) {
+            this.simulator.world!.maxStabilizationIterations = this.params.guiSettings!.stabilizationIterations
+        }
+
+        if (this.prevParams.guiSettings!.linearError != this.params.guiSettings!.linearError) {
+            this.world.integrationParameters.allowedLinearError = this.params.guiSettings!.linearError;
+        }
+
+        if (this.prevParams.guiSettings!.errorReductionRatio != this.params.guiSettings!.errorReductionRatio) {
+            this.world.integrationParameters.erp = this.params.guiSettings!.errorReductionRatio;
+        }
+
+        if (this.prevParams.guiSettings!.predictionDistance != this.params.guiSettings!.predictionDistance) {
+            this.world.integrationParameters.predictionDistance = this.params.guiSettings!.predictionDistance;
+        }
+
+
+        if (this.prevParams.guiSettings!.slowdown != this.params.guiSettings!.slowdown) {
+            this.simulator.slowdown = this.params.guiSettings!.slowdown
+        }
+
+
+
     }
 
 

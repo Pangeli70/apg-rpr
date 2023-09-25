@@ -32,7 +32,7 @@ export var ApgRpr_eSimulationName = /* @__PURE__ */ ((ApgRpr_eSimulationName2) =
   ApgRpr_eSimulationName2["Z_NONE"] = "";
   return ApgRpr_eSimulationName2;
 })(ApgRpr_eSimulationName || {});
-export function ApgRprSim_Get() {
+export function ApgRpr_PrepareSimulations() {
   const simulations = /* @__PURE__ */ new Map();
   simulations.set("Pyramid" /* A0_PYRAMID */, ApgRprSim_Pyramid);
   simulations.set("Column" /* A1_COLUMN */, ApgRprSim_Column);

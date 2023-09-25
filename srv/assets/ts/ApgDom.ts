@@ -16,15 +16,15 @@ export enum eApgDomFormElementType {
     DIV = 'div',
     DETAILS = 'details',
     INPUT = "input",
-    LABEL ="label",
-    SELECT ="select",
-    TEXT_AREA ="textarea",
-    BUTTON ="button",
-    FIELD_SET ="fieldset",
-    LEGEND ="legend",
-    DATA_LIST ="datalist",
-    OUTPUT ="output",
-    OPTION ="option",
+    LABEL = "label",
+    SELECT = "select",
+    TEXT_AREA = "textarea",
+    BUTTON = "button",
+    FIELD_SET = "fieldset",
+    LEGEND = "legend",
+    DATA_LIST = "datalist",
+    OUTPUT = "output",
+    OPTION = "option",
     OPT_GROUP = "optgroup",
     DIALOG = "dialog"
 
@@ -55,6 +55,9 @@ export enum eApgDomInputType {
     WEEK = "week"
 }
 
+export interface IApgDomBrowserLocation {
+    search: string
+}
 
 export interface IApgDomStyle {
     visibility?: string;
@@ -82,15 +85,18 @@ export interface IApgDomBrowserWindow {
     innerHeight: number;
     localStorage: IApgDomBrowserLocalStorage,
 
+    location: IApgDomBrowserLocation,
+
     addEventListener(aevent: string, acallBack: Function, aflag?: boolean): void;
 
     requestAnimationFrame(acallBack: Function): void;
+    setTimeout(acallback: () => void, amilliseconds: number): unknown;
 }
 
 
 export interface IApgDomBrowserLocalStorage {
-    getItem(akey: string): unknown;
-    setItem(akey: string, avalue: unknown): void;
+    getItem(akey: string): string;
+    setItem(akey: string, avalue: string): void;
 }
 
 

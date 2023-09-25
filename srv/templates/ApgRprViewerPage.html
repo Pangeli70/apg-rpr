@@ -1,4 +1,35 @@
 [: extends("/master/ApgRprViewerMaster.html") :]
 
 
-[: partial("/partials/ApgRprViewerPartial.html") :]
+<div style="display: flex; width: 100%; height:100%; margin: 0; padding: 0; ">
+    <div
+      id="ApgWglGui"
+      style="width:20%; height: 100%; overflow-y: scroll;"
+    >
+        <div
+          id="ApgWglGuiTitle"
+          style="text-align: center;"
+        >
+            <img
+              title="APG-Logo"
+              style="width:1.25rem; height:1.25rem; margin-left: 0.25rem"
+              src="https://apg-cdn.deno.dev/assets/img/png/APG-logo-2022-128px.png"
+            />
+            <span style="font-size: 1rem"> [: $site.name :] </span>
+            <span style="font-size: 0.4rem"> [: $site.version :] </span>
+        </div>
+        <div id="ApgWglGuiPanel"></div>
+    </div>
+    <div
+      id="ApgWglViewer"
+      style="width:80%; height:100%; background-color: rgb(0, 0, 0);"
+    ></div>
+</div>
+
+<script type="module">
+
+    import { ApgRpr } from "./assets/ts/ApgRpr.ts";
+
+    await ApgRpr(window, document);
+
+</script>

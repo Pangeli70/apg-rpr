@@ -17,6 +17,11 @@ export class ApgRprUtils {
 
     }
 
+    static Assert(amessage: string) { 
+        alert(amessage);
+        throw new Error(amessage);
+    } 
+
     static GetHeightfieldGeometryDataByHeightFieldColliderData(collider: RAPIER.Collider) {
 
         const heights = collider.heightfieldHeights();

@@ -1,7 +1,13 @@
 {
   "compilerOptions": {
     "noImplicitOverride": true,
-    "include": ["dom"]
+    "include": [
+      "dom",
+      "dom.iterable",
+      "dom.asynciterable",
+      "deno.ns",
+      "deno.unstable"
+    ]
   },
   "tasks": {
     "run": "deno run -A --unstable --watch server.ts",

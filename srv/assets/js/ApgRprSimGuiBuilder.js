@@ -16,7 +16,6 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     const simulationGroupControl = this.#buildSimulationGroupControl();
     const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params).buildHtml();
     const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo).buildHtml();
-    const creditsDialogControl = this.#buildCreditsDialogControl();
     const FULLSCREEN_BTN_CNT = "fullscreenButtonControl";
     const fullscreenButtonControl = this.buildButtonControl(
       FULLSCREEN_BTN_CNT,
@@ -37,6 +36,20 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         }
       }
     );
+    const GET_URL_BTN_CNT = "getUrlButtonControl";
+    const getUrlButtonControl = this.buildButtonControl(
+      GET_URL_BTN_CNT,
+      "Get url",
+      () => {
+        const stringifiedSettings = JSON.stringify(this.params.guiSettings);
+        const b64EncodedSettings = btoa(stringifiedSettings);
+        alert(stringifiedSettings);
+        alert(b64EncodedSettings);
+        alert("length: " + b64EncodedSettings.length);
+        prompt("Copy url", "p=" + b64EncodedSettings);
+      }
+    );
+    const creditsDialogControl = this.#buildCreditsDialogControl();
     const CREDITS_BTN_CNT = "creditsButtonControl";
     const creditsButtonControl = this.buildButtonControl(
       CREDITS_BTN_CNT,
@@ -50,8 +63,9 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       simulationGroupControl,
       statsGroupControl,
       debugGroupControl,
-      creditsDialogControl,
       fullscreenButtonControl,
+      getUrlButtonControl,
+      creditsDialogControl,
       creditsButtonControl
     ];
     const r = controls.join("\n");
@@ -163,6 +177,21 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         output.innerHTML = range.value;
       }
     );
+    const SIM_PREDICTION_DISTANCE_CNT = "simulationPredictionDistanceControl";
+    const simulationPredictionDistanceControl = this.buildRangeControl(
+      SIM_PREDICTION_DISTANCE_CNT,
+      "Prediction distance",
+      this.params.guiSettings.predictionDistance,
+      this.params.guiSettings.predictionDistanceMMS.min,
+      this.params.guiSettings.predictionDistanceMMS.max,
+      this.params.guiSettings.predictionDistanceMMS.step,
+      () => {
+        const range = this.gui.controls.get(SIM_PREDICTION_DISTANCE_CNT).element;
+        this.params.guiSettings.predictionDistance = parseFloat(range.value);
+        const output = this.gui.controls.get(`${SIM_PREDICTION_DISTANCE_CNT}Value`).element;
+        output.innerHTML = range.value;
+      }
+    );
     const SIM_SPEED_CNT = "simulationSpeedControl";
     const simulationSpeedControl = this.buildRangeControl(
       SIM_SPEED_CNT,
@@ -178,6 +207,15 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         output.innerHTML = range.value;
       }
     );
+    const RESET_BTN_CNT = "resetButtonControl";
+    const resetButtonControl = this.buildButtonControl(
+      RESET_BTN_CNT,
+      "Reset",
+      () => {
+        this.params.guiSettings.doResetToDefaults = true;
+        this.gui.log("Reset button pressed");
+      }
+    );
     const r = this.buildGroupControl(
       "simulationGroupControl",
       "Simulation:",
@@ -187,7 +225,9 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         simulationStabilizationIterationsControl,
         simulationLinearErrorControl,
         simulationErrorReductionRatioControl,
-        simulationSpeedControl
+        simulationPredictionDistanceControl,
+        simulationSpeedControl,
+        resetButtonControl
       ],
       this.params.guiSettings.isSimulationGroupOpened,
       () => {

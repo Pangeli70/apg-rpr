@@ -24,12 +24,7 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
 
     constructor(asimulator: ApgRpr_Simulator, aparams: IApgRprSim_Params) {
 
-        // Custom +Z gravity on this simulation
-        super(asimulator, {
-            simulation: aparams.simulation,
-            gravity: (aparams != undefined && aparams.gravity != undefined) ? aparams.gravity : new RAPIER.Vector3(0, 0, +9.81),
-            restart: (aparams != undefined && aparams.restart != undefined) ? aparams.restart : false
-        });
+        super(asimulator, aparams);
 
         this.buildGui(ApgRprSim_Damping_GuiBuilder);
 
@@ -104,6 +99,9 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
         r.cameraPosition.eye.x = 0;
         r.cameraPosition.eye.y = 2;
         r.cameraPosition.eye.z = 80;
+
+        // Custom +Z gravity on this simulation
+        r.gravity = new RAPIER.Vector3(0, 0, +9.81)
 
         return r;
     }

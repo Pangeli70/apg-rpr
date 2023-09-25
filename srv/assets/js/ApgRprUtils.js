@@ -5,6 +5,10 @@ export class ApgRprUtils {
     const r = Math.round(v) / t;
     return r;
   }
+  static Assert(amessage) {
+    alert(amessage);
+    throw new Error(amessage);
+  }
   static GetHeightfieldGeometryDataByHeightFieldColliderData(collider) {
     const heights = collider.heightfieldHeights();
     const nrows = collider.heightfieldNRows();

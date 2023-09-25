@@ -48,7 +48,7 @@ export enum ApgRpr_eSimulationName {
 }
 
 
-export function ApgRprSim_Get() {
+export function ApgRpr_PrepareSimulations() {
     const simulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base> = new Map();
 
     simulations.set(ApgRpr_eSimulationName.A0_PYRAMID, ApgRprSim_Pyramid);

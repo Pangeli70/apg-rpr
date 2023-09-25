@@ -13,7 +13,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
     const DEBUG_INFO_OPEN_BTN_CNT = "debugInfoOpenButtonControl";
     const debugInfoOpenButtonControl = this.buildButtonControl(
       DEBUG_INFO_OPEN_BTN_CNT,
-      "Show debug info",
+      "Show info",
       () => {
         const dialog = this.gui.controls.get(this.DEBUG_INFO_DIALOG_CNT).element;
         dialog.showModal();
@@ -75,6 +75,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
                 Max stabil. iter.: ${this.debugInfo.integrationParams.maxStabilizationIterations}<br/>
                 Linear error: ${this.debugInfo.integrationParams.allowedLinearError.toFixed(5)}<br/>
                 Err. reduc. param.: ${this.debugInfo.integrationParams.erp.toFixed(5)}<br/>
+                Predict.distance: ${this.debugInfo.integrationParams.predictionDistance.toFixed(5)}<br/>
                 ${hashInfo}
             </p>
         `;

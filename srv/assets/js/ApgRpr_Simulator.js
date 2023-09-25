@@ -1,12 +1,11 @@
 import { ApgGui } from "./ApgGui.ts";
 import {
+  ApgGui_Stats,
   ApgRpr_Colliders_StatsPanel,
-  ApgRpr_Step_StatsPanel,
-  ApgGui_Stats
+  ApgRpr_Step_StatsPanel
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from "./ApgRprDeps.ts";
-import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
-import { ApgRprThreeViewer } from "./ApgRprThreeViewer.ts";
+import { ApgRprViewer } from "./ApgRprThreeViewer.ts";
 export class ApgRpr_Simulator {
   /** Used to interact with the browser we don't like global variables */
   window;
@@ -14,6 +13,8 @@ export class ApgRpr_Simulator {
   document;
   /** The current set of simulations */
   simulations;
+  /** Default simulation */
+  defaultSim;
   /** Gui */
   gui;
   /** Stats objects */
@@ -48,23 +49,31 @@ export class ApgRpr_Simulator {
   snapshot;
   /** The simulation step of the snapshot */
   snapshotStepId = 0;
+  DEFAULT_GRAVITY = 9.81;
+  DEFAULT_GRAVITY_X = 0;
+  DEFAULT_GRAVITY_Y = -this.DEFAULT_GRAVITY;
+  DEFAULT_GRAVITY_Z = 0;
   DEFAULT_VELOCITY_ITERATIONS = 4;
   DEFAULT_FRICTION_ITERATIONS = 7;
   DEFAULT_STABILIZATION_ITERATIONS = 1;
   DEFAULT_LINEAR_ERROR = 1e-3;
   DEFAULT_ERR_REDUCTION_RATIO = 0.8;
-  DEFAULT_FRAME_RATE = 1 / 50;
+  DEFAULT_PREDICTION_DISTANCE = 2e-3;
+  DEFAULT_SIMULATION_RATE = 1 / 60;
   MAX_SLOWDOWN = 20;
-  constructor(awindow, adocument, asimulations) {
+  LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";
+  LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS = "ApgRprLocalStorage_SimulationSettingsFor_";
+  constructor(awindow, adocument, asimulations, adefaultSim) {
     this.window = awindow;
     this.document = adocument;
     this.simulations = asimulations;
+    this.defaultSim = adefaultSim;
     this.gui = new ApgGui(this.document);
     this.#initStats();
     this.debugInfo = {
       stepId: 0
     };
-    this.viewer = new ApgRprThreeViewer(this.window, this.document);
+    this.viewer = new ApgRprViewer(this.window, this.document);
     this.gui.log(`ApgRprThreeViewer created`, true);
     this.mouse = { x: 0, y: 0 };
     this.events = new RAPIER.EventQueue(true);
@@ -72,7 +81,44 @@ export class ApgRpr_Simulator {
       this.mouse.x = event.clientX / this.window.innerWidth * 2 - 1;
       this.mouse.y = 1 - event.clientY / this.window.innerHeight * 2;
     });
-    this.setSimulation({ simulation: ApgRpr_eSimulationName.A0_PYRAMID });
+  }
+  /**
+   * Tries to get simulation parameters in the following order 1) querystring, 2) localstorage 3) revert to defaults
+   * @returns The current simulation parameters
+   */
+  getSimulationParams() {
+    let settings = null;
+    const querystringParams = new URLSearchParams(this.window.location.search);
+    const b64EncodedSettings = querystringParams.get("p");
+    if (b64EncodedSettings != null) {
+      try {
+        const stringifiedSettings = atob(b64EncodedSettings);
+        alert(stringifiedSettings);
+        settings = JSON.parse(stringifiedSettings);
+      } catch (e) {
+        alert("Invalid querystring params: " + e.message);
+      }
+    }
+    if (settings == null) {
+      const lastSimulation = this.window.localStorage.getItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION);
+      if (lastSimulation != void 0) {
+        const localStorageSettings = this.window.localStorage.getItem(this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + lastSimulation);
+        if (localStorageSettings != void 0) {
+          try {
+            settings = JSON.parse(localStorageSettings);
+          } catch (e) {
+            alert("Invalid local storage settings: " + e.message);
+          }
+        }
+      }
+    }
+    let params;
+    if (settings === null) {
+      params = { simulation: this.defaultSim };
+    } else {
+      params = { simulation: settings.name, guiSettings: settings };
+    }
+    return params;
   }
   #initStats() {
     const pixelRatio = this.window.devicePixelRatio;
@@ -85,7 +131,9 @@ export class ApgRpr_Simulator {
     this.collidersStatsPanel.updateInMainLoop = false;
     this.stats.addPanel(this.collidersStatsPanel);
   }
-  /** Hook to attach a function that will execute before the simulation step  */
+  /** 
+   * Hook to attach a function that will execute before the simulation step
+   */
   setPreStepAction(action) {
     this.preStepAction = action;
   }
@@ -105,36 +153,40 @@ export class ApgRpr_Simulator {
     this.gui.log("RAPIER world added", true);
   }
   /** 
-   * This method is called to allow the DOM to refresh when is changed diamically.
+   * Called to allow the DOM to refresh when is changed diamically.
    * It delays the event loop calling setTimeout
    */
   updateViewerPanel(ahtml) {
     this.gui.isRefreshing = true;
-    this.viewer.panel.innerHTML = ahtml;
+    this.viewer.guiPanelElement.innerHTML = ahtml;
     setTimeout(() => {
       this.gui.isRefreshing = false;
     }, 0);
   }
   /** 
-   * This method is called to allow the DOM to refresh when is changed diamically.
+   * Called to allow the DOM to refresh when is changed diamically.
    * It delays the event loop calling setTimeout
    */
   updateViewerHud(ahtml) {
-    this.gui.isRefreshing = true;
-    this.viewer.panel.innerHTML = ahtml;
     setTimeout(() => {
       this.gui.isRefreshing = false;
     }, 0);
   }
-  /** If we call this it means that the camera is locked */
+  /** 
+   * If we call this it means that the camera is locked
+   */
   resetCamera(acameraPosition) {
-    this.viewer.setCamera(acameraPosition);
+    this.viewer.setOrbControlsParams(acameraPosition);
   }
+  /**
+   * Allows to restart the current simulation or to change another one
+   * @param aparams
+   */
   setSimulation(aparams) {
     const simulation = aparams.simulation;
     const simulationType = this.simulations.get(simulation);
     if (!simulationType) {
-      const errorMessage = `Simulation for ${simulation} is not yet available`;
+      const errorMessage = `Simulation for (${simulation}) is not yet available`;
       alert(errorMessage);
       throw new Error(errorMessage);
     }
@@ -142,6 +194,10 @@ export class ApgRpr_Simulator {
     this.viewer.reset();
     const newSimulation = new simulationType(this, aparams);
     this.gui.log(`${aparams.simulation} simulation created`, true);
+    this.window.localStorage.setItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION, simulation);
+    const settingsKey = this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + simulation;
+    const localStorageSettings = JSON.stringify(aparams.guiSettings, void 0, "  ");
+    this.window.localStorage.setItem(settingsKey, localStorageSettings);
   }
   takeSnapshot() {
     if (this.world) {
@@ -159,9 +215,9 @@ export class ApgRpr_Simulator {
   run() {
     this.runCall++;
     let canRun = false;
-    if (this.runCall % this.slowdown == 0) {
-      this.runCall = 0;
-      if (this.slowdown != this.MAX_SLOWDOWN) {
+    if (this.slowdown != this.MAX_SLOWDOWN) {
+      if (this.runCall % this.slowdown == 0) {
+        this.runCall = 0;
         canRun = true;
       }
     }
@@ -181,10 +237,9 @@ export class ApgRpr_Simulator {
       }
       this.#collectDebugInfo();
     }
-    this.window.requestAnimationFrame(() => {
-      const frame = performance.now();
-      const deltaTime1 = (frame - this.lastBrowserFrame) / 1e3;
-      const deltaTime2 = this.debugInfo.integrationParams.dt;
+    this.window.setTimeout(() => {
+      const frameTime = performance.now();
+      const deltaTime1 = (frameTime - this.lastBrowserFrame) / 1e3;
       if (this.world) {
         if (!this.document.hasFocus()) {
           this.world.integrationParameters.dt = 0;
@@ -193,7 +248,7 @@ export class ApgRpr_Simulator {
             this.documentHasFocus = false;
           }
         } else {
-          this.world.integrationParameters.dt = this.DEFAULT_FRAME_RATE;
+          this.world.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
           if (this.documentHasFocus != true) {
             this.gui.log("Document has focus: sim. active");
             this.documentHasFocus = true;
@@ -204,9 +259,9 @@ export class ApgRpr_Simulator {
         if (this.world) {
         }
       }
-      this.lastBrowserFrame = frame;
+      this.lastBrowserFrame = frameTime;
       this.run();
-    });
+    }, this.DEFAULT_SIMULATION_RATE);
   }
   #collectDebugInfo() {
     if (this.world && this.isInDebugMode) {

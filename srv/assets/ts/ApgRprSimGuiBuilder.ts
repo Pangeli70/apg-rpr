@@ -7,7 +7,7 @@
 
 import { IApgRprSim_Params } from "./ApgRprSimulationBase.ts";
 import {
-IApgDomButton,
+  IApgDomButton,
   IApgDomDialog, IApgDomElement,
   IApgDomRange, IApgDomSelect
 } from "./ApgDom.ts";
@@ -16,6 +16,7 @@ import { ApgRprSimStatsGuiBuilder } from "./ApgRprSimStatsGuiBuilder.ts";
 import { ApgRprSimDebugGuiBuilder } from "./ApgRprSimDebugGuiBuilder.ts";
 import { ApgGui } from "./ApgGui.ts";
 import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
+import { ApgRpr_ISettings } from "./ApgRprInterfaces.ts";
 
 
 
@@ -55,7 +56,6 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo!)
       .buildHtml();
 
-    const creditsDialogControl = this.#buildCreditsDialogControl();
 
     const FULLSCREEN_BTN_CNT = 'fullscreenButtonControl';
     const fullscreenButtonControl = this.buildButtonControl(
@@ -69,7 +69,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
             docElement.requestFullscreen();
             button.innerText = 'Exit full screen';
           }
-          else { 
+          else {
             this.gui.document.exitFullscreen();
             button.innerText = 'Go full screen';
           }
@@ -79,6 +79,24 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         }
       }
     );
+
+
+    const GET_URL_BTN_CNT = 'getUrlButtonControl';
+    const getUrlButtonControl = this.buildButtonControl(
+      GET_URL_BTN_CNT,
+      'Get url',
+      () => {
+
+        const stringifiedSettings = JSON.stringify(this.params.guiSettings!);
+        const b64EncodedSettings = btoa(stringifiedSettings);
+        alert(stringifiedSettings);
+        alert(b64EncodedSettings);
+        alert('length: ' + b64EncodedSettings.length);
+        prompt('Copy url', "p=" + b64EncodedSettings)
+      }
+    );
+
+    const creditsDialogControl = this.#buildCreditsDialogControl();
 
     const CREDITS_BTN_CNT = 'creditsButtonControl';
     const creditsButtonControl = this.buildButtonControl(
@@ -95,8 +113,9 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       simulationGroupControl,
       statsGroupControl,
       debugGroupControl,
-      creditsDialogControl,
       fullscreenButtonControl,
+      getUrlButtonControl,
+      creditsDialogControl,
       creditsButtonControl
     ];
     const r = controls.join("\n");
@@ -195,7 +214,6 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       }
     );
 
-
     const SIM_LIN_ERR_CNT = 'simulationLinearErrorControl';
     const simulationLinearErrorControl = this.buildRangeControl(
       SIM_LIN_ERR_CNT,
@@ -230,6 +248,22 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       }
     );
 
+    const SIM_PREDICTION_DISTANCE_CNT = 'simulationPredictionDistanceControl';
+    const simulationPredictionDistanceControl = this.buildRangeControl(
+      SIM_PREDICTION_DISTANCE_CNT,
+      'Prediction distance',
+      this.params.guiSettings!.predictionDistance,
+      this.params.guiSettings!.predictionDistanceMMS.min,
+      this.params.guiSettings!.predictionDistanceMMS.max,
+      this.params.guiSettings!.predictionDistanceMMS.step,
+      () => {
+        const range = this.gui.controls.get(SIM_PREDICTION_DISTANCE_CNT)!.element as IApgDomRange;
+        this.params.guiSettings!.predictionDistance = parseFloat(range.value);
+        const output = this.gui.controls.get(`${SIM_PREDICTION_DISTANCE_CNT}Value`)!.element as IApgDomElement;
+        output.innerHTML = range.value;
+        //alert(range.value);
+      }
+    );
 
     const SIM_SPEED_CNT = 'simulationSpeedControl';
     const simulationSpeedControl = this.buildRangeControl(
@@ -248,6 +282,16 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       }
     );
 
+    const RESET_BTN_CNT = 'resetButtonControl';
+    const resetButtonControl = this.buildButtonControl(
+      RESET_BTN_CNT,
+      'Reset',
+      () => {
+        this.params.guiSettings!.doResetToDefaults = true;
+        this.gui.log('Reset button pressed');
+      }
+    );
+
     const r = this.buildGroupControl(
       "simulationGroupControl",
       "Simulation:",
@@ -257,7 +301,9 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         simulationStabilizationIterationsControl,
         simulationLinearErrorControl,
         simulationErrorReductionRatioControl,
+        simulationPredictionDistanceControl,
         simulationSpeedControl,
+        resetButtonControl,
       ],
       this.params.guiSettings!.isSimulationGroupOpened,
       () => {

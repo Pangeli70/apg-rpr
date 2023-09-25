@@ -5,11 +5,7 @@ import {
 } from "../ApgRprSimulationBase.ts";
 export class ApgRprSim_Damping extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
-    super(asimulator, {
-      simulation: aparams.simulation,
-      gravity: aparams != void 0 && aparams.gravity != void 0 ? aparams.gravity : new RAPIER.Vector3(0, 0, 9.81),
-      restart: aparams != void 0 && aparams.restart != void 0 ? aparams.restart : false
-    });
+    super(asimulator, aparams);
     this.buildGui(ApgRprSim_Damping_GuiBuilder);
     const settings = this.params.guiSettings;
     this.createWorld(settings);
@@ -52,6 +48,7 @@ export class ApgRprSim_Damping extends ApgRprSim_Base {
     r.cameraPosition.eye.x = 0;
     r.cameraPosition.eye.y = 2;
     r.cameraPosition.eye.z = 80;
+    r.gravity = new RAPIER.Vector3(0, 0, 9.81);
     return r;
   }
 }

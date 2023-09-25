@@ -333,7 +333,7 @@ export class ApgGui_Builder {
         ${caption}
             <select 
                 id="${aId}"
-                style="font-size: 0.75rem; padding: 0.125rem; margin: 0px;"
+                style="padding: 0.125rem; margin: 0px;"
             >${options.join()}</select>
 
         </p>

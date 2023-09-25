@@ -35,6 +35,10 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     const groundBody = this.world.createRigidBody(groundBodyDesc);
     const groundColliderDesc = RAPIER.ColliderDesc.cuboid(WORLD_SIZE / 2, 0.1, WORLD_SIZE / 2);
     this.world.createCollider(groundColliderDesc, groundBody);
+    const northBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1 / 2, 20).setRotation({ x: 0, y: 1, z: 0, w: 0.5 });
+    const northBody = this.world.createRigidBody(northBodyDesc);
+    const northColliderDesc = RAPIER.ColliderDesc.cuboid(1 / 2, 1 / 2, 1 / 2);
+    this.world.createCollider(northColliderDesc, northBody);
     this.#createCards(asettings, CARDS_AREA_DIAMETER);
     this.simulator.document.onkeyup = (event) => {
       if (event.key == " ") {
@@ -45,7 +49,7 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
   #createRandomCards(asettings, acardsAreaDiameter) {
     const ashift = 2 * this._cardHeight;
     const r = new Array();
-    for (let i = 0; i < asettings.cardsNumber; ++i) {
+    for (let i = 0; i < asettings.cardsNumber; i++) {
       const x = (this.rng.next() - 0.5) * acardsAreaDiameter;
       const y = ashift;
       const z = (this.rng.next() - 0.5) * acardsAreaDiameter;
@@ -59,11 +63,30 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     const deltaZ = this._cardHeight * 0.75;
     const ashift = 2 * this._cardHeight;
     const r = new Array();
-    for (let i = 0; i < asettings.cardsNumber; ++i) {
+    for (let i = 0; i < asettings.cardsNumber; i++) {
       const x = 0;
       const y = ashift;
       const z = -acardsAreaDiameter / 2 + deltaZ * i;
       const w = 0;
+      const quaternion = new RAPIER.Quaternion(x, y, z, w);
+      r.push(quaternion);
+    }
+    return r;
+  }
+  #createStarCards(asettings, acardsAreaDiameter) {
+    const y = 2 * this._cardHeight;
+    const r = new Array();
+    const K_TO_RDNS = 2 * Math.PI / 360;
+    const radious = 10;
+    const deltaAngle = 360 / asettings.cardsNumber;
+    const startAngle = 0;
+    for (let i = 0; i < asettings.cardsNumber; i++) {
+      const angle = (deltaAngle * i + startAngle) % 360;
+      const angleRdns = angle * K_TO_RDNS;
+      const x = Math.cos(angleRdns) * radious;
+      const z = Math.sin(angleRdns) * radious;
+      const w = angle / 360;
+      this.simulator.gui.log(`${angle.toFixed(2)},${angleRdns.toFixed(2)}, x:${x.toFixed(2)} z:${z.toFixed(2)} w:${w.toFixed(2)}`);
       const quaternion = new RAPIER.Quaternion(x, y, z, w);
       r.push(quaternion);
     }
@@ -82,7 +105,7 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
         break;
       }
       case "Star" /* STAR */: {
-        p = this.#createRandomCards(asettings, acardsAreaDiameter);
+        p = this.#createStarCards(asettings, acardsAreaDiameter);
         break;
       }
     }
@@ -95,12 +118,12 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     }
   }
   #throwBall() {
-    const target = this.simulator.viewer.controls.target.clone();
+    const target = this.simulator.viewer.orbitControls.target.clone();
     target.x = Math.round(target.x * 100) / 100;
     target.y = Math.round(target.y * 100) / 100;
     target.z = Math.round(target.z * 100) / 100;
     const source = target.clone();
-    this.simulator.viewer.controls.object.getWorldPosition(source);
+    this.simulator.viewer.orbitControls.object.getWorldPosition(source);
     source.x = Math.round(source.x * 100) / 100;
     source.y = Math.round(source.y * 100) / 100;
     source.z = Math.round(source.z * 100) / 100;
@@ -140,9 +163,9 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
       },
       cardsNumber: 30,
       cardsNumberMMS: {
-        min: 10,
+        min: 4,
         max: 250,
-        step: 5
+        step: 2
       },
       throwBallPressed: false
     };
