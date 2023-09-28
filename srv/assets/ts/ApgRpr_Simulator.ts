@@ -21,8 +21,9 @@ import {
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings, IApgRprSim_Params
 } from "./ApgRprSimulationBase.ts";
-import { ApgRprViewer } from "./ApgRprThreeViewer.ts";
+import { ApgRprViewer } from "./ApgRprViewer.ts";
 import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
+import { IApgWglOrbitControlsParams } from "./ApgWglViewer.ts";
 
 
 export class ApgRpr_Simulator {
@@ -111,6 +112,8 @@ export class ApgRpr_Simulator {
     constructor(
         awindow: IApgDomBrowserWindow,
         adocument: IApgDomDocument,
+        aguiPanelElementId: string,
+        aviewerElementId: string,
         asimulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base>,
         adefaultSim: ApgRpr_eSimulationName
     ) {
@@ -119,7 +122,7 @@ export class ApgRpr_Simulator {
         this.simulations = asimulations;
         this.defaultSim = adefaultSim;
 
-        this.gui = new ApgGui(this.document);
+        this.gui = new ApgGui(this.document, aguiPanelElementId, aviewerElementId);
 
         this.#initStats();
 
@@ -127,8 +130,8 @@ export class ApgRpr_Simulator {
             stepId: 0
         }
 
-        this.viewer = new ApgRprViewer(this.window, this.document);
-        this.gui.log(`ApgRprThreeViewer created`, true);
+        this.viewer = new ApgRprViewer(this.window, this.document, this.gui.viewerElement);
+        this.gui.log(`ApgRprThreeViewer created`);
 
         this.mouse = { x: 0, y: 0 };
 
@@ -244,7 +247,7 @@ export class ApgRpr_Simulator {
             this.viewer.addCollider(coll);
         });
 
-        this.gui.log('RAPIER world added', true);
+        this.gui.log('RAPIER world added');
     }
 
 
@@ -256,7 +259,7 @@ export class ApgRpr_Simulator {
 
         this.gui.isRefreshing = true;
 
-        this.viewer.guiPanelElement.innerHTML = ahtml;
+        this.gui.panelElement.innerHTML = ahtml;
 
         // @WARNING This is a hack that could be useful to allow to run everything asynchronously -- APG 20230916
         setTimeout(() => {
@@ -284,7 +287,7 @@ export class ApgRpr_Simulator {
      */
     resetCamera(acameraPosition: IApgRpr_CameraPosition) {
 
-        this.viewer.setOrbControlsParams(acameraPosition);
+        this.viewer.setOrbControlsParams(acameraPosition as IApgWglOrbitControlsParams);
 
     }
 
@@ -313,7 +316,7 @@ export class ApgRpr_Simulator {
         // dispose everyting explicitly when we change the simulation instead than let 
         // the garbage collector to do it on its own -- APG 20230812
         const newSimulation = new simulationType(this, aparams);
-        this.gui.log(`${aparams.simulation} simulation created`, true);
+        this.gui.log(`${aparams.simulation} simulation created`);
 
         // Save data to local storage
         this.window.localStorage.setItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION, simulation);
@@ -393,14 +396,14 @@ export class ApgRpr_Simulator {
 
                     this.world!.integrationParameters.dt = 0;
                     if (this.documentHasFocus != false) {
-                        this.gui.log('Document lost focus: sim. paused');
+                        this.gui.logNoTime('Document lost focus: sim. paused');
                         this.documentHasFocus = false;
                     }
                 }
                 else {
                     this.world!.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
                     if (this.documentHasFocus != true) {
-                        this.gui.log('Document has focus: sim. active');
+                        this.gui.logNoTime('Document has focus: sim. active');
                         this.documentHasFocus = true;
                     }
                 }

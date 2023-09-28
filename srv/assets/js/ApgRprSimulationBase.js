@@ -53,7 +53,7 @@ export class ApgRprSim_Base {
     const html = guiBuilder.buildHtml();
     this.simulator.updateViewerPanel(html);
     guiBuilder.bindControls();
-    this.simulator.gui.log("Sim Gui built", true);
+    this.simulator.gui.log("Sim Gui built");
   }
   /** 
    * Set up the default Gui settings for the simulator. This method can be overridden 

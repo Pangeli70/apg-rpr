@@ -424,7 +424,7 @@ class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
             () => {
                 if (!this.gui.isRefreshing) {
                     this.guiSettings.isCardsGroupOpened = !this.guiSettings.isCardsGroupOpened;
-                    this.gui.log('Cards group toggled')
+                    this.gui.logNoTime('Cards group toggled')
                 }
             }
 

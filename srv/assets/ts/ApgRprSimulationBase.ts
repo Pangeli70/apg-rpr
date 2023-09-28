@@ -5,13 +5,14 @@
  * -----------------------------------------------------------------------
 */
 
-import { ApgGui_IMinMaxStep } from "./ApgGui.ts";
 import { ApgGui_Stats } from "./ApgGuiStats.ts";
 import { RAPIER, PRANDO } from './ApgRprDeps.ts';
 import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import { IApgRpr_DebugInfo, IApgRpr_CameraPosition, ApgRpr_ISettings } from "./ApgRprInterfaces.ts";
 import { ApgRprSim_GuiBuilder } from "./ApgRprSimGuiBuilder.ts";
 import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
+import { IApgWglViewerOptions } from "./ApgWglViewer.ts";
+import { ApgGui_IMinMaxStep } from "./ApgGuiBuilder.ts";
 
 
 
@@ -66,6 +67,8 @@ export interface IApgRprSim_Params {
 
     // TODO Can we say that is not optional? Yes if we exctract a default Rapier settings -- APG 20230916
     guiSettings?: ApgRprSim_IGuiSettings;
+
+    viewerSettings?: IApgWglViewerOptions;
 
     stats?: ApgGui_Stats;
 
@@ -152,7 +155,7 @@ export class ApgRprSim_Base {
         this.simulator.updateViewerPanel(html);
         guiBuilder.bindControls();
 
-        this.simulator.gui.log('Sim Gui built', true);
+        this.simulator.gui.log('Sim Gui built');
     }
 
 

@@ -11,13 +11,25 @@ import { ApgRpr_PrepareSimulations, ApgRpr_eSimulationName } from "./ApgRpr_Simu
 import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
 
 
-export async function ApgRpr(awindow: IApgDomBrowserWindow, adocument: IApgDomDocument,) {
+export async function ApgRpr(
+    awindow: IApgDomBrowserWindow,
+    adocument: IApgDomDocument,
+    aguiPanelElementId: string,
+    aviewerElementId: string,
+) {
 
     await RAPIER.init();
 
     const simulations = ApgRpr_PrepareSimulations();
 
-    const simulator = new ApgRpr_Simulator(awindow, adocument, simulations, ApgRpr_eSimulationName.A0_PYRAMID);
+    const simulator = new ApgRpr_Simulator(
+        awindow,
+        adocument,
+        aguiPanelElementId,
+        aviewerElementId,
+        simulations,
+        ApgRpr_eSimulationName.A0_PYRAMID
+    );
 
     const params = simulator.getSimulationParams();
 

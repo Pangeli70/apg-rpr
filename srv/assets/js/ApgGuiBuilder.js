@@ -2,6 +2,7 @@ import {
   eApgDomFormElementType,
   eApgDomInputType
 } from "./ApgDom.ts";
+import { ApgUtils } from "./ApgUtils.ts";
 export class ApgGui_Builder {
   gui;
   name;
@@ -90,6 +91,42 @@ export class ApgGui_Builder {
                 min="${amin}"
                 max="${amax}"
                 step="${astep}"
+                value="${avalue}"
+                style="margin-bottom: 0.5rem"
+            />
+        </p>
+        `;
+    return r;
+  }
+  buildColorControl(aId, acaption, avalue, ainputCallback) {
+    const colorControl = {
+      element: null,
+      type: eApgDomFormElementType.INPUT,
+      inputType: eApgDomInputType.COLOR,
+      callback: ainputCallback
+    };
+    this.#addControl(aId, colorControl);
+    const outputControl = {
+      element: null,
+      type: eApgDomFormElementType.OUTPUT
+    };
+    this.#addControl(`${aId}Value`, outputControl);
+    const r = `
+        <p style="margin-bottom: 0.25rem">
+            <label
+                for="${aId}"
+                style="font-size: 0.75rem"
+            >
+                ${acaption}: 
+                <output
+                    id="${aId}Value"
+                    for="${aId}"
+                >${avalue}</output>
+            </label>
+            <input
+                id="${aId}"
+                name="${aId}"
+                type="color"
                 value="${avalue}"
                 style="margin-bottom: 0.5rem"
             />
@@ -302,5 +339,28 @@ export class ApgGui_Builder {
         element.addEventListener("change", control.callback);
       }
     }
+  }
+  /**
+   * Adds reactivity to a control
+   * @param aid Identificator of the control that has to be reactive
+   * @param astate State object that contains the property associated to the reactive control
+   * @param aprop Name of the property associated to the reactive control
+   */
+  addReactivity(aid, astate, aprop) {
+    const control = this.gui.controls.get(aid);
+    ApgUtils.Assert(
+      control != void 0,
+      `$$451 the control with id (${aid}) is not registered in the GUI!`
+    );
+    ApgUtils.Assert(
+      astate[aprop] != void 0,
+      `$$456 The property (${aprop}), is undefined in state object passed for reactivity!`
+    );
+    const propType = typeof astate[aprop];
+    ApgUtils.Assert(
+      propType == "string" || propType == "number" || propType == "boolean",
+      `$$462 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`
+    );
+    control.reactive = { state: astate, prop: aprop };
   }
 }

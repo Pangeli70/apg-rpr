@@ -51,7 +51,7 @@ export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
       () => {
         if (!this.gui.isRefreshing) {
           this.params.guiSettings.isStatsGroupOpened = !this.params.guiSettings.isStatsGroupOpened;
-          this.gui.log("Stats group toggled");
+          this.gui.logNoTime("Stats group toggled");
         }
       }
     );

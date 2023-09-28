@@ -266,7 +266,7 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
             () => {
                 if (!this.gui.isRefreshing) {
                     this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
-                    this.gui.log('Cubes group toggled')
+                    this.gui.logNoTime('Cubes group toggled')
                 }
             }
 

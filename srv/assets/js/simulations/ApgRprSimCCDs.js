@@ -199,7 +199,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       () => {
         if (!this.gui.isRefreshing) {
           this.guiSettings.isWallsGroupOpened = !this.guiSettings.isWallsGroupOpened;
-          this.gui.log("Walls group toggled");
+          this.gui.logNoTime("Walls group toggled");
         }
       }
     );
@@ -274,7 +274,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       () => {
         if (!this.gui.isRefreshing) {
           this.guiSettings.isProjectileGroupOpened = !this.guiSettings.isProjectileGroupOpened;
-          this.gui.log("Projectile group toggled");
+          this.gui.logNoTime("Projectile group toggled");
         }
       }
     );

@@ -17,6 +17,7 @@ import { ApgRprSimDebugGuiBuilder } from "./ApgRprSimDebugGuiBuilder.ts";
 import { ApgGui } from "./ApgGui.ts";
 import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
 import { ApgRpr_ISettings } from "./ApgRprInterfaces.ts";
+import { ApgWgl_GuiBuilder } from "./ApgWglGuiBuilder.ts";
 
 
 
@@ -109,6 +110,9 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       }
     );
 
+    const viewerSettingsControls =  new ApgWgl_GuiBuilder(this.gui, this.name, this.params.viewerSettings!)
+      .buildHtml();
+
     const controls = [
       simulationGroupControl,
       statsGroupControl,
@@ -116,7 +120,8 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       fullscreenButtonControl,
       getUrlButtonControl,
       creditsDialogControl,
-      creditsButtonControl
+      creditsButtonControl,
+      viewerSettingsControls
     ];
     const r = controls.join("\n");
 
@@ -153,7 +158,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       'Restart',
       () => {
         this.params.restart = true;
-        this.gui.log('Restart button pressed');
+        this.gui.logNoTime('Restart button pressed');
       }
     );
 
@@ -288,7 +293,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       'Reset',
       () => {
         this.params.guiSettings!.doResetToDefaults = true;
-        this.gui.log('Reset button pressed');
+        this.gui.logNoTime('Reset button pressed');
       }
     );
 
@@ -309,7 +314,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       () => {
         if (!this.gui.isRefreshing) {
           this.params.guiSettings!.isSimulationGroupOpened = !this.params.guiSettings!.isSimulationGroupOpened
-          this.gui.log('Simulation group toggled');
+          this.gui.logNoTime('Simulation group toggled');
         }
       }
     );

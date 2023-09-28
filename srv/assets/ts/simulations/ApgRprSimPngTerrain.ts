@@ -334,7 +334,7 @@ class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
             () => {
                 if (!this.gui.isRefreshing) {
                     this.guiSettings.isSamplingGroupOpened = !this.guiSettings.isSamplingGroupOpened;
-                    this.gui.log('Sampling group toggled')
+                    this.gui.logNoTime('Sampling group toggled')
                 }
             }
 

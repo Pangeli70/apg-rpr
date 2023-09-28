@@ -215,7 +215,7 @@ class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
       () => {
         if (!this.gui.isRefreshing) {
           this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
-          this.gui.log("Blocks group toggled");
+          this.gui.logNoTime("Blocks group toggled");
         }
       }
     );

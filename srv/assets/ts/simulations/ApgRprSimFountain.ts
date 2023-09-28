@@ -299,7 +299,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
             () => {
                 if (!this.gui.isRefreshing) {
                     this.guiSettings.isBodiesGroupOpened = !this.guiSettings.isBodiesGroupOpened;
-                    this.gui.log('Bodies group toggled')
+                    this.gui.logNoTime('Bodies group toggled')
                 }
             }
         );
@@ -335,7 +335,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
             () => {
                 if (!this.gui.isRefreshing) {
                     this.guiSettings.isGroundGroupOpened = !this.guiSettings.isGroundGroupOpened;
-                    this.gui.log('Ground group toggled')
+                    this.gui.logNoTime('Ground group toggled')
                 }
             }
         );

@@ -15,7 +15,17 @@ import {
   eApgDomFormElementType,
   eApgDomInputType
 } from "./ApgDom.ts";
-import { ApgGui, ApgGui_IControl } from "./ApgGui.ts";
+import { ApgGui, ApgGui_IControl, ApgGui_TReactiveState } from "./ApgGui.ts";
+import { ApgUtils } from "./ApgUtils.ts";
+
+
+export interface ApgGui_IMinMaxStep {
+  min: number;
+  max: number;
+  step: number;
+}
+
+export type ApgGui_TSelectValuesMap = Map<string, string>;
 
 
 export class ApgGui_Builder {
@@ -145,6 +155,49 @@ export class ApgGui_Builder {
                 min="${amin}"
                 max="${amax}"
                 step="${astep}"
+                value="${avalue}"
+                style="margin-bottom: 0.5rem"
+            />
+        </p>
+        `;
+    return r;
+  }
+  
+
+  buildColorControl(
+    aId: string,
+    acaption: string,
+    avalue: number,
+    ainputCallback: TApgDomEventCallback
+  ) { 
+    const colorControl: ApgGui_IControl = {
+      element: null,
+      type: eApgDomFormElementType.INPUT,
+      inputType: eApgDomInputType.COLOR,
+      callback: ainputCallback
+    };
+    this.#addControl(aId, colorControl);
+    const outputControl: ApgGui_IControl = {
+      element: null,
+      type: eApgDomFormElementType.OUTPUT,
+    };
+    this.#addControl(`${aId}Value`, outputControl);
+    const r = `
+        <p style="margin-bottom: 0.25rem">
+            <label
+                for="${aId}"
+                style="font-size: 0.75rem"
+            >
+                ${acaption}: 
+                <output
+                    id="${aId}Value"
+                    for="${aId}"
+                >${avalue}</output>
+            </label>
+            <input
+                id="${aId}"
+                name="${aId}"
+                type="color"
                 value="${avalue}"
                 style="margin-bottom: 0.5rem"
             />
@@ -299,7 +352,7 @@ export class ApgGui_Builder {
     aId: string,
     acaption: string,
     avalue: string,
-    avalues: Map<string, string>,
+    avalues: ApgGui_TSelectValuesMap,
     achangeCallback: TApgDomEventCallback
   ) {
 
@@ -437,6 +490,42 @@ export class ApgGui_Builder {
 
     }
   }
+
+
+  /**
+   * Adds reactivity to a control
+   * @param aid Identificator of the control that has to be reactive
+   * @param astate State object that contains the property associated to the reactive control
+   * @param aprop Name of the property associated to the reactive control
+   */
+  addReactivity(
+    aid: string,
+    astate: ApgGui_TReactiveState,
+    aprop: string
+  ) {
+
+    const control = this.gui.controls.get(aid);
+    ApgUtils.Assert(
+      control != undefined,
+      `$$451 the control with id (${aid}) is not registered in the GUI!`
+    );
+
+    ApgUtils.Assert(
+      astate[aprop] != undefined,
+      `$$456 The property (${aprop}), is undefined in state object passed for reactivity!`
+    );
+
+    const propType = typeof astate[aprop];
+    ApgUtils.Assert(
+      (propType == "string" || propType == "number" || propType == "boolean"),
+      `$$462 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`);
+
+    control!.reactive = { state: astate, prop: aprop };
+
+  }
+
+
+
 }
 
 

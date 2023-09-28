@@ -1,75 +1,52 @@
 import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
-import { ApgRprSimStatsGuiBuilder } from "./ApgRprSimStatsGuiBuilder.ts";
-import { ApgRprSimDebugGuiBuilder } from "./ApgRprSimDebugGuiBuilder.ts";
-import { ApgWgl_GuiBuilder } from "./ApgWglGuiBuilder.ts";
-export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
+export class ApgWgl_GuiBuilder extends ApgGui_Builder {
   params;
-  CREDITS_DIALOG_CNT = "creditsDialogControl";
-  constructor(agui, aparams) {
-    super(agui, aparams.simulation);
-    this.params = aparams;
+  VIEWER_SETTINGS_DIALOG_CNT = "ViewerSettingsDialogControl";
+  constructor(agui, aname, aparams) {
+    super(agui, aname);
+    this.params = {
+      ...aparams,
+      worldSizeMMS: { min: 500, max: 2e3, step: 500 },
+      toneMappingValues: /* @__PURE__ */ new Map([
+        ["0", "NoToneMapping"],
+        ["1", "LinearToneMapping"],
+        ["2", "ReinhardToneMapping"],
+        ["3", "CineonToneMapping"],
+        ["5", "ACESFilmicToneMapping"],
+        ["6", "CustomToneMapping"]
+      ]),
+      outputColorSpaceValues: /* @__PURE__ */ new Map([
+        ["", "NoColorSpace"],
+        ["srgb", "SRGBColorSpace"],
+        ["srgb-linear", "LinearSRGBColorSpace"],
+        ["display-p3", "DisplayP3ColorSpace"]
+      ]),
+      shadowMapTypeValues: /* @__PURE__ */ new Map([
+        ["0", "BasicShadowMap "],
+        ["1", "PCFShadowMap"],
+        ["2", "PCFSoftShadowMap"],
+        ["3", "VSMShadowMap"]
+      ])
+    };
   }
   /**
    * 
    * @returns 
    */
   buildHtml() {
-    const simulationGroupControl = this.#buildSimulationGroupControl();
-    const statsGroupControl = new ApgRprSimStatsGuiBuilder(this.gui, this.params).buildHtml();
-    const debugGroupControl = new ApgRprSimDebugGuiBuilder(this.gui, this.params.debugInfo).buildHtml();
-    const FULLSCREEN_BTN_CNT = "fullscreenButtonControl";
-    const fullscreenButtonControl = this.buildButtonControl(
-      FULLSCREEN_BTN_CNT,
-      "Go full screen",
+    const viewerSettingsDialogControl = this.#buildViewerSettingsDialogControl();
+    const VIEWER_SETTINGS_BTN_CNT = "ViewerSettingsButtonControl";
+    const viewerSettingsButtonControl = this.buildButtonControl(
+      VIEWER_SETTINGS_BTN_CNT,
+      "Viewer",
       () => {
-        const button = this.gui.controls.get(FULLSCREEN_BTN_CNT).element;
-        const docElement = this.gui.document.documentElement;
-        if (docElement.requestFullscreen) {
-          if (!this.gui.document.fullscreenElement) {
-            docElement.requestFullscreen();
-            button.innerText = "Exit full screen";
-          } else {
-            this.gui.document.exitFullscreen();
-            button.innerText = "Go full screen";
-          }
-        } else {
-          alert("Full screen not supported");
-        }
-      }
-    );
-    const GET_URL_BTN_CNT = "getUrlButtonControl";
-    const getUrlButtonControl = this.buildButtonControl(
-      GET_URL_BTN_CNT,
-      "Get url",
-      () => {
-        const stringifiedSettings = JSON.stringify(this.params.guiSettings);
-        const b64EncodedSettings = btoa(stringifiedSettings);
-        alert(stringifiedSettings);
-        alert(b64EncodedSettings);
-        alert("length: " + b64EncodedSettings.length);
-        prompt("Copy url", "p=" + b64EncodedSettings);
-      }
-    );
-    const creditsDialogControl = this.#buildCreditsDialogControl();
-    const CREDITS_BTN_CNT = "creditsButtonControl";
-    const creditsButtonControl = this.buildButtonControl(
-      CREDITS_BTN_CNT,
-      "Credits",
-      () => {
-        const dialog = this.gui.controls.get(this.CREDITS_DIALOG_CNT).element;
+        const dialog = this.gui.controls.get(this.VIEWER_SETTINGS_DIALOG_CNT).element;
         dialog.showModal();
       }
     );
-    const viewerSettingsControls = new ApgWgl_GuiBuilder(this.gui, this.name, this.params.viewerSettings).buildHtml();
     const controls = [
-      simulationGroupControl,
-      statsGroupControl,
-      debugGroupControl,
-      fullscreenButtonControl,
-      getUrlButtonControl,
-      creditsDialogControl,
-      creditsButtonControl,
-      viewerSettingsControls
+      viewerSettingsDialogControl,
+      viewerSettingsButtonControl
     ];
     const r = controls.join("\n");
     return r;
@@ -242,24 +219,21 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     );
     return r;
   }
-  #buildCreditsDialogControl() {
-    const footer = this.gui.document.getElementById("footer");
-    footer.innerHTML;
-    const CREDITS_CLOSE_BTN_CNT = "creditsCloseButtonControl";
-    const creditsCloseButtonControl = this.buildButtonControl(
-      CREDITS_CLOSE_BTN_CNT,
+  #buildViewerSettingsDialogControl() {
+    const VIEWER_SETTINGS_CLOSE_BTN_CNT = "viewerSettingsDialogCloseButtonControl";
+    const viewerSettingsDialogCloseButtonControl = this.buildButtonControl(
+      VIEWER_SETTINGS_CLOSE_BTN_CNT,
       "Close",
       () => {
-        const dialog = this.gui.controls.get(this.CREDITS_DIALOG_CNT).element;
+        const dialog = this.gui.controls.get(this.VIEWER_SETTINGS_DIALOG_CNT).element;
         dialog.close();
       }
     );
     const r = this.buildDialogControl(
-      this.CREDITS_DIALOG_CNT,
+      this.VIEWER_SETTINGS_DIALOG_CNT,
       "Credits:",
       [
-        footer.innerHTML,
-        creditsCloseButtonControl
+        viewerSettingsDialogCloseButtonControl
       ]
     );
     return r;

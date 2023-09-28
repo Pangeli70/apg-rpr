@@ -189,7 +189,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
       () => {
         if (!this.gui.isRefreshing) {
           this.guiSettings.isCubesGroupOpened = !this.guiSettings.isCubesGroupOpened;
-          this.gui.log("Cubes group toggled");
+          this.gui.logNoTime("Cubes group toggled");
         }
       }
     );

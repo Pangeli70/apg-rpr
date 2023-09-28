@@ -5,7 +5,7 @@ import {
   ApgRpr_Step_StatsPanel
 } from "./ApgGuiStats.ts";
 import { RAPIER, md5 } from "./ApgRprDeps.ts";
-import { ApgRprViewer } from "./ApgRprThreeViewer.ts";
+import { ApgRprViewer } from "./ApgRprViewer.ts";
 export class ApgRpr_Simulator {
   /** Used to interact with the browser we don't like global variables */
   window;
@@ -63,18 +63,18 @@ export class ApgRpr_Simulator {
   MAX_SLOWDOWN = 20;
   LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";
   LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS = "ApgRprLocalStorage_SimulationSettingsFor_";
-  constructor(awindow, adocument, asimulations, adefaultSim) {
+  constructor(awindow, adocument, aguiPanelElementId, aviewerElementId, asimulations, adefaultSim) {
     this.window = awindow;
     this.document = adocument;
     this.simulations = asimulations;
     this.defaultSim = adefaultSim;
-    this.gui = new ApgGui(this.document);
+    this.gui = new ApgGui(this.document, aguiPanelElementId, aviewerElementId);
     this.#initStats();
     this.debugInfo = {
       stepId: 0
     };
-    this.viewer = new ApgRprViewer(this.window, this.document);
-    this.gui.log(`ApgRprThreeViewer created`, true);
+    this.viewer = new ApgRprViewer(this.window, this.document, this.gui.viewerElement);
+    this.gui.log(`ApgRprThreeViewer created`);
     this.mouse = { x: 0, y: 0 };
     this.events = new RAPIER.EventQueue(true);
     this.window.addEventListener("mousemove", (event) => {
@@ -150,7 +150,7 @@ export class ApgRpr_Simulator {
     this.world.forEachCollider((coll) => {
       this.viewer.addCollider(coll);
     });
-    this.gui.log("RAPIER world added", true);
+    this.gui.log("RAPIER world added");
   }
   /** 
    * Called to allow the DOM to refresh when is changed diamically.
@@ -158,7 +158,7 @@ export class ApgRpr_Simulator {
    */
   updateViewerPanel(ahtml) {
     this.gui.isRefreshing = true;
-    this.viewer.guiPanelElement.innerHTML = ahtml;
+    this.gui.panelElement.innerHTML = ahtml;
     setTimeout(() => {
       this.gui.isRefreshing = false;
     }, 0);
@@ -193,7 +193,7 @@ export class ApgRpr_Simulator {
     this.gui.clearControls();
     this.viewer.reset();
     const newSimulation = new simulationType(this, aparams);
-    this.gui.log(`${aparams.simulation} simulation created`, true);
+    this.gui.log(`${aparams.simulation} simulation created`);
     this.window.localStorage.setItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION, simulation);
     const settingsKey = this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + simulation;
     const localStorageSettings = JSON.stringify(aparams.guiSettings, void 0, "  ");
@@ -244,13 +244,13 @@ export class ApgRpr_Simulator {
         if (!this.document.hasFocus()) {
           this.world.integrationParameters.dt = 0;
           if (this.documentHasFocus != false) {
-            this.gui.log("Document lost focus: sim. paused");
+            this.gui.logNoTime("Document lost focus: sim. paused");
             this.documentHasFocus = false;
           }
         } else {
           this.world.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
           if (this.documentHasFocus != true) {
-            this.gui.log("Document has focus: sim. active");
+            this.gui.logNoTime("Document has focus: sim. active");
             this.documentHasFocus = true;
           }
         }

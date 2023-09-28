@@ -8,19 +8,7 @@ import { RAPIER } from './ApgRprDeps.ts';
 
 export class ApgRprUtils {
 
-    static Round(anum: number, aprecision: number) { 
 
-        const t = 10 ** (-1 * aprecision);
-        const v = anum * t; 
-        const r = Math.round(v) / t;
-        return r;
-
-    }
-
-    static Assert(amessage: string) { 
-        alert(amessage);
-        throw new Error(amessage);
-    } 
 
     static GetHeightfieldGeometryDataByHeightFieldColliderData(collider: RAPIER.Collider) {
 
