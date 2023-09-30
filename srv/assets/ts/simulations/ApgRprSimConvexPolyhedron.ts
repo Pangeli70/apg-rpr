@@ -6,12 +6,12 @@
 */
 
 import { ApgGui } from "../ApgGui.ts";
-import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import { RAPIER, PRANDO } from "../ApgRpr_Deps.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 

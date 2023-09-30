@@ -5,8 +5,6 @@
  * -----------------------------------------------------------------------
 */
 import {
-    IApgDom2DRenderingContext,
-    IApgDomCanvas,
     IApgDomDocument,
     IApgDomElement
 } from "./ApgDom.ts";

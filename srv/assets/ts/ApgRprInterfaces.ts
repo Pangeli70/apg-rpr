@@ -5,9 +5,13 @@
  * -----------------------------------------------------------------------
 */
 
-import { RAPIER } from "./ApgRprDeps.ts";
-import { eApgRpr_InstancedMeshesGroups } from "./ApgRprEnums.ts";
-import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
+import {
+    RAPIER
+} from "./ApgRpr_Deps.ts";
+
+import {
+    ApgRpr_eSimulationName
+} from "./ApgRpr_Simulations.ts";
 
 
 export interface IApgRpr_Point2D {
@@ -16,8 +20,13 @@ export interface IApgRpr_Point2D {
 }
 
 
-export interface IApgRpr_Point3D extends IApgRpr_Point2D {
+export interface ApgRpr_IPoint3D extends IApgRpr_Point2D {
     z: number;
+}
+
+export interface ApgRpr_ICameraPosition {
+    eye: ApgRpr_IPoint3D;
+    target: ApgRpr_IPoint3D;
 }
 
 
@@ -41,17 +50,12 @@ export interface ApgRpr_ISettings {
 
     slowdown: number;
 
-    cameraPosition: IApgRpr_CameraPosition;
+    cameraPosition: ApgRpr_ICameraPosition;
 
 }
 
-export interface IApgRpr_CameraPosition {
-    eye: IApgRpr_Point3D,
-    target: IApgRpr_Point3D
-}
 
-
-export interface IApgRpr_DebugInfo {
+export interface ApgRpr_IDebugInfo {
     stepId: number;
     integrationParams?: RAPIER.IntegrationParameters;
     // @NOTE The following are not used momentarily -- APG 20230916
@@ -61,20 +65,3 @@ export interface IApgRpr_DebugInfo {
     snapshotStepId?: number;
 }
 
-
-export interface IApgRpr_InstanceDesc {
-
-    /** Group of instanced Meshes ID */
-    groupId: eApgRpr_InstancedMeshesGroups;
-    /** Instanceable Meshes ID */
-    indexInGroup: number;
-    /** Collider handle */
-    colliderHandle: number;
-    /** Instance count at moment of creation */
-    count: number;
-    /** This instance is hightlighted */
-    highlighted: boolean;
-    /** Scaling factors of this ins */
-    scale: THREE.Vector3
-
-}

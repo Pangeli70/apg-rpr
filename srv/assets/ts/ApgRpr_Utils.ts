@@ -4,9 +4,11 @@
  * @version 0.9.8 [APG 2023/08/11]
  * -----------------------------------------------------------------------
 */
-import { RAPIER } from './ApgRprDeps.ts';
+import {
+    RAPIER
+} from './ApgRpr_Deps.ts';
 
-export class ApgRprUtils {
+export class ApgRpr_Utils {
 
 
 

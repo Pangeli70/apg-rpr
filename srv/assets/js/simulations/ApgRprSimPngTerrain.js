@@ -1,8 +1,12 @@
-import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+  RAPIER
+} from "../ApgRpr_Deps.ts";
 import {
   ApgRprSim_Base
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
+import {
+  ApgRprSim_GuiBuilder
+} from "../ApgRprSim_GuiBuilder.ts";
 export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
@@ -196,7 +200,7 @@ class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
         output.innerHTML = range.value;
       }
     );
-    const r = this.buildGroupControl(
+    const r = this.buildDetailsControl(
       "samplingGroupControl",
       "Sampling:",
       [

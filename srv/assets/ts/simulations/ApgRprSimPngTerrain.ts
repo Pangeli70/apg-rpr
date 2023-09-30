@@ -6,18 +6,35 @@
 */
 
 import {
-    IApgDomCanvas, IApgDomElement,
-    IApgDomImage, IApgDomRange,
+    IApgDomCanvas,
+    IApgDomElement,
+    IApgDomImage,
+    IApgDomRange,
     IApgDomSelect
 } from "../ApgDom.ts";
-import { ApgGui_IMinMaxStep, ApgGui } from "../ApgGui.ts";
-import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+
 import {
-    ApgRprSim_Base, ApgRprSim_IGuiSettings,
+    ApgGui,
+    ApgGui_IMinMaxStep
+} from "../ApgGui.ts";
+
+import {
+    RAPIER
+} from "../ApgRpr_Deps.ts";
+
+import {
+    ApgRprSim_Base,
+    ApgRprSim_IGuiSettings,
     IApgRprSim_Params
-} from "../ApgRprSimulationBase.ts";
-import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
+} from "../ApgRprSim_Base.ts";
+
+import {
+    ApgRprSim_GuiBuilder
+} from "../ApgRprSim_GuiBuilder.ts";
+
+import {
+    ApgRpr_Simulator
+} from "../ApgRpr_Simulator.ts";
 
 
 
@@ -322,7 +339,7 @@ class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
         );
 
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "samplingGroupControl",
             "Sampling:",
             [

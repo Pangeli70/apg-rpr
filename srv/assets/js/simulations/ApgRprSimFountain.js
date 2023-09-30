@@ -1,8 +1,12 @@
-import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+  RAPIER
+} from "../ApgRpr_Deps.ts";
+import {
+  ApgRprSim_GuiBuilder
+} from "../ApgRprSim_GuiBuilder.ts";
 import {
   ApgRprSim_Base
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 var ApgRprSim_Fountain_eGroundType = /* @__PURE__ */ ((ApgRprSim_Fountain_eGroundType2) => {
   ApgRprSim_Fountain_eGroundType2["CYL"] = "Cylinder";
   ApgRprSim_Fountain_eGroundType2["CONE"] = "Cone";
@@ -161,9 +165,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
       BODIES_REST_CNT,
       "Restitution",
       this.guiSettings.restitution,
-      this.guiSettings.restitutionMMS.min,
-      this.guiSettings.restitutionMMS.max,
-      this.guiSettings.restitutionMMS.step,
+      this.guiSettings.restitutionMMS,
       () => {
         const range = this.gui.controls.get(BODIES_REST_CNT).element;
         this.guiSettings.restitution = parseFloat(range.value);
@@ -171,7 +173,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
         output.innerHTML = range.value;
       }
     );
-    const r = this.buildGroupControl(
+    const r = this.buildDetailsControl(
       "bodiesGroupControl",
       "Bodies:",
       [
@@ -204,7 +206,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
         this.params.restart = true;
       }
     );
-    const r = this.buildGroupControl(
+    const r = this.buildDetailsControl(
       "hroundGroupControl",
       "Ground:",
       [

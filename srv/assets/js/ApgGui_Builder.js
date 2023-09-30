@@ -2,7 +2,9 @@ import {
   eApgDomFormElementType,
   eApgDomInputType
 } from "./ApgDom.ts";
-import { ApgUtils } from "./ApgUtils.ts";
+import {
+  ApgUtils
+} from "./ApgUtils.ts";
 export class ApgGui_Builder {
   gui;
   name;
@@ -10,31 +12,24 @@ export class ApgGui_Builder {
     this.gui = agui;
     this.name = aname;
   }
-  #addControl(aId, acontrol) {
-    if (this.gui.controls.has(aId)) {
-      const message = `The control ${aId} is already in the map. Maybe you are adding a control with the same name!`;
+  #addControl(acontrolId, acontrol) {
+    if (this.gui.controls.has(acontrolId)) {
+      const message = `The control ${acontrolId} is already in the map. Maybe you are adding a control with the same name!`;
       alert(message);
       throw new Error(message);
     }
-    this.gui.controls.set(aId, acontrol);
+    this.gui.controls.set(acontrolId, acontrol);
   }
-  /**
-   * Virtual method that has to be overriden by the descendants of this class
-   * @param acontainer The element that will contain this GUI. Usually a <div> in the DOM
-   */
-  buildHtml(acontainer) {
-    const r = "Override the ApgGuiBuilder.build() method to get the GUI";
-    acontainer.innerHTML = r;
-  }
-  buildParagraphControl(aId, acontent, astyle) {
+  // #region Basic controls -----------------------------------------------
+  buildParagraphControl(acontrolId, acontent, astyle) {
     const paragraphControl = {
       element: null,
       type: eApgDomFormElementType.PARAGRAPH
     };
-    this.#addControl(aId, paragraphControl);
+    this.#addControl(acontrolId, paragraphControl);
     const r = `
         <p
-          id="${aId}"
+          id="${acontrolId}"
           style="${astyle || ""}"
         >
             ${acontent}
@@ -42,16 +37,16 @@ export class ApgGui_Builder {
         `;
     return r;
   }
-  buildDivControl(aId, acontent, astyle = "", ainjected) {
+  buildDivControl(acontrolId, acontent, astyle = "", ainjected) {
     const paragraphControl = {
       element: null,
       type: eApgDomFormElementType.DIV,
       injected: ainjected
     };
-    this.#addControl(aId, paragraphControl);
+    this.#addControl(acontrolId, paragraphControl);
     const r = `
         <div
-          id="${aId}"
+          id="${acontrolId}"
           style="${astyle}"
         >
             ${acontent}
@@ -59,38 +54,58 @@ export class ApgGui_Builder {
         `;
     return r;
   }
-  buildRangeControl(aId, acaption, avalue, amin, amax, astep, ainputCallback) {
+  buildButtonControl(acontrolId, acaption, aclickCallback) {
+    const buttonControl = {
+      element: null,
+      type: eApgDomFormElementType.BUTTON,
+      callback: aclickCallback
+    };
+    this.#addControl(acontrolId, buttonControl);
+    const r = `
+        <p style="margin-bottom: 0.25rem">
+            <button
+              id="${acontrolId}"
+              type="button"
+              style="padding:0.25rem; margin:0px"
+            >${acaption}</button>
+        </p>
+        `;
+    return r;
+  }
+  // #endregion
+  // #region Data controls -----------------------------------------------
+  buildRangeControl(acontrolId, acaption, avalue, aminMaxStep, ainputCallback) {
     const rangeControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.RANGE,
       callback: ainputCallback
     };
-    this.#addControl(aId, rangeControl);
+    this.#addControl(acontrolId, rangeControl);
     const outputControl = {
       element: null,
       type: eApgDomFormElementType.OUTPUT
     };
-    this.#addControl(`${aId}Value`, outputControl);
+    this.#addControl(`${acontrolId}Value`, outputControl);
     const r = `
         <p style="margin-bottom: 0.25rem">
             <label
-                for="${aId}"
+                for="${acontrolId}"
                 style="font-size: 0.75rem"
             >
                 ${acaption}: 
                 <output
-                    id="${aId}Value"
-                    for="${aId}"
+                    id="${acontrolId}Value"
+                    for="${acontrolId}"
                 >${avalue}</output>
             </label>
             <input
-                id="${aId}"
-                name="${aId}"
+                id="${acontrolId}"
+                name="${acontrolId}"
                 type="range"
-                min="${amin}"
-                max="${amax}"
-                step="${astep}"
+                min="${aminMaxStep.min}"
+                max="${aminMaxStep.max}"
+                step="${aminMaxStep.step}"
                 value="${avalue}"
                 style="margin-bottom: 0.5rem"
             />
@@ -98,34 +113,41 @@ export class ApgGui_Builder {
         `;
     return r;
   }
-  buildColorPickerControl(aId, acaption, avalue, ainputCallback) {
+  readRangeControl(acontrolId) {
+    const range = this.gui.controls.get(acontrolId).element;
+    const output = this.gui.controls.get(`${acontrolId}Value`).element;
+    output.innerHTML = range.value;
+    this.gui.devLog(`${acontrolId} = ${range.value}`);
+    return parseFloat(range.value);
+  }
+  buildColorPickerControl(acontrolId, acaption, avalue, ainputCallback) {
     const colorControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.COLOR,
       callback: ainputCallback
     };
-    this.#addControl(aId, colorControl);
+    this.#addControl(acontrolId, colorControl);
     const outputControl = {
       element: null,
       type: eApgDomFormElementType.OUTPUT
     };
-    this.#addControl(`${aId}Value`, outputControl);
+    this.#addControl(`${acontrolId}Value`, outputControl);
     const r = `
         <p style="margin-bottom: 0.25rem">
             <label
-                for="${aId}"
+                for="${acontrolId}"
                 style="font-size: 0.75rem"
             >
                 ${acaption}: 
                 <output
-                    id="${aId}Value"
-                    for="${aId}"
+                    id="${acontrolId}Value"
+                    for="${acontrolId}"
                 >#${avalue.toString(16)}</output>
             </label>
             <input
-                id="${aId}"
-                name="${aId}"
+                id="${acontrolId}"
+                name="${acontrolId}"
                 type="color"
                 value="#${avalue.toString(16)}"
                 style="margin-bottom: 0.5rem"
@@ -134,58 +156,102 @@ export class ApgGui_Builder {
         `;
     return r;
   }
-  buildButtonControl(aId, acaption, aclickCallback) {
-    const buttonControl = {
-      element: null,
-      type: eApgDomFormElementType.BUTTON,
-      callback: aclickCallback
-    };
-    this.#addControl(aId, buttonControl);
-    const r = `
-        <p style="margin-bottom: 0.25rem">
-            <button
-              id="${aId}"
-              type="button"
-              style="padding:0.25rem; margin:0px"
-            >${acaption}</button>
-        </p>
-        `;
-    return r;
+  readColorPickerControl(acontrolId) {
+    const colorPicker = this.gui.controls.get(acontrolId).element;
+    const output = this.gui.controls.get(`${acontrolId}Value`).element;
+    output.innerHTML = colorPicker.value;
+    this.gui.devLog(`${acontrolId} = ${colorPicker.value}`);
+    return parseInt(colorPicker.value.replace("#", "0x"), 16);
   }
-  buildCheckBoxControl(aId, acaption, avalue, achangeCallback) {
+  buildCheckBoxControl(acontrolId, acaption, avalue, achangeCallback) {
     const checkBoxControl = {
       element: null,
       type: eApgDomFormElementType.INPUT,
       inputType: eApgDomInputType.CHECK_BOX,
       callback: achangeCallback
     };
-    this.#addControl(aId, checkBoxControl);
+    this.#addControl(acontrolId, checkBoxControl);
     const r = `
         <p style="margin-bottom: 0.25rem">
             <input
-              id="${aId}"
-              name="${aId}"
+              id="${acontrolId}"
+              name="${acontrolId}"
               type="checkbox"
               ${avalue ? "checked" : ""}
             />
             <label
-                for="${aId}"
+                for="${acontrolId}"
                 style="font-size: 0.75rem"
             >${acaption}</label>
         </p>
         `;
     return r;
   }
+  readCheckBoxControl(acontrolId) {
+    const checkBox = this.gui.controls.get(acontrolId).element;
+    this.gui.devLog(`${acontrolId} = ${checkBox.checked}`);
+    return checkBox.checked;
+  }
+  /**
+   * Build a select control (<p> with <label> and <select> inside)
+   * @param acontrolId Identifier
+   * @param acaption Optional title for the control, if empty won't be rendered
+   * @param avalue current value of the select element
+   * @param avalues Map of key/value pairs for the select options 
+   * @param achangeCallback A callback to be executed when the value changes
+   * @returns the full HTML of the control ready to be added to a list of other controls
+   */
+  buildSelectControl(acontrolId, acaption, avalue, avalues, achangeCallback) {
+    let caption = "";
+    if (acaption != "") {
+      caption = `
+            <label
+                for="${acontrolId}"
+                style="font-size: 0.75rem"
+            >${acaption}:</label>
+        `;
+    }
+    const selectControl = {
+      element: null,
+      type: eApgDomFormElementType.SELECT,
+      callback: achangeCallback
+    };
+    this.#addControl(acontrolId, selectControl);
+    const options = [];
+    for (const [key, value] of avalues) {
+      const selected = key == avalue ? " selected" : "";
+      const row = `<option value="${key}" ${selected}>${value}</option>`;
+      options.push(row);
+    }
+    const r = `
+        <p style="margin-bottom: 0.25rem">
+        ${caption}
+            <select 
+                id="${acontrolId}"
+                style="padding: 0.125rem; margin: 0px;"
+            >${options.join()}</select>
+
+        </p>
+        `;
+    return r;
+  }
+  readSelectControl(acontrolId) {
+    const select = this.gui.controls.get(acontrolId).element;
+    this.gui.devLog(`${acontrolId} = ${select.value}`);
+    return select.value;
+  }
+  // #endregion
+  // #region Grouping controls -----------------------------------------------
   /**
    *  Build a FieldSet control (<fieldset> and <legend> + other controls)
-   * @param aid 
+   * @param acontrolId 
    * @param acaption 
    * @param acontrols 
    * @returns 
    */
-  buildFieldSetControl(aid, acaption, acontrols) {
+  buildFieldSetControl(acontrolId, acaption, acontrols) {
     const r = `
-        <fieldset id="${aid}">
+        <fieldset id="${acontrolId}">
             <legend>${acaption}</legend>
             ${acontrols.join("\n")}
         </fieldset>
@@ -194,23 +260,23 @@ export class ApgGui_Builder {
   }
   /**
    * Build a Group control (<details> and <summary> + other controls)
-   * @param aId Element identifier
+   * @param acontrolId Element identifier
    * @param acaption Summary text
    * @param acontrols array of other contained elements as controls
    * @param aopened the details element is opened. Default false
    * @param atoggleCallback a callback for the toggle event
    * @returns the HTML string of all the components wrapped by the details element
    */
-  buildGroupControl(aId, acaption, acontrols, aopened = false, atoggleCallback) {
+  buildDetailsControl(acontrolId, acaption, acontrols, aopened = false, atoggleCallback) {
     const groupControl = {
       element: null,
       type: eApgDomFormElementType.DETAILS,
       callback: atoggleCallback
     };
-    this.#addControl(aId, groupControl);
+    this.#addControl(acontrolId, groupControl);
     const r = `
         <details 
-          id="${aId}"
+          id="${acontrolId}"
           style="padding: 0.5rem; margin-bottom: 0px"
           ${aopened ? "open" : ""}
         >
@@ -222,12 +288,12 @@ export class ApgGui_Builder {
   }
   /**
    * Build a panel control (<p> as title a <div> after it)
-   * @param aid Identificator
+   * @param acontrolId Identifier
    * @param acontrols List of other HTML controls inside the panel
    * @param acaption Optional title for the panel: if empty won't be rendered
    * @returns the full HTML of the panel ready to be injectend in the DOM with (element).appendChild
    */
-  buildPanelControl(aid, acontrols, acaption = "") {
+  buildPanelControl(acontrolId, acontrols, acaption = "") {
     let caption = "";
     if (acaption != "") {
       caption = ` <p 
@@ -238,7 +304,7 @@ export class ApgGui_Builder {
     const r = `
        ${caption}
         <div
-            id="${aid}" 
+            id="${acontrolId}" 
             style="overflow-y: auto; margin:0.25rem; background-color: #fafafa" 
         >${acontrols.join("\n")}</div>
         
@@ -246,64 +312,21 @@ export class ApgGui_Builder {
     return r;
   }
   /**
-   * Build a select control (<p> with <label> and <select> inside)
-   * @param aId Identificator
-   * @param acaption Optional title for the control, if empty won't be rendered
-   * @param avalue current value of the select element
-   * @param avalues Map of key/value pairs for the select options 
-   * @param achangeCallback A callback to be executed when the value changes
-   * @returns the full HTML of the control ready to be added to a list of other controls
-   */
-  buildSelectControl(aId, acaption, avalue, avalues, achangeCallback) {
-    let caption = "";
-    if (acaption != "") {
-      caption = `
-            <label
-                for="${aId}"
-                style="font-size: 0.75rem"
-            >${acaption}:</label>
-        `;
-    }
-    const selectControl = {
-      element: null,
-      type: eApgDomFormElementType.SELECT,
-      callback: achangeCallback
-    };
-    this.#addControl(aId, selectControl);
-    const options = [];
-    for (const [key, value] of avalues) {
-      const selected = key == avalue ? " selected" : "";
-      const row = `<option value="${key}" ${selected}>${value}</option>`;
-      options.push(row);
-    }
-    const r = `
-        <p style="margin-bottom: 0.25rem">
-        ${caption}
-            <select 
-                id="${aId}"
-                style="padding: 0.125rem; margin: 0px;"
-            >${options.join()}</select>
-
-        </p>
-        `;
-    return r;
-  }
-  /**
    * Build a dialog control (<dialog> with <article> inside)
-   * @param aId 
+   * @param acontrolId 
    * @param acaption 
    * @param acontrols 
    * @returns 
    */
-  buildDialogControl(aId, acaption, acontrols) {
+  buildDialogControl(acontrolId, acaption, acontrols) {
     const dialogControl = {
       element: null,
       type: eApgDomFormElementType.DIALOG
     };
-    this.#addControl(aId, dialogControl);
+    this.#addControl(acontrolId, dialogControl);
     const r = `
         <dialog
-            id="${aId}"
+            id="${acontrolId}"
             style="padding: 1rem; margin: 0px"
         >
             <article
@@ -317,6 +340,30 @@ export class ApgGui_Builder {
         </dialog>
         `;
     return r;
+  }
+  // #endregion
+  /**
+   * Adds reactivity to a control
+   * @param acontrolId Identifier of the control that has to become reactive
+   * @param astate State object that contains the property associated to the reactive control
+   * @param aprop Name of the property associated to the reactive control
+   */
+  addReactivityToControl(acontrolId, astate, aprop) {
+    const control = this.gui.controls.get(acontrolId);
+    ApgUtils.Assert(
+      control != void 0,
+      `$$451 the control with id (${acontrolId}) is not registered in the GUI!`
+    );
+    ApgUtils.Assert(
+      astate[aprop] != void 0,
+      `$$456 The property (${aprop}), is undefined in state object passed for reactivity!`
+    );
+    const propType = typeof astate[aprop];
+    ApgUtils.Assert(
+      propType == "string" || propType == "number" || propType == "boolean",
+      `$$462 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`
+    );
+    control.reactive = { state: astate, prop: aprop };
   }
   /**
    * After the dinamic insertion of the ApgGui controls in the DOM as elements 
@@ -368,26 +415,11 @@ export class ApgGui_Builder {
     }
   }
   /**
-   * Adds reactivity to a control
-   * @param aid Identificator of the control that has to be reactive
-   * @param astate State object that contains the property associated to the reactive control
-   * @param aprop Name of the property associated to the reactive control
+   * Virtual method that has to be overriden by the descendants of this class
+   * @param acontainer The element that will contain this GUI. Usually a <div> in the DOM
    */
-  addReactivity(aid, astate, aprop) {
-    const control = this.gui.controls.get(aid);
-    ApgUtils.Assert(
-      control != void 0,
-      `$$451 the control with id (${aid}) is not registered in the GUI!`
-    );
-    ApgUtils.Assert(
-      astate[aprop] != void 0,
-      `$$456 The property (${aprop}), is undefined in state object passed for reactivity!`
-    );
-    const propType = typeof astate[aprop];
-    ApgUtils.Assert(
-      propType == "string" || propType == "number" || propType == "boolean",
-      `$$462 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`
-    );
-    control.reactive = { state: astate, prop: aprop };
+  buildHtml(acontainer) {
+    const r = "<p>Override the ApgGui_Builder.build() method to get the GUI</p>";
+    acontainer.innerHTML = r;
   }
 }

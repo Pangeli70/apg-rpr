@@ -10,13 +10,13 @@ import {
     IApgDomRange
 } from "../ApgDom.ts";
 import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
-import { RAPIER } from "../ApgRprDeps.ts";
-import { IApgRpr_Point3D } from "../ApgRprInterfaces.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import { RAPIER } from "../ApgRpr_Deps.ts";
+import { ApgRpr_IPoint3D } from "../ApgRprInterfaces.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
@@ -90,7 +90,7 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
         const shiftY = groundHeight + 0.5;
         for (let i = 0; i < asettings.wallsNumber; ++i) {
             const x = i * 6.0;
-            const offsetPoint: IApgRpr_Point3D = { x: x, y: shiftY, z: 0.0 };
+            const offsetPoint: ApgRpr_IPoint3D = { x: x, y: shiftY, z: 0.0 };
             this.#createWall(offsetPoint, asettings.wallsHeight, asettings.wallsCcd);
         }
 
@@ -107,7 +107,7 @@ export class ApgRprSim_CCDs extends ApgRprSim_Base {
     }
 
 
-    #createWall(offset: IApgRpr_Point3D, stackHeight: number, aisCcdEnabled = false) {
+    #createWall(offset: ApgRpr_IPoint3D, stackHeight: number, aisCcdEnabled = false) {
 
         const shiftY = 1.0;
         const shiftZ = 2.0;
@@ -254,9 +254,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             WALLS_DENS_CNT,
             'Density',
             this.guiSettings.wallsDensity,
-            this.guiSettings.wallsDensityMMS.min,
-            this.guiSettings.wallsDensityMMS.max,
-            this.guiSettings.wallsDensityMMS.step,
+            this.guiSettings.wallsDensityMMS,
             () => {
                 const range = this.gui.controls.get(WALLS_DENS_CNT)!.element as IApgDomRange;
                 this.guiSettings.wallsDensity = parseFloat(range.value);
@@ -271,9 +269,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             WALLS_HEIGHT_CNT,
             'Height',
             this.guiSettings.wallsHeight,
-            this.guiSettings.wallsHeightMMS.min,
-            this.guiSettings.wallsHeightMMS.max,
-            this.guiSettings.wallsHeightMMS.step,
+            this.guiSettings.wallsHeightMMS,
             () => {
                 const range = this.gui.controls.get(WALLS_HEIGHT_CNT)!.element as IApgDomRange;
                 this.guiSettings.wallsHeight = parseInt(range.value);
@@ -288,9 +284,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             WALLS_NUMB_CNT,
             'Number',
             this.guiSettings.wallsNumber,
-            this.guiSettings.wallsNumberMMS.min,
-            this.guiSettings.wallsNumberMMS.max,
-            this.guiSettings.wallsNumberMMS.step,
+            this.guiSettings.wallsNumberMMS,
             () => {
                 const range = this.gui.controls.get(WALLS_NUMB_CNT)!.element as IApgDomRange;
                 this.guiSettings.wallsNumber = parseInt(range.value);
@@ -312,7 +306,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             }
         );
 
-        const wallsGroupControl = this.buildGroupControl(
+        const wallsGroupControl = this.buildDetailsControl(
             "wallsGroupControl",
             "Walls:",
             [
@@ -339,9 +333,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             PROJ_RADIOUS_CNT,
             'Radious',
             this.guiSettings.projectileRadious,
-            this.guiSettings.projectileRadiousMMS.min,
-            this.guiSettings.projectileRadiousMMS.max,
-            this.guiSettings.projectileRadiousMMS.step,
+            this.guiSettings.projectileRadiousMMS,
             () => {
                 const range = this.gui.controls.get(PROJ_RADIOUS_CNT)!.element as IApgDomRange;
                 this.guiSettings.projectileRadious = parseFloat(range.value);
@@ -356,9 +348,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             PROJ_DENSITY_CNT,
             'Density',
             this.guiSettings.projectileDensity,
-            this.guiSettings.projectileDensityMMS.min,
-            this.guiSettings.projectileDensityMMS.max,
-            this.guiSettings.projectileDensityMMS.step,
+            this.guiSettings.projectileDensityMMS,
             () => {
                 const range = this.gui.controls.get(PROJ_DENSITY_CNT)!.element as IApgDomRange;
                 this.guiSettings.projectileDensity = parseFloat(range.value);
@@ -373,9 +363,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             PROJ_SPEED_CNT,
             'Speed',
             this.guiSettings.projectileSpeed,
-            this.guiSettings.projectileSpeedMMS.min,
-            this.guiSettings.projectileSpeedMMS.max,
-            this.guiSettings.projectileSpeedMMS.step,
+            this.guiSettings.projectileSpeedMMS,
             () => {
                 const range = this.gui.controls.get(PROJ_SPEED_CNT)!.element as IApgDomRange;
                 this.guiSettings.projectileSpeed = parseFloat(range.value);
@@ -397,7 +385,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
             }
         );
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "projectileGroupControl",
             "Projectile:",
             [

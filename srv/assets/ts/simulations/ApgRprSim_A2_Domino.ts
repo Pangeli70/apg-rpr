@@ -7,12 +7,12 @@
 
 import { IApgDomElement, IApgDomKeyboardEvent, IApgDomRange, IApgDomSelect } from "../ApgDom.ts";
 import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
-import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import { RAPIER } from "../ApgRpr_Deps.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 

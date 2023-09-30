@@ -5,15 +5,34 @@
  * -----------------------------------------------------------------------
 */
 
-import { IApgDomElement, IApgDomRange, IApgDomSelect } from "../ApgDom.ts";
-import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
-import { PRANDO, RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import {
+    IApgDomElement,
+    IApgDomRange,
+    IApgDomSelect
+} from "../ApgDom.ts";
+
+import {
+    ApgGui,
+    ApgGui_IMinMaxStep
+} from "../ApgGui.ts";
+
+import {
+    RAPIER
+} from "../ApgRpr_Deps.ts";
+
+import {
+    ApgRprSim_GuiBuilder
+} from "../ApgRprSim_GuiBuilder.ts";
+
+
 import {
     ApgRprSim_Base, ApgRprSim_IGuiSettings,
     IApgRprSim_Params
-} from "../ApgRprSimulationBase.ts";
-import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
+} from "../ApgRprSim_Base.ts";
+
+import {
+    ApgRpr_Simulator
+} from "../ApgRpr_Simulator.ts";
 
 
 
@@ -277,9 +296,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
             BODIES_REST_CNT,
             'Restitution',
             this.guiSettings.restitution,
-            this.guiSettings.restitutionMMS.min,
-            this.guiSettings.restitutionMMS.max,
-            this.guiSettings.restitutionMMS.step,
+            this.guiSettings.restitutionMMS,
             () => {
                 const range = this.gui.controls.get(BODIES_REST_CNT)!.element as IApgDomRange;
                 this.guiSettings.restitution = parseFloat(range.value);
@@ -289,7 +306,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
             }
         );
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "bodiesGroupControl",
             "Bodies:",
             [
@@ -325,7 +342,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
             }
         );
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "hroundGroupControl",
             "Ground:",
             [

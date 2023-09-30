@@ -5,10 +5,23 @@
  * -----------------------------------------------------------------------
 */
 
-import { IApgDomBrowserWindow, IApgDomDocument } from "./ApgDom.ts";
-import { RAPIER } from "./ApgRprDeps.ts";
-import { ApgRpr_PrepareSimulations, ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
-import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
+import {
+    IApgDomBrowserWindow,
+    IApgDomDocument
+} from "./ApgDom.ts";
+
+import {
+    RAPIER
+} from "./ApgRpr_Deps.ts";
+
+import {
+    ApgRpr_PrepareSimulations,
+    ApgRpr_eSimulationName
+} from "./ApgRpr_Simulations.ts";
+
+import {
+    ApgRpr_Simulator
+} from "./ApgRpr_Simulator.ts";
 
 
 export async function ApgRpr(

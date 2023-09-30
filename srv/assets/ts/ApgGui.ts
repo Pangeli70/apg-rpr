@@ -19,6 +19,15 @@ import { ApgUtils } from "./ApgUtils.ts";
 
 
 
+export interface ApgGui_IMinMaxStep {
+    min: number;
+    max: number;
+    step: number;
+}
+
+export type ApgGui_TSelectValuesMap = Map<string, string>;
+
+
 export type ApgGui_TReactiveState = Record<string, string | number | boolean>
 
 
@@ -30,7 +39,6 @@ export interface ApgGui_IReactive {
     /** The name of the property that will be associated to the GUI state */
     prop: string;
 }
-
 
 
 /**
@@ -62,6 +70,8 @@ export interface ApgGui_IControl {
  * Simple gui similar to LilGui or DatGui
  */
 export class ApgGui {
+
+    private _devMode = true;
 
     /** Inital timestamp for logging events */
     private _creation: number;
@@ -165,8 +175,22 @@ export class ApgGui {
     }
 
 
+    devLog(aitem: string, alogger = ApgGui.LOGGER_NAME) {
+        if (this._devMode) { 
+            this.#log(true, aitem, alogger);
+        }
+    }
+
+
     logNoTime(aitem: string, alogger = ApgGui.LOGGER_NAME) {
         this.#log(false, aitem, alogger);
+    }
+
+
+    devLogNoTime(aitem: string, alogger = ApgGui.LOGGER_NAME) {
+        if (this._devMode) { 
+            this.#log(false, aitem, alogger);
+        }
     }
 
 

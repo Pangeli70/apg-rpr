@@ -4,16 +4,21 @@
  * @version 0.9.8 [APG 2023/08/11]
  * -----------------------------------------------------------------------
 */
-import { THREE, THREE_OrbitControls, PRANDO, RAPIER } from './ApgRprDeps.ts';
-import { ApgRprUtils } from "./ApgRprUtils.ts";
 import {
-    IApgDomBrowserWindow, IApgDomCanvas, IApgDomDocument, IApgDomElement
-} from './ApgDom.ts'
-import { IApgRpr_CameraPosition, IApgRpr_InstanceDesc } from "./ApgRprInterfaces.ts";
-import { eApgRpr_InstancedMeshesGroups } from "./ApgRprEnums.ts";
+    IApgDomBrowserWindow,
+    IApgDomCanvas,
+    IApgDomDocument,
+    IApgDomElement
+} from './ApgDom.ts';
+
+import {
+    THREE,
+    THREE_OrbitControls
+} from './ApgWgl_Deps.ts';
 
 
-export class ApgWglLayers {
+
+export class ApgWgl_Layers {
     static readonly helpers = 1;
     static readonly lights = 2;
     static readonly characters = 3;
@@ -22,37 +27,36 @@ export class ApgWglLayers {
 }
 
 
-export interface IApgWglOrbitControlsParams {
+export interface ApgWgl_IOrbitControlsParams {
     eye: THREE.Vector3,
     target: THREE.Vector3
 }
 
 
-
-export interface IApgWglViewerOptions {
+export interface ApgWgl_IViewerSettings {
 
     /** Overall diameter size of the world */
     worldSize: number;
 
     /** Color of the fog */
-    fogColor: number;
+    fogColor: THREE.Color;
     /** Fog mode */
     fogLinear: boolean;
     /** a percentage of word size*/
-    fogMinDistance: number;
+    fogNear: number;
     /** a percentage of word size*/
-    fogMaxDistance: number;
+    fogFar: number;
 
     /** THREE JS Constants */
     toneMapping: THREE.ToneMapping;
     /** ??? */
     toneMappingExposure: number;
-    
+
     /** THREE JS Constants */
     outputColorSpace: THREE.ColorSpace;
 
     /** Use shadows */
-    shadowMapEnabled: boolean;
+    areShadowsEnabled: boolean;
     /** THREE JS Constants */
     shadowMapType: THREE.ShadowMapType;
     /** ??? */
@@ -102,7 +106,8 @@ export interface IApgWglViewerOptions {
 
 }
 
-export class ApgWglViewer {
+
+export class ApgWgl_Viewer {
 
     /** We don't like global objects */
     protected window: IApgDomBrowserWindow;
@@ -114,21 +119,21 @@ export class ApgWglViewer {
 
     readonly APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY = 'APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY';
 
-    readonly DEFAULT_OPTIONS: IApgWglViewerOptions = {
+    readonly DEFAULT_SETTINGS: ApgWgl_IViewerSettings = {
 
         worldSize: this.WORLD_SIZE,
 
-        fogColor: 0x888888,
+        fogColor: new THREE.Color(0x888888),
         fogLinear: true,
-        fogMinDistance: this.WORLD_SIZE / 4,
-        fogMaxDistance: this.WORLD_SIZE / 2,
+        fogNear: 0.8,
+        fogFar: 1,
 
         toneMapping: THREE.LinearToneMapping,
         toneMappingExposure: 1,
 
         outputColorSpace: THREE.SRGBColorSpace,
 
-        shadowMapEnabled: false,
+        areShadowsEnabled: false,
         // shadowMapType: THREE.PCFSoftShadowMap,
         shadowMapType: THREE.BasicShadowMap,
         shadowMapRadious: 4,
@@ -138,7 +143,7 @@ export class ApgWglViewer {
 
         perspCameraFov: 45,
         perspCameraNear: 0.1, // 100mm
-        perspCameraFar: this.WORLD_SIZE/2,
+        perspCameraFar: this.WORLD_SIZE / 2,
         perspCameraPosition: new THREE.Vector3(0, this.EYE_HEIGHT, 5),
 
         useEnvMapInsteadThanLights: false,
@@ -174,7 +179,8 @@ export class ApgWglViewer {
 
     }
 
-    protected options: IApgWglViewerOptions;
+    settings: ApgWgl_IViewerSettings;
+    prevSettingsStamp: string;
 
     /** Dom Elements*/
     protected viewerElement!: IApgDomElement;
@@ -199,14 +205,14 @@ export class ApgWglViewer {
         adocument: IApgDomDocument,
         aviewerElement: IApgDomElement,
     ) {
-
         this.window = awindow;
         this.document = adocument;
         this.viewerElement = aviewerElement;
 
-        this.options = { ...this.DEFAULT_OPTIONS }
+        this.settings = { ...this.DEFAULT_SETTINGS }
+        this.prevSettingsStamp = JSON.stringify(this.settings);
 
-        this.#initDomElements();
+        this.#initCanvas();
         this.#initRenderer();
         this.#initCamera();
         this.#initScene();
@@ -216,142 +222,208 @@ export class ApgWglViewer {
         this.raycaster = new THREE.Raycaster();
 
         this.window.addEventListener("resize", () => { this.resize() }, false);
-
     }
 
-    #initDomElements() {
 
+    #initCanvas(): void {
         this.viewerCanvasElement = this.document.createElement('canvas') as IApgDomCanvas;
         this.viewerCanvasElement.id = 'ApgWglViewerCanvas';
         this.viewerElement.appendChild(this.viewerCanvasElement);
-
     }
 
-    #initRenderer() {
+
+    #initRenderer(): void {
         this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.viewerCanvasElement });
         this.renderer.setSize(this.viewerElement.clientWidth, this.viewerElement.clientHeight);
-        this.renderer.toneMapping = this.options.toneMapping;
-        this.renderer.toneMappingExposure = this.options.toneMappingExposure;
-        this.renderer.outputColorSpace = this.options.outputColorSpace;
-        this.renderer.shadowMap.enabled = this.options.shadowMapEnabled;
-        this.renderer.shadowMap.type = this.options.shadowMapType;
-        this.renderer.setClearColor(this.options.clearColor, 1);
         this.renderer.setPixelRatio(this.window.devicePixelRatio);
+        this.updateRenderer();
     }
 
-    #initCamera() {
-        const aspectRatio = this.viewerElement.clientWidth / this.viewerElement.clientHeight;
+
+    updateRenderer(): void {
+        this.renderer.toneMapping = this.settings.toneMapping;
+        this.renderer.toneMappingExposure = this.settings.toneMappingExposure;
+        this.renderer.outputColorSpace = this.settings.outputColorSpace;
+        this.renderer.shadowMap.enabled = this.settings.areShadowsEnabled;
+        this.renderer.shadowMap.type = this.settings.shadowMapType;
+        this.renderer.setClearColor(this.settings.clearColor, 1);
+    }
+
+
+    #initCamera(): void {
         this.camera = new THREE.PerspectiveCamera();
-        this.camera.fov = this.options.perspCameraFov;
-        this.camera.aspect = aspectRatio;
-        this.camera.near = this.options.perspCameraNear;
-        this.camera.far = this.options.perspCameraFar;
+
         this.camera.position.set(
-            this.options.perspCameraPosition.x,
-            this.options.perspCameraPosition.y,
-            this.options.perspCameraPosition.z);
-        this.camera.updateProjectionMatrix();
+            this.settings.perspCameraPosition.x,
+            this.settings.perspCameraPosition.y,
+            this.settings.perspCameraPosition.z);
+
         this.camera.layers.enableAll();
+
+        this.updateCamera();
     }
 
-    #initScene() {
+
+    updateCamera(): void {
+        this.camera.fov = this.settings.perspCameraFov;
+        const aspectRatio = this.viewerElement.clientWidth / this.viewerElement.clientHeight;
+        this.camera.aspect = aspectRatio;
+        this.camera.near = this.settings.perspCameraNear;
+        this.camera.far = this.settings.perspCameraFar;
+        this.camera.updateProjectionMatrix();
+    }
+
+
+    #initScene(): void {
 
         this.scene = new THREE.Scene();
 
         this.scene.fog = new THREE.Fog(
-            this.options.fogColor,
-            this.options.fogMinDistance,
-            this.options.fogMaxDistance
+            this.settings.fogColor,
+            this.WORLD_SIZE * this.settings.fogNear,
+            this.WORLD_SIZE * this.settings.fogFar
         );
 
     }
 
-    #initLights() {
+
+    updateFog(): void {
+        const fog = this.scene.fog! as THREE.Fog;
+        fog.color.set(this.settings.fogColor);
+
+        if (this.settings.fogNear > this.settings.fogFar) {
+            const t = this.settings.fogNear;
+            this.settings.fogNear = this.settings.fogFar;
+            this.settings.fogFar = t;
+        }
+        if (this.settings.fogNear == this.settings.fogFar) {
+            this.settings.fogFar = 1;
+        }
+
+        fog.near = this.WORLD_SIZE * this.settings.fogNear;
+        fog.far = this.WORLD_SIZE * this.settings.fogFar;
+    }
+
+
+    #initLights(): void {
 
         this.ambLight = new THREE.AmbientLight()
-        this.ambLight.color = this.options.ambLightColor;
-        this.ambLight.intensity = this.options.ambLightIntensity;
-        this.ambLight.visible =
-            !this.options.useEnvMapInsteadThanLights
-            && this.options.ambLightEnabled;
-        this.ambLight.layers.set(ApgWglLayers.lights);
+        this.ambLight.layers.set(ApgWgl_Layers.lights);
+        this.updateAmbLight();
         this.scene.add(this.ambLight);
 
         this.sunLight = new THREE.DirectionalLight()
-        this.sunLight.color = this.options.sunLightColor;
-        this.sunLight.intensity = this.options.sunLightIntensity;
-        this.sunLight.visible =
-            !this.options.useEnvMapInsteadThanLights
-            && this.options.sunLightEnabled;
-        this.sunLight.layers.set(ApgWglLayers.lights);
+        this.sunLight.layers.set(ApgWgl_Layers.lights);
+        this.updateSunLight()
+        this.sunLight.castShadow = true;
+        this.scene.add(this.sunLight);
 
-        this.sunLight.position.set(
-            this.options.sunLightPosition.x,
-            this.options.sunLightPosition.y,
-            this.options.sunLightPosition.z);
-        
         const sunLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 100, 0xff0000);
-        sunLightHelper.layers.set(ApgWglLayers.helpers);
-        this.scene!.add(sunLightHelper);
+        sunLightHelper.layers.set(ApgWgl_Layers.helpers);
+        this.scene.add(sunLightHelper);
 
-        if (this.options.shadowMapEnabled) {
-            this.sunLight.castShadow = true;
-            this.sunLight.shadow.radius = this.options.shadowMapRadious;
-            this.sunLight.shadow.mapSize.width = this.options.shadowMapSize;
-            this.sunLight.shadow.mapSize.height = this.options.shadowMapSize;
-            this.sunLight.shadow.camera.top = this.options.sunLightShadowMapCameraSize;
-            this.sunLight.shadow.camera.right = this.options.sunLightShadowMapCameraSize;
-            this.sunLight.shadow.camera.bottom = -this.options.sunLightShadowMapCameraSize;
-            this.sunLight.shadow.camera.left = -this.options.sunLightShadowMapCameraSize;
-            this.sunLight.shadow.camera.near = this.options.sunLightShadowMapCameraNear;
-            this.sunLight.shadow.camera.far = this.options.sunLightShadowMapCameraFar;
-            //this.sunLight.shadow.bias = -0.001;
-            this.sunLight.shadow.bias = -0.0001;
-            //this.sunLight.shadow.normalBias = 0.3;
-
-            const sunLightShadowCameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
-            sunLightShadowCameraHelper.layers.set(ApgWglLayers.helpers);
-            this.scene.add(sunLightShadowCameraHelper);
-        }
-        this.scene!.add(this.sunLight);
+        const sunLightShadowCameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+        sunLightShadowCameraHelper.layers.set(ApgWgl_Layers.helpers);
+        this.scene.add(sunLightShadowCameraHelper);
 
         this.camLight = new THREE.PointLight()
-        this.camLight.color = this.options.camLightColor;
-        this.camLight.intensity = this.options.camLightIntensity
-        this.camLight.distance = this.options.camLightIntensity;
+        this.updateCamLight();
+        this.camLight.layers.set(ApgWgl_Layers.lights);
+        this.scene.add(this.camLight);
+
+        const camLightHelper = new THREE.PointLightHelper(this.camLight, 1, 0x0000ff);
+        camLightHelper.layers.set(ApgWgl_Layers.helpers);
+        this.scene.add(camLightHelper);
+
+    }
+
+
+    updateAmbLight(): void {
+        this.ambLight.color = this.settings.ambLightColor;
+        this.ambLight.intensity = this.settings.ambLightIntensity;
+        this.ambLight.visible =
+            !this.settings.useEnvMapInsteadThanLights
+            && this.settings.ambLightEnabled;
+    }
+
+
+    updateSunLight() {
+        this.sunLight.color = this.settings.sunLightColor;
+        this.sunLight.intensity = this.settings.sunLightIntensity;
+        this.sunLight.visible =
+            !this.settings.useEnvMapInsteadThanLights
+            && this.settings.sunLightEnabled;
+
+        this.sunLight.position.set(
+            this.settings.sunLightPosition.x,
+            this.settings.sunLightPosition.y,
+            this.settings.sunLightPosition.z);
+
+        this.sunLight.shadow.radius = this.settings.shadowMapRadious;
+        this.sunLight.shadow.mapSize.width = this.settings.shadowMapSize;
+        this.sunLight.shadow.mapSize.height = this.settings.shadowMapSize;
+
+        this.sunLight.shadow.bias = -0.0001;
+
+        this.sunLight.shadow.camera.top = this.settings.sunLightShadowMapCameraSize;
+        this.sunLight.shadow.camera.right = this.settings.sunLightShadowMapCameraSize;
+        this.sunLight.shadow.camera.bottom = -this.settings.sunLightShadowMapCameraSize;
+        this.sunLight.shadow.camera.left = -this.settings.sunLightShadowMapCameraSize;
+        this.sunLight.shadow.camera.near = this.settings.sunLightShadowMapCameraNear;
+        this.sunLight.shadow.camera.far = this.settings.sunLightShadowMapCameraFar;
+    }
+
+
+    updateCamLight() {
+        this.camLight.color = this.settings.camLightColor;
+        this.camLight.intensity = this.settings.camLightIntensity;
+        this.camLight.visible =
+            !this.settings.useEnvMapInsteadThanLights
+            && this.settings.camLightEnabled;
+
+        this.camLight.distance = this.settings.camLightDistance;
+
         this.camLight.position.set(
             this.camera.position.x,
             this.camera.position.y,
             this.camera.position.z
         );
-        this.camLight.visible =
-            !this.options.useEnvMapInsteadThanLights
-            && this.options.camLightEnabled;
-        this.camLight.layers.set(ApgWglLayers.lights);
-        this.scene.add(this.camLight);
-
-        const camLightHelper = new THREE.PointLightHelper(this.camLight, 1, 0x0000ff);
-        camLightHelper.layers.set(ApgWglLayers.helpers);
-        this.scene.add(camLightHelper);
 
     }
+
 
     #initOrbitControls() {
         this.orbitControls = new THREE_OrbitControls(this.camera, this.renderer.domElement);
 
-        this.orbitControls.minDistance = this.options.orbControlsMinDistance;
-        this.orbitControls.maxDistance = this.options.orbControlsMaxDistance;
+        this.orbitControls.minDistance = this.settings.orbControlsMinDistance;
+        this.orbitControls.maxDistance = this.settings.orbControlsMaxDistance;
         this.orbitControls.target.set(
-            this.options.orbControlsTarget.x,
-            this.options.orbControlsTarget.y,
-            this.options.orbControlsTarget.z,
+            this.settings.orbControlsTarget.x,
+            this.settings.orbControlsTarget.y,
+            this.settings.orbControlsTarget.z,
         );
-        this.orbitControls.minPolarAngle = this.options.orbControlsMinPolarAngle;
-        this.orbitControls.maxPolarAngle = this.options.orbControlsMaxPolarAngle;
-        this.orbitControls.enableDamping = this.options.orbControlsEnableDamping;
-        this.orbitControls.dampingFactor = this.options.orbControlsDampingFactor;
+        this.orbitControls.minPolarAngle = this.settings.orbControlsMinPolarAngle;
+        this.orbitControls.maxPolarAngle = this.settings.orbControlsMaxPolarAngle;
+        this.orbitControls.enableDamping = this.settings.orbControlsEnableDamping;
+        this.orbitControls.dampingFactor = this.settings.orbControlsDampingFactor;
 
         this.orbitControls.update();
+    }
+
+
+    updateSettings() {
+
+        // TODO this could be slow to do at every frame??? -- APG 20230930
+        const strSettingsStamp = JSON.stringify(this.settings);
+        if (this.prevSettingsStamp != strSettingsStamp) {
+            this.updateRenderer();
+            this.updateFog();
+            this.updateCamera();
+            this.updateAmbLight();
+            this.updateSunLight();
+            this.updateCamLight();
+            this.prevSettingsStamp = JSON.stringify(this.settings);
+        }
     }
 
 
@@ -375,7 +447,7 @@ export class ApgWglViewer {
      * Move the camera associated with the orbit control
      * @param anewPosition 
      */
-    setOrbControlsParams(anewPosition: IApgWglOrbitControlsParams) {
+    setOrbControlsParams(anewPosition: ApgWgl_IOrbitControlsParams) {
         this.camera.position.set(
             anewPosition.eye.x,
             anewPosition.eye.y,
@@ -400,13 +472,13 @@ export class ApgWglViewer {
      * Collects data on the current viewer settings
      * @returns Array of strings 
      */
-    getInfo() { 
+    getInfo() {
 
         const r: string[] = [];
-        
+
         const tp = this.orbitControls.target;
         const cp = this.camera.position;
-        
+
         r.push(`Apg Wgl Viewer`);
         r.push(``);
 
@@ -421,21 +493,36 @@ export class ApgWglViewer {
         r.push(` - Near: ${this.camera.near.toFixed(1)}`);
         r.push(` - Far: ${this.camera.far.toFixed(1)}`);
 
+        const fog = this.scene.fog! as THREE.Fog;
+        r.push(`Fog:`);
+        r.push(` - Color: ${fog.color.getHex()}`);
+        r.push(` - Near: ${fog.near.toFixed(1)}`);
+        r.push(` - Far: ${fog.far.toFixed(1)}`);
+
+
         r.push('Lights:');
-        r.push(` - Ambient is: ${this.ambLight.visible ? 'Enabled': 'Disabled'}`);
+        r.push(` - Ambient is: ${this.ambLight.visible ? 'Enabled' : 'Disabled'}`);
         r.push(` - Sun is: ${this.sunLight.visible ? 'Enabled' : 'Disabled'}`);
         r.push(` - Camera is: ${this.camLight.visible ? 'Enabled' : 'Disabled'}`);
-        
+
         const vp = this.renderer.getViewport(new THREE.Vector4);
         r.push('Renderer:');
         r.push(` - Shadows are: ${this.renderer.shadowMap.enabled ? 'Enabled' : 'Disabled'}`);
         r.push(` - Dimensions are: ${vp.width.toFixed(1)} x ${vp.height.toFixed(1)}`);
         r.push(` - Pixel ratio is: ${this.renderer.getPixelRatio().toFixed(3)}`);
-        
+
 
 
         return r;
     }
 
+
+    render() {
+
+        this.updateSettings();
+
+        this.renderer.render(this.scene, this.camera);
+
+    }
 }
 

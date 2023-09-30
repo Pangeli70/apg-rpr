@@ -5,7 +5,7 @@
  * -----------------------------------------------------------------------
 */
 
-import { ApgRprSim_Base } from './ApgRprSimulationBase.ts';
+import { ApgRprSim_Base } from './ApgRprSim_Base.ts';
 
 
 import { ApgRprSim_Pyramid } from "./simulations/ApgRprSim_A0_Pyramid.ts";
@@ -19,7 +19,6 @@ import { ApgRprSim_CollisionGroups } from "./simulations/ApgRprSimCollisionGroup
 import { ApgRprSim_TrimeshTerrain } from "./simulations/ApgRprSimTrimeshTerrain.ts";
 import { ApgRprSim_PngTerrain } from "./simulations/ApgRprSimPngTerrain.ts";
 // import * as Keva from "./simulations/ApgRprSimKeva.ts";
-// import * as Joints from "./simulations/ApgRprSimJoints.ts";
 import { ApgRprSim_ConvexPolyhedron } from "./simulations/ApgRprSimConvexPolyhedron.ts";
 import { ApgRprSim_Platform } from "./simulations/ApgRprSimPlatform.ts";
 import { ApgRprSim_CCDs } from "./simulations/ApgRprSimCCDs.ts";

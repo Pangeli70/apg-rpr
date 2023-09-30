@@ -7,12 +7,9 @@
 
 import { IApgDomElement, IApgDomRange } from "../ApgDom.ts";
 import { ApgGui, ApgGui_IMinMaxStep } from "../ApgGui.ts";
-import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
-import {
-    ApgRprSim_Base, ApgRprSim_IGuiSettings,
-    IApgRprSim_Params
-} from "../ApgRprSimulationBase.ts";
+import { RAPIER } from "../ApgRpr_Deps.ts";
+import { ApgRprSim_Base, ApgRprSim_IGuiSettings, IApgRprSim_Params } from "../ApgRprSim_Base.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import { ApgRpr_Simulator } from "../ApgRpr_Simulator.ts";
 
 
@@ -184,9 +181,7 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
             CUBES_REST_CNT,
             'Restitution',
             this.guiSettings.cubesRestitution,
-            this.guiSettings.cubesRestitutionMMS.min,
-            this.guiSettings.cubesRestitutionMMS.max,
-            this.guiSettings.cubesRestitutionMMS.step,
+            this.guiSettings.cubesRestitutionMMS,
             () => {
                 const range = this.gui.controls.get(CUBES_REST_CNT)!.element as IApgDomRange;
                 this.guiSettings.cubesRestitution = parseFloat(range.value);
@@ -201,9 +196,7 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
             PYR_SIZE_CNT,
             'Size',
             this.guiSettings.size,
-            this.guiSettings.sizeMMS.min,
-            this.guiSettings.sizeMMS.max,
-            this.guiSettings.sizeMMS.step,
+            this.guiSettings.sizeMMS,
             () => {
                 const range = this.gui.controls.get(PYR_SIZE_CNT)!.element as IApgDomRange;
                 this.guiSettings.size = parseFloat(range.value);
@@ -214,7 +207,7 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
         );
 
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "cubesGroupControl",
             "Cubes:",
             [

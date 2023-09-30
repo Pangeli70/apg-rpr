@@ -8,15 +8,27 @@ import {
     IApgDomDialog,
     IApgDomElement
 } from "./ApgDom.ts";
-import { ApgGui } from "./ApgGui.ts";
-import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
-import { RAPIER } from "./ApgRprDeps.ts";
-import { IApgRpr_DebugInfo } from "./ApgRprInterfaces.ts";
+
+import {
+    ApgGui
+} from "./ApgGui.ts";
+
+import {
+    ApgGui_Builder
+} from "./ApgGui_Builder.ts";
+
+import {
+    ApgRpr_IDebugInfo
+} from "./ApgRprInterfaces.ts";
+
+import {
+    RAPIER
+} from "./ApgRpr_Deps.ts";
 
 
-export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
+export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
 
-    debugInfo: IApgRpr_DebugInfo;
+    debugInfo: ApgRpr_IDebugInfo;
 
     readonly DEBUG_INFO_DIALOG_CNT = 'debugInfoDialogControl';
     readonly DEBUG_INFO_PAR_CNT = 'debugInfoParagraphControl';
@@ -24,7 +36,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
 
     constructor(
         agui: ApgGui,
-        ainfo: IApgRpr_DebugInfo
+        ainfo: ApgRpr_IDebugInfo
     ) {
         super(agui, "Pippo debug");
 
@@ -50,7 +62,7 @@ export class ApgRprSimDebugGuiBuilder extends ApgGui_Builder {
             }
         );
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "debugInfoGroupControl",
             "Debug:",
             [

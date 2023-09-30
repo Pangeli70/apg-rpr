@@ -1,8 +1,8 @@
-import { RAPIER, PRANDO } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import { RAPIER, PRANDO } from "../ApgRpr_Deps.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
   ApgRprSim_Base
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);

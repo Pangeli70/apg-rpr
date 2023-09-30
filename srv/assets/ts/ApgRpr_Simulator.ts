@@ -6,24 +6,48 @@
 */
 
 import {
-    IApgDomBrowserWindow, IApgDomDocument,
+    IApgDomBrowserWindow,
+    IApgDomDocument,
     IApgDomMouseEvent
 } from "./ApgDom.ts";
-import { ApgGui } from "./ApgGui.ts";
+
+import {
+    ApgGui
+} from "./ApgGui.ts";
+
 import {
     ApgGui_Stats,
-    ApgRpr_Colliders_StatsPanel, ApgRpr_Step_StatsPanel
-} from "./ApgGuiStats.ts";
-import { RAPIER, md5 } from './ApgRprDeps.ts';
+    ApgRpr_Colliders_StatsPanel,
+    ApgRpr_Step_StatsPanel
+} from "./ApgGui_StatsPanel.ts";
+
 import {
-    IApgRpr_CameraPosition, IApgRpr_DebugInfo, IApgRpr_Point2D
+    RAPIER, md5
+} from './ApgRpr_Deps.ts';
+
+import {
+ApgRpr_ICameraPosition,
+    ApgRpr_IDebugInfo,
+    IApgRpr_Point2D
 } from "./ApgRprInterfaces.ts";
+
 import {
-    ApgRprSim_Base, ApgRprSim_IGuiSettings, IApgRprSim_Params
-} from "./ApgRprSimulationBase.ts";
-import { ApgRprViewer } from "./ApgRprViewer.ts";
-import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
-import { IApgWglOrbitControlsParams } from "./ApgWglViewer.ts";
+    ApgRprSim_Base,
+    ApgRprSim_IGuiSettings,
+    IApgRprSim_Params
+} from "./ApgRprSim_Base.ts";
+
+import {
+    ApgRpr_Viewer
+} from "./ApgRpr_Viewer.ts";
+
+import {
+    ApgRpr_eSimulationName
+} from "./ApgRpr_Simulations.ts";
+
+import {
+    ApgWgl_IOrbitControlsParams
+} from "./ApgWgl_Viewer.ts";
 
 
 export class ApgRpr_Simulator {
@@ -47,7 +71,7 @@ export class ApgRpr_Simulator {
     collidersStatsPanel!: ApgRpr_Colliders_StatsPanel;
 
     /** The THREE viewer attached to the simulation */
-    viewer: ApgRprViewer;
+    viewer: ApgRpr_Viewer;
 
     /** Eventually used for picking objects with a raycaster */
     mouse: IApgRpr_Point2D;
@@ -80,7 +104,7 @@ export class ApgRpr_Simulator {
     /** The simulation is in debug mode so we collect additional data */
     isInDebugMode = false;
     /** The current debug info contain the simulation step counter */
-    debugInfo: IApgRpr_DebugInfo;
+    debugInfo: ApgRpr_IDebugInfo;
 
 
     /** The last snapshot collected to be eventually stored or transmitted */
@@ -130,7 +154,7 @@ export class ApgRpr_Simulator {
             stepId: 0
         }
 
-        this.viewer = new ApgRprViewer(this.window, this.document, this.gui.viewerElement);
+        this.viewer = new ApgRpr_Viewer(this.window, this.document, this.gui.viewerElement);
         this.gui.log(`ApgRprThreeViewer created`);
 
         this.mouse = { x: 0, y: 0 };
@@ -285,9 +309,11 @@ export class ApgRpr_Simulator {
     /** 
      * If we call this it means that the camera is locked
      */
-    resetCamera(acameraPosition: IApgRpr_CameraPosition) {
+    resetCamera(acameraPosition: ApgRpr_ICameraPosition) {
 
-        this.viewer.setOrbControlsParams(acameraPosition as IApgWglOrbitControlsParams);
+        // TODO this cast is a bad hack, works only because the two interfaces overlap -- APG 20230930
+
+        this.viewer.setOrbControlsParams(acameraPosition as ApgWgl_IOrbitControlsParams);
 
     }
 
@@ -375,7 +401,7 @@ export class ApgRpr_Simulator {
             // @NOTE Here we update THREE.js only when the world changes!!! 
             if (this.world) {
                 this.stats.begin();
-                this.viewer.render(this.world, this.isInDebugMode);
+                this.viewer.updateAndRender(this.world, this.isInDebugMode);
                 this.stats.end();
             }
 

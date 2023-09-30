@@ -1,8 +1,8 @@
-import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import { RAPIER } from "../ApgRpr_Deps.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
   ApgRprSim_Base
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 export class ApgRprSim_CCDs extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
@@ -136,9 +136,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       WALLS_DENS_CNT,
       "Density",
       this.guiSettings.wallsDensity,
-      this.guiSettings.wallsDensityMMS.min,
-      this.guiSettings.wallsDensityMMS.max,
-      this.guiSettings.wallsDensityMMS.step,
+      this.guiSettings.wallsDensityMMS,
       () => {
         const range = this.gui.controls.get(WALLS_DENS_CNT).element;
         this.guiSettings.wallsDensity = parseFloat(range.value);
@@ -151,9 +149,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       WALLS_HEIGHT_CNT,
       "Height",
       this.guiSettings.wallsHeight,
-      this.guiSettings.wallsHeightMMS.min,
-      this.guiSettings.wallsHeightMMS.max,
-      this.guiSettings.wallsHeightMMS.step,
+      this.guiSettings.wallsHeightMMS,
       () => {
         const range = this.gui.controls.get(WALLS_HEIGHT_CNT).element;
         this.guiSettings.wallsHeight = parseInt(range.value);
@@ -166,9 +162,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       WALLS_NUMB_CNT,
       "Number",
       this.guiSettings.wallsNumber,
-      this.guiSettings.wallsNumberMMS.min,
-      this.guiSettings.wallsNumberMMS.max,
-      this.guiSettings.wallsNumberMMS.step,
+      this.guiSettings.wallsNumberMMS,
       () => {
         const range = this.gui.controls.get(WALLS_NUMB_CNT).element;
         this.guiSettings.wallsNumber = parseInt(range.value);
@@ -186,7 +180,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         this.guiSettings.wallsCcd = chkbox.checked;
       }
     );
-    const wallsGroupControl = this.buildGroupControl(
+    const wallsGroupControl = this.buildDetailsControl(
       "wallsGroupControl",
       "Walls:",
       [
@@ -211,9 +205,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       PROJ_RADIOUS_CNT,
       "Radious",
       this.guiSettings.projectileRadious,
-      this.guiSettings.projectileRadiousMMS.min,
-      this.guiSettings.projectileRadiousMMS.max,
-      this.guiSettings.projectileRadiousMMS.step,
+      this.guiSettings.projectileRadiousMMS,
       () => {
         const range = this.gui.controls.get(PROJ_RADIOUS_CNT).element;
         this.guiSettings.projectileRadious = parseFloat(range.value);
@@ -226,9 +218,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       PROJ_DENSITY_CNT,
       "Density",
       this.guiSettings.projectileDensity,
-      this.guiSettings.projectileDensityMMS.min,
-      this.guiSettings.projectileDensityMMS.max,
-      this.guiSettings.projectileDensityMMS.step,
+      this.guiSettings.projectileDensityMMS,
       () => {
         const range = this.gui.controls.get(PROJ_DENSITY_CNT).element;
         this.guiSettings.projectileDensity = parseFloat(range.value);
@@ -241,9 +231,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
       PROJ_SPEED_CNT,
       "Speed",
       this.guiSettings.projectileSpeed,
-      this.guiSettings.projectileSpeedMMS.min,
-      this.guiSettings.projectileSpeedMMS.max,
-      this.guiSettings.projectileSpeedMMS.step,
+      this.guiSettings.projectileSpeedMMS,
       () => {
         const range = this.gui.controls.get(PROJ_SPEED_CNT).element;
         this.guiSettings.projectileSpeed = parseFloat(range.value);
@@ -261,7 +249,7 @@ export class ApgRprSim_CCDs_GuiBuilder extends ApgRprSim_GuiBuilder {
         this.guiSettings.projectileCcd = chkbox.checked;
       }
     );
-    const r = this.buildGroupControl(
+    const r = this.buildDetailsControl(
       "projectileGroupControl",
       "Projectile:",
       [

@@ -202,6 +202,7 @@ export interface IApgDomCanvas extends IApgDomElement {
     width: string | number;
     height: string | number;
 
+    // deno-lint-ignore no-explicit-any
     toBlob(af: Function): any;
 
     getContext(atype: "2d"): IApgDom2DRenderingContext;
@@ -252,11 +253,13 @@ export interface IApgDomSelect extends IApgDomFormElement {
 
 }
 
+
 export interface IApgDomInput extends IApgDomFormElement {
 
     type: eApgDomInputType;
 
 }
+
 
 export interface IApgDomCheckBox extends IApgDomInput {
 
@@ -266,23 +269,33 @@ export interface IApgDomCheckBox extends IApgDomInput {
 
 }
 
+
 export interface IApgDomColorPicker extends IApgDomInput {
+
     value: string;
+
 }
+
+
 export interface IApgDomRange extends IApgDomInput {
 
     min: string;
     max: string;
     step: string;
     value: string;
+
 }
 
+
 export interface IApgDomOutput extends IApgDomElement {
+
     textContent: string;
+
 }
 
 
 export interface IApgDomEvent {
+    isEvent: true;
 }
 
 

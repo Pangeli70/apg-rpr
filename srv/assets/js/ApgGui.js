@@ -4,6 +4,7 @@ import {
 } from "./ApgDom.ts";
 import { ApgUtils } from "./ApgUtils.ts";
 export class ApgGui {
+  _devMode = true;
   /** Inital timestamp for logging events */
   _creation;
   /** Log Queue of Gui Messages */
@@ -65,8 +66,18 @@ export class ApgGui {
   log(aitem, alogger = ApgGui.LOGGER_NAME) {
     this.#log(true, aitem, alogger);
   }
+  devLog(aitem, alogger = ApgGui.LOGGER_NAME) {
+    if (this._devMode) {
+      this.#log(true, aitem, alogger);
+    }
+  }
   logNoTime(aitem, alogger = ApgGui.LOGGER_NAME) {
     this.#log(false, aitem, alogger);
+  }
+  devLogNoTime(aitem, alogger = ApgGui.LOGGER_NAME) {
+    if (this._devMode) {
+      this.#log(false, aitem, alogger);
+    }
   }
   #log(aprependTimeStamp, aitem, alogger) {
     ApgUtils.Assert(

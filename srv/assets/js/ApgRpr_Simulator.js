@@ -1,11 +1,18 @@
-import { ApgGui } from "./ApgGui.ts";
+import {
+  ApgGui
+} from "./ApgGui.ts";
 import {
   ApgGui_Stats,
   ApgRpr_Colliders_StatsPanel,
   ApgRpr_Step_StatsPanel
-} from "./ApgGuiStats.ts";
-import { RAPIER, md5 } from "./ApgRprDeps.ts";
-import { ApgRprViewer } from "./ApgRprViewer.ts";
+} from "./ApgGui_StatsPanel.ts";
+import {
+  RAPIER,
+  md5
+} from "./ApgRpr_Deps.ts";
+import {
+  ApgRpr_Viewer
+} from "./ApgRpr_Viewer.ts";
 export class ApgRpr_Simulator {
   /** Used to interact with the browser we don't like global variables */
   window;
@@ -73,7 +80,7 @@ export class ApgRpr_Simulator {
     this.debugInfo = {
       stepId: 0
     };
-    this.viewer = new ApgRprViewer(this.window, this.document, this.gui.viewerElement);
+    this.viewer = new ApgRpr_Viewer(this.window, this.document, this.gui.viewerElement);
     this.gui.log(`ApgRprThreeViewer created`);
     this.mouse = { x: 0, y: 0 };
     this.events = new RAPIER.EventQueue(true);
@@ -232,7 +239,7 @@ export class ApgRpr_Simulator {
       this.collidersStatsPanel.update(this.world.colliders.len());
       if (this.world) {
         this.stats.begin();
-        this.viewer.render(this.world, this.isInDebugMode);
+        this.viewer.updateAndRender(this.world, this.isInDebugMode);
         this.stats.end();
       }
       this.#collectDebugInfo();

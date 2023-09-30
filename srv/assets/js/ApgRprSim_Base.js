@@ -1,4 +1,7 @@
-import { RAPIER, PRANDO } from "./ApgRprDeps.ts";
+import {
+  PRANDO,
+  RAPIER
+} from "./ApgRpr_Deps.ts";
 export class ApgRprSim_Base {
   /** The Rapier world*/
   world;
@@ -22,7 +25,7 @@ export class ApgRprSim_Base {
       simulation: aparams.simulation,
       simulations: Array.from(this.simulator.simulations.keys()),
       guiSettings: aparams.guiSettings,
-      viewerSettings: aparams.viewerSettings || this.simulator.viewer.settings,
+      viewer: this.simulator.viewer,
       stats: this.simulator.stats,
       debugInfo: this.simulator.debugInfo
     };

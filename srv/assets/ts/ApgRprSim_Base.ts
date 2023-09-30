@@ -5,14 +5,43 @@
  * -----------------------------------------------------------------------
 */
 
-import { ApgGui_Stats } from "./ApgGuiStats.ts";
-import { RAPIER, PRANDO } from './ApgRprDeps.ts';
-import { ApgRpr_eSimulationName } from "./ApgRpr_Simulations.ts";
-import { IApgRpr_DebugInfo, IApgRpr_CameraPosition, ApgRpr_ISettings } from "./ApgRprInterfaces.ts";
-import { ApgRprSim_GuiBuilder } from "./ApgRprSimGuiBuilder.ts";
-import { ApgRpr_Simulator } from "./ApgRpr_Simulator.ts";
-import { IApgWglViewerOptions } from "./ApgWglViewer.ts";
-import { ApgGui_IMinMaxStep } from "./ApgGuiBuilder.ts";
+import {
+    ApgGui_IMinMaxStep
+} from "./ApgGui.ts";
+
+import {
+    ApgGui_Stats
+} from "./ApgGui_StatsPanel.ts";
+
+import {
+    PRANDO,
+    RAPIER
+} from './ApgRpr_Deps.ts';
+
+
+import {
+    ApgRpr_IDebugInfo,
+    ApgRpr_ISettings,
+    ApgRpr_ICameraPosition
+} from "./ApgRprInterfaces.ts";
+
+import {
+    ApgRprSim_GuiBuilder
+} from "./ApgRprSim_GuiBuilder.ts";
+
+import {
+    ApgRpr_eSimulationName
+} from "./ApgRpr_Simulations.ts";
+
+import {
+    ApgRpr_Simulator
+} from "./ApgRpr_Simulator.ts";
+
+import {
+    ApgWgl_IViewerSettings, ApgWgl_Viewer
+} from "./ApgWgl_Viewer.ts";
+
+
 
 
 
@@ -52,7 +81,7 @@ export interface ApgRprSim_IGuiSettings extends ApgRpr_ISettings {
 
     isStatsGroupOpened: boolean;
 
-    cameraPosition: IApgRpr_CameraPosition;
+    cameraPosition: ApgRpr_ICameraPosition;
     doResetCamera: boolean;
 
 }
@@ -68,11 +97,11 @@ export interface IApgRprSim_Params {
     // TODO Can we say that is not optional? Yes if we exctract a default Rapier settings -- APG 20230916
     guiSettings?: ApgRprSim_IGuiSettings;
 
-    viewerSettings?: IApgWglViewerOptions;
+    viewer?: ApgWgl_Viewer;
 
     stats?: ApgGui_Stats;
 
-    debugInfo?: IApgRpr_DebugInfo;
+    debugInfo?: ApgRpr_IDebugInfo;
 }
 
 
@@ -110,6 +139,7 @@ export class ApgRprSim_Base {
             simulation: aparams.simulation,
             simulations: Array.from(this.simulator.simulations.keys()),
             guiSettings: aparams.guiSettings,
+            viewer: this.simulator.viewer,
             stats: this.simulator.stats,
             debugInfo: this.simulator.debugInfo,
         }
@@ -168,7 +198,7 @@ export class ApgRprSim_Base {
         const r: ApgRprSim_IGuiSettings = {
 
             name: this.params.simulation,
-            
+
             isSimulationGroupOpened: false,
 
             gravity: new RAPIER.Vector3(0, -9.81, 0),

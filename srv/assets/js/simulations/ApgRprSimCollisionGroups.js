@@ -1,8 +1,8 @@
-import { RAPIER } from "../ApgRprDeps.ts";
-import { ApgRprSim_GuiBuilder } from "../ApgRprSimGuiBuilder.ts";
+import { RAPIER } from "../ApgRpr_Deps.ts";
+import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
   ApgRprSim_Base
-} from "../ApgRprSimulationBase.ts";
+} from "../ApgRprSim_Base.ts";
 export class ApgRprSim_CollisionGroups extends ApgRprSim_Base {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);

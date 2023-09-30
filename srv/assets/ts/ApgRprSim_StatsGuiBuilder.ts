@@ -6,16 +6,15 @@
 */
 
 import {
-    IApgDomDocument, IApgDomElement,
-    IApgDomRange, IApgDomSelect
+    IApgDomSelect
 } from "./ApgDom.ts";
 import { ApgGui } from "./ApgGui.ts";
 
-import { ApgGui_Builder } from "./ApgGuiBuilder.ts";
-import { ApgGui_Stats } from "./ApgGuiStats.ts";
-import { IApgRprSim_Params } from "./ApgRprSimulationBase.ts";
+import { ApgGui_Builder } from "./ApgGui_Builder.ts";
+import { ApgGui_Stats } from "./ApgGui_StatsPanel.ts";
+import { IApgRprSim_Params } from "./ApgRprSim_Base.ts";
 
-export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
+export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
 
     params: IApgRprSim_Params;
     stats: ApgGui_Stats;
@@ -32,7 +31,7 @@ export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
 
     }
 
-    override buildHtml() {
+    override buildHtml(): string {
 
         const statsGroupControl = this.#buildStatsGroupControl();
 
@@ -46,7 +45,7 @@ export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
     }
 
 
-    #buildStatsGroupControl() {
+    #buildStatsGroupControl(): string {
 
         const panelsNames = Array.from(this.stats.panels.keys());
         const keyValues = new Map<string, string>();
@@ -77,7 +76,7 @@ export class ApgRprSimStatsGuiBuilder extends ApgGui_Builder {
         )
 
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "statsGroupControl",
             "Statistics:",
             [

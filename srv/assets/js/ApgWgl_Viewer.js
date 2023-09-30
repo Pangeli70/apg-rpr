@@ -1,12 +1,15 @@
-import { THREE, THREE_OrbitControls } from "./ApgRprDeps.ts";
-export class ApgWglLayers {
+import {
+  THREE,
+  THREE_OrbitControls
+} from "./ApgWgl_Deps.ts";
+export class ApgWgl_Layers {
   static helpers = 1;
   static lights = 2;
   static characters = 3;
   static meshColliders = 4;
   static instancedColliders = 5;
 }
-export class ApgWglViewer {
+export class ApgWgl_Viewer {
   /** We don't like global objects */
   window;
   /** We don't like global objects */
@@ -19,8 +22,8 @@ export class ApgWglViewer {
     worldSize: this.WORLD_SIZE,
     fogColor: new THREE.Color(8947848),
     fogLinear: true,
-    fogNear: this.WORLD_SIZE / 4,
-    fogFar: this.WORLD_SIZE / 2,
+    fogNear: 0.8,
+    fogFar: 1,
     toneMapping: THREE.LinearToneMapping,
     toneMappingExposure: 1,
     outputColorSpace: THREE.SRGBColorSpace,
@@ -62,7 +65,7 @@ export class ApgWglViewer {
     layers: [true, true, true, true]
   };
   settings;
-  prevSettings;
+  prevSettingsStamp;
   /** Dom Elements*/
   viewerElement;
   viewerCanvasElement;
@@ -82,7 +85,7 @@ export class ApgWglViewer {
     this.document = adocument;
     this.viewerElement = aviewerElement;
     this.settings = { ...this.DEFAULT_SETTINGS };
-    this.prevSettings = { ...this.DEFAULT_SETTINGS };
+    this.prevSettingsStamp = JSON.stringify(this.settings);
     this.#initCanvas();
     this.#initRenderer();
     this.#initCamera();
@@ -135,38 +138,46 @@ export class ApgWglViewer {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.Fog(
       this.settings.fogColor,
-      this.settings.fogNear,
-      this.settings.fogFar
+      this.WORLD_SIZE * this.settings.fogNear,
+      this.WORLD_SIZE * this.settings.fogFar
     );
   }
   updateFog() {
     const fog = this.scene.fog;
     fog.color.set(this.settings.fogColor);
-    fog.near = this.settings.fogNear;
-    fog.far = this.settings.fogFar;
+    if (this.settings.fogNear > this.settings.fogFar) {
+      const t = this.settings.fogNear;
+      this.settings.fogNear = this.settings.fogFar;
+      this.settings.fogFar = t;
+    }
+    if (this.settings.fogNear == this.settings.fogFar) {
+      this.settings.fogFar = 1;
+    }
+    fog.near = this.WORLD_SIZE * this.settings.fogNear;
+    fog.far = this.WORLD_SIZE * this.settings.fogFar;
   }
   #initLights() {
     this.ambLight = new THREE.AmbientLight();
-    this.ambLight.layers.set(ApgWglLayers.lights);
+    this.ambLight.layers.set(ApgWgl_Layers.lights);
     this.updateAmbLight();
     this.scene.add(this.ambLight);
     this.sunLight = new THREE.DirectionalLight();
-    this.sunLight.layers.set(ApgWglLayers.lights);
+    this.sunLight.layers.set(ApgWgl_Layers.lights);
     this.updateSunLight();
     this.sunLight.castShadow = true;
     this.scene.add(this.sunLight);
     const sunLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 100, 16711680);
-    sunLightHelper.layers.set(ApgWglLayers.helpers);
+    sunLightHelper.layers.set(ApgWgl_Layers.helpers);
     this.scene.add(sunLightHelper);
     const sunLightShadowCameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
-    sunLightShadowCameraHelper.layers.set(ApgWglLayers.helpers);
+    sunLightShadowCameraHelper.layers.set(ApgWgl_Layers.helpers);
     this.scene.add(sunLightShadowCameraHelper);
     this.camLight = new THREE.PointLight();
     this.updateCamLight();
-    this.camLight.layers.set(ApgWglLayers.lights);
+    this.camLight.layers.set(ApgWgl_Layers.lights);
     this.scene.add(this.camLight);
     const camLightHelper = new THREE.PointLightHelper(this.camLight, 1, 255);
-    camLightHelper.layers.set(ApgWglLayers.helpers);
+    camLightHelper.layers.set(ApgWgl_Layers.helpers);
     this.scene.add(camLightHelper);
   }
   updateAmbLight() {
@@ -197,13 +208,13 @@ export class ApgWglViewer {
   updateCamLight() {
     this.camLight.color = this.settings.camLightColor;
     this.camLight.intensity = this.settings.camLightIntensity;
-    this.camLight.distance = this.settings.camLightIntensity;
+    this.camLight.visible = !this.settings.useEnvMapInsteadThanLights && this.settings.camLightEnabled;
+    this.camLight.distance = this.settings.camLightDistance;
     this.camLight.position.set(
       this.camera.position.x,
       this.camera.position.y,
       this.camera.position.z
     );
-    this.camLight.visible = !this.settings.useEnvMapInsteadThanLights && this.settings.camLightEnabled;
   }
   #initOrbitControls() {
     this.orbitControls = new THREE_OrbitControls(this.camera, this.renderer.domElement);
@@ -221,11 +232,16 @@ export class ApgWglViewer {
     this.orbitControls.update();
   }
   updateSettings() {
-    this.updateRenderer();
-    this.updateCamera();
-    this.updateAmbLight();
-    this.updateSunLight();
-    this.updateCamLight();
+    const strSettingsStamp = JSON.stringify(this.settings);
+    if (this.prevSettingsStamp != strSettingsStamp) {
+      this.updateRenderer();
+      this.updateFog();
+      this.updateCamera();
+      this.updateAmbLight();
+      this.updateSunLight();
+      this.updateCamLight();
+      this.prevSettingsStamp = JSON.stringify(this.settings);
+    }
   }
   /**
    * Callback when the window is resized
@@ -279,6 +295,11 @@ export class ApgWglViewer {
     r.push(` - FOV: ${this.camera.fov.toFixed(1)}`);
     r.push(` - Near: ${this.camera.near.toFixed(1)}`);
     r.push(` - Far: ${this.camera.far.toFixed(1)}`);
+    const fog = this.scene.fog;
+    r.push(`Fog:`);
+    r.push(` - Color: ${fog.color.getHex()}`);
+    r.push(` - Near: ${fog.near.toFixed(1)}`);
+    r.push(` - Far: ${fog.far.toFixed(1)}`);
     r.push("Lights:");
     r.push(` - Ambient is: ${this.ambLight.visible ? "Enabled" : "Disabled"}`);
     r.push(` - Sun is: ${this.sunLight.visible ? "Enabled" : "Disabled"}`);

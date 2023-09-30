@@ -4,24 +4,42 @@
  * @version 0.9.8 [APG 2023/08/11]
  * -----------------------------------------------------------------------
 */
-import { THREE, PRANDO, RAPIER } from './ApgRprDeps.ts';
-import { ApgRprUtils } from "./ApgRprUtils.ts";
 import {
-    IApgDomBrowserWindow, IApgDomDocument, IApgDomElement
-} from './ApgDom.ts'
-import { IApgRpr_InstanceDesc } from "./ApgRprInterfaces.ts";
-import { eApgRpr_InstancedMeshesGroups } from "./ApgRprEnums.ts";
-import { ApgWglLayers, ApgWglViewer } from "./ApgWglViewer.ts";
-import { ApgUtils } from "./ApgUtils.ts";
+    PRANDO,
+    RAPIER,
+} from './ApgRpr_Deps.ts';
+
+import {
+    THREE
+} from './ApgWgl_Deps.ts';
+
+import {
+    ApgRpr_Utils
+} from "./ApgRpr_Utils.ts";
+
+import {
+    IApgDomBrowserWindow,
+    IApgDomDocument,
+    IApgDomElement
+} from './ApgDom.ts';
+
+import {
+    ApgWgl_Layers,
+    ApgWgl_Viewer
+} from "./ApgWgl_Viewer.ts";
+
+import {
+    ApgUtils
+} from "./ApgUtils.ts";
 
 
-interface IApgRprInstancedMeshUserData {
+interface ApgRpr_IInstancedMeshUserData {
     isRprInstancedMesh: boolean;
     mapOfCollidersAssocToThisInstancedMesh: Map<number, RAPIER.Collider>;
 }
 
 
-enum eApgRprCollidersColorPalette {
+enum ApgRpr_eCollidersColorPalette {
     FIXED = 0,
     KINEMATIC = 1,
     DYNAMIC = 2,
@@ -30,8 +48,34 @@ enum eApgRprCollidersColorPalette {
     HIGHLIGHTED = 5
 }
 
+export enum ApgRpr_eInstancedMeshesGroups {
+    BOXES = 0,
+    BALLS = 1,
+    CYLINDERS = 2,
+    CONES = 3,
+    CAPSULES = 4,
+}
 
-export class ApgRprViewer extends ApgWglViewer {
+
+
+export interface IApgRpr_InstanceDesc {
+
+    /** Group of instanced Meshes ID */
+    groupId: ApgRpr_eInstancedMeshesGroups;
+    /** Instanceable Meshes ID */
+    indexInGroup: number;
+    /** Collider handle */
+    colliderHandle: number;
+    /** Instance count at moment of creation */
+    count: number;
+    /** This instance is hightlighted */
+    highlighted: boolean;
+    /** Scaling factors of this ins */
+    scale: THREE.Vector3
+
+}
+
+export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
     // Maximum count of colliders mesh instances
     readonly COLLIDERS_MESH_INSTANCES_MAX = 250;
@@ -42,7 +86,7 @@ export class ApgRprViewer extends ApgWglViewer {
     mapOfCollidersByRigidBodyHandle: Map<number, RAPIER.Collider[]>;
 
     /** Colors for the instanced colliders meshes */
-    collidersPalette: Map<eApgRprCollidersColorPalette, { colors: number[], offset: number }>;
+    collidersPalette: Map<ApgRpr_eCollidersColorPalette, { colors: number[], offset: number }>;
 
     rng: PRANDO;
 
@@ -54,7 +98,7 @@ export class ApgRprViewer extends ApgWglViewer {
     highlightedCollider: number;
 
     /** Set of reusable meshes used to represent the standard colliders */
-    instancedMeshesGroups: Map<eApgRpr_InstancedMeshesGroups, THREE.InstancedMesh[]>;
+    instancedMeshesGroups: Map<ApgRpr_eInstancedMeshesGroups, THREE.InstancedMesh[]>;
 
     constructor(
         awindow: IApgDomBrowserWindow,
@@ -90,43 +134,43 @@ export class ApgRprViewer extends ApgWglViewer {
 
     #initInstanceMeshesGroups() {
 
-        this.#buildInstancedMeshesGroup(eApgRpr_InstancedMeshesGroups.BOXES, this.COLLIDERS_MESH_INSTANCES_MAX);
-        this.#buildInstancedMeshesGroup(eApgRpr_InstancedMeshesGroups.BALLS, this.COLLIDERS_MESH_INSTANCES_MAX);
-        this.#buildInstancedMeshesGroup(eApgRpr_InstancedMeshesGroups.CYLINDERS, this.COLLIDERS_MESH_INSTANCES_MAX);
-        this.#buildInstancedMeshesGroup(eApgRpr_InstancedMeshesGroups.CONES, this.COLLIDERS_MESH_INSTANCES_MAX);
-        this.#buildInstancedMeshesGroup(eApgRpr_InstancedMeshesGroups.CAPSULES, this.COLLIDERS_MESH_INSTANCES_MAX);
+        this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.BOXES, this.COLLIDERS_MESH_INSTANCES_MAX);
+        this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.BALLS, this.COLLIDERS_MESH_INSTANCES_MAX);
+        this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CYLINDERS, this.COLLIDERS_MESH_INSTANCES_MAX);
+        this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CONES, this.COLLIDERS_MESH_INSTANCES_MAX);
+        this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CAPSULES, this.COLLIDERS_MESH_INSTANCES_MAX);
 
     }
 
 
     #initCollidersPalette() {
 
-        this.collidersPalette.set(eApgRprCollidersColorPalette.FIXED, { colors: [0xffd480], offset: 0 });
-        this.collidersPalette.set(eApgRprCollidersColorPalette.KINEMATIC, { colors: [0x4040bf], offset: 1 });
-        this.collidersPalette.set(eApgRprCollidersColorPalette.DYNAMIC, { colors: [0x17334f, 0x295989, 0x4e8cca, 0xc4d9ed], offset: 2 });
-        this.collidersPalette.set(eApgRprCollidersColorPalette.CCD_ENABLED, { colors: [0xffff00], offset: 6 });
-        this.collidersPalette.set(eApgRprCollidersColorPalette.SENSOR, { colors: [0x00ff00], offset: 7 });
-        this.collidersPalette.set(eApgRprCollidersColorPalette.HIGHLIGHTED, { colors: [0xff0000], offset: 8 });
+        this.collidersPalette.set(ApgRpr_eCollidersColorPalette.FIXED, { colors: [0xffd480], offset: 0 });
+        this.collidersPalette.set(ApgRpr_eCollidersColorPalette.KINEMATIC, { colors: [0x4040bf], offset: 1 });
+        this.collidersPalette.set(ApgRpr_eCollidersColorPalette.DYNAMIC, { colors: [0x17334f, 0x295989, 0x4e8cca, 0xc4d9ed], offset: 2 });
+        this.collidersPalette.set(ApgRpr_eCollidersColorPalette.CCD_ENABLED, { colors: [0xffff00], offset: 6 });
+        this.collidersPalette.set(ApgRpr_eCollidersColorPalette.SENSOR, { colors: [0x00ff00], offset: 7 });
+        this.collidersPalette.set(ApgRpr_eCollidersColorPalette.HIGHLIGHTED, { colors: [0xff0000], offset: 8 });
     }
 
 
-    #buildInstancedMeshesGroup(agroup: eApgRpr_InstancedMeshesGroups, amaxInstances: number) {
+    #buildInstancedMeshesGroup(agroup: ApgRpr_eInstancedMeshesGroups, amaxInstances: number) {
 
         let geometry;
         switch (agroup) {
-            case eApgRpr_InstancedMeshesGroups.BOXES:
+            case ApgRpr_eInstancedMeshesGroups.BOXES:
                 geometry = new THREE.BoxGeometry(1.0, 1.0, 1.0);
                 break;
-            case eApgRpr_InstancedMeshesGroups.BALLS:
+            case ApgRpr_eInstancedMeshesGroups.BALLS:
                 geometry = new THREE.SphereGeometry(0.5);
                 break;
-            case eApgRpr_InstancedMeshesGroups.CYLINDERS:
+            case ApgRpr_eInstancedMeshesGroups.CYLINDERS:
                 geometry = new THREE.CylinderGeometry(0.5, 0.5, 1.0, 16, 1);
                 break;
-            case eApgRpr_InstancedMeshesGroups.CONES:
+            case ApgRpr_eInstancedMeshesGroups.CONES:
                 geometry = new THREE.ConeGeometry(0.5, 1.0, 16, 1);
                 break;
-            case eApgRpr_InstancedMeshesGroups.CAPSULES:
+            case ApgRpr_eInstancedMeshesGroups.CAPSULES:
                 geometry = new THREE.CapsuleGeometry(0.25, 0.5, 4, 16);
                 break;
         }
@@ -140,12 +184,12 @@ export class ApgRprViewer extends ApgWglViewer {
                 });
                 const instancedMesh = new THREE.InstancedMesh(geometry, material, amaxInstances);
 
-                const userData = instancedMesh.userData as IApgRprInstancedMeshUserData;
+                const userData = instancedMesh.userData as ApgRpr_IInstancedMeshUserData;
                 userData.isRprInstancedMesh = true;
                 userData.mapOfCollidersAssocToThisInstancedMesh = new Map();
                 instancedMesh.count = 0;
                 instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-                instancedMesh.layers.set(ApgWglLayers.instancedColliders);
+                instancedMesh.layers.set(ApgWgl_Layers.instancedColliders);
                 instancedMesh.castShadow = true;
                 instancedMesh.receiveShadow = true;
 
@@ -164,9 +208,9 @@ export class ApgRprViewer extends ApgWglViewer {
      * @param aworld 
      * @param aisDebugMode 
      */
-    render(aworld: RAPIER.World, aisDebugMode: boolean) {
+    updateAndRender(aworld: RAPIER.World, aisDebugMode: boolean) {
 
-        ApgRprViewer.renderCalls++;
+        ApgRpr_Viewer.renderCalls++;
 
         this.orbitControls.update();
 
@@ -184,7 +228,7 @@ export class ApgRprViewer extends ApgWglViewer {
             this.lines.visible = false;
         }
 
-        this.renderer.render(this.scene, this.camera);
+        this.render();
     }
 
 
@@ -272,7 +316,7 @@ export class ApgRprViewer extends ApgWglViewer {
 
         for (const group of this.instancedMeshesGroups.values()) {
             for (const instance of group) {
-                const userData = instance.userData as IApgRprInstancedMeshUserData;
+                const userData = instance.userData as ApgRpr_IInstancedMeshUserData;
                 userData.isRprInstancedMesh = true;
                 userData.mapOfCollidersAssocToThisInstancedMesh = new Map();
                 instance.count = 0;
@@ -337,7 +381,7 @@ export class ApgRprViewer extends ApgWglViewer {
                 instancedMesh.count -= 1;
 
                 // TODO Check all this stuff seems obscure and very incomplete -- APG 20230815
-                const userData = instancedMesh.userData as IApgRprInstancedMeshUserData;
+                const userData = instancedMesh.userData as ApgRpr_IInstancedMeshUserData;
 
                 const collAssocMap = userData.mapOfCollidersAssocToThisInstancedMesh;
 
@@ -385,18 +429,18 @@ export class ApgRprViewer extends ApgWglViewer {
         let instance;
         switch (acollider.shapeType()) {
             case RAPIER.ShapeType.Cuboid: {
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroups.BOXES)!;
+                const instancesGroups = this.instancedMeshesGroups.get(ApgRpr_eInstancedMeshesGroups.BOXES)!;
                 instance = instancesGroups[instanceDesc.indexInGroup];
-                instanceDesc.groupId = eApgRpr_InstancedMeshesGroups.BOXES;
+                instanceDesc.groupId = ApgRpr_eInstancedMeshesGroups.BOXES;
 
                 const size = acollider.halfExtents()!;
                 instanceDesc.scale = new THREE.Vector3(size.x * 2, size.y * 2, size.z * 2);
                 break;
             }
             case RAPIER.ShapeType.Ball: {
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroups.BALLS)!;
+                const instancesGroups = this.instancedMeshesGroups.get(ApgRpr_eInstancedMeshesGroups.BALLS)!;
                 instance = instancesGroups[instanceDesc.indexInGroup];
-                instanceDesc.groupId = eApgRpr_InstancedMeshesGroups.BALLS;
+                instanceDesc.groupId = ApgRpr_eInstancedMeshesGroups.BALLS;
 
                 const radious = acollider.radius();
                 instanceDesc.scale = new THREE.Vector3(radious, radious, radious);
@@ -404,9 +448,9 @@ export class ApgRprViewer extends ApgWglViewer {
             }
             case RAPIER.ShapeType.Cylinder:
             case RAPIER.ShapeType.RoundCylinder: {
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroups.CYLINDERS)!;
+                const instancesGroups = this.instancedMeshesGroups.get(ApgRpr_eInstancedMeshesGroups.CYLINDERS)!;
                 instance = instancesGroups[instanceDesc.indexInGroup];
-                instanceDesc.groupId = eApgRpr_InstancedMeshesGroups.CYLINDERS;
+                instanceDesc.groupId = ApgRpr_eInstancedMeshesGroups.CYLINDERS;
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight() * 2.0;
@@ -414,9 +458,9 @@ export class ApgRprViewer extends ApgWglViewer {
                 break;
             }
             case RAPIER.ShapeType.Cone: {
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroups.CONES)!;
+                const instancesGroups = this.instancedMeshesGroups.get(ApgRpr_eInstancedMeshesGroups.CONES)!;
                 instance = instancesGroups[instanceDesc.indexInGroup];
-                instanceDesc.groupId = eApgRpr_InstancedMeshesGroups.CONES;
+                instanceDesc.groupId = ApgRpr_eInstancedMeshesGroups.CONES;
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight() * 2.0;
@@ -424,9 +468,9 @@ export class ApgRprViewer extends ApgWglViewer {
                 break;
             }
             case RAPIER.ShapeType.Capsule: {
-                const instancesGroups = this.instancedMeshesGroups.get(eApgRpr_InstancedMeshesGroups.CAPSULES)!;
+                const instancesGroups = this.instancedMeshesGroups.get(ApgRpr_eInstancedMeshesGroups.CAPSULES)!;
                 instance = instancesGroups[instanceDesc.indexInGroup];
-                instanceDesc.groupId = eApgRpr_InstancedMeshesGroups.CAPSULES;
+                instanceDesc.groupId = ApgRpr_eInstancedMeshesGroups.CAPSULES;
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight();
@@ -446,7 +490,7 @@ export class ApgRprViewer extends ApgWglViewer {
                     indices = acollider.indices();
                 }
                 else {
-                    const heightFieldGeomData = ApgRprUtils.GetHeightfieldGeometryDataByHeightFieldColliderData(acollider);
+                    const heightFieldGeomData = ApgRpr_Utils.GetHeightfieldGeometryDataByHeightFieldColliderData(acollider);
                     vertices = heightFieldGeomData.vertices;
                     indices = heightFieldGeomData.indices;
                 }
@@ -463,7 +507,7 @@ export class ApgRprViewer extends ApgWglViewer {
                 });
                 const mesh = new THREE.Mesh(geometry, material);
 
-                mesh.layers.set(ApgWglLayers.meshColliders);
+                mesh.layers.set(ApgWgl_Layers.meshColliders);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
 
@@ -479,7 +523,7 @@ export class ApgRprViewer extends ApgWglViewer {
         if (instance) {
             instanceDesc.colliderHandle = acollider.handle;
 
-            const userData = instance.userData as IApgRprInstancedMeshUserData;
+            const userData = instance.userData as ApgRpr_IInstancedMeshUserData;
             userData.mapOfCollidersAssocToThisInstancedMesh.set(acollider.handle, acollider);
 
             const collTransl = acollider.translation()!;
@@ -509,18 +553,18 @@ export class ApgRprViewer extends ApgWglViewer {
     }
 
     private getPaletteByRigidBodyType(rigidBodyParentOfCollider: RAPIER.RigidBody) {
-        let paletteIndex: eApgRprCollidersColorPalette;
+        let paletteIndex: ApgRpr_eCollidersColorPalette;
         if (rigidBodyParentOfCollider.isFixed()) {
-            paletteIndex = eApgRprCollidersColorPalette.FIXED;
+            paletteIndex = ApgRpr_eCollidersColorPalette.FIXED;
         }
         else if (rigidBodyParentOfCollider.isKinematic()) {
-            paletteIndex = eApgRprCollidersColorPalette.KINEMATIC;
+            paletteIndex = ApgRpr_eCollidersColorPalette.KINEMATIC;
         }
         else if (rigidBodyParentOfCollider.isCcdEnabled()) {
-            paletteIndex = eApgRprCollidersColorPalette.CCD_ENABLED;
+            paletteIndex = ApgRpr_eCollidersColorPalette.CCD_ENABLED;
         }
         else {
-            paletteIndex = eApgRprCollidersColorPalette.DYNAMIC;
+            paletteIndex = ApgRpr_eCollidersColorPalette.DYNAMIC;
         }
         const palette = this.collidersPalette.get(paletteIndex)!;
         return palette;
