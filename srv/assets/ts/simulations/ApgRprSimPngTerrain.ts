@@ -309,9 +309,7 @@ class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
             SAMPLES_SIZE_CNT,
             'Samples',
             this.guiSettings.sampleSize,
-            this.guiSettings.sampleSizeMMS.min,
-            this.guiSettings.sampleSizeMMS.max,
-            this.guiSettings.sampleSizeMMS.step,
+            this.guiSettings.sampleSizeMMS,
             () => {
                 const range = this.gui.controls.get(SAMPLES_SIZE_CNT)!.element as IApgDomRange;
                 this.guiSettings.sampleSize = parseFloat(range.value);
@@ -326,9 +324,7 @@ class ApgRprSim_PngTerrain_GuiBuilder extends ApgRprSim_GuiBuilder {
             MAP_HEIGHT_CNT,
             'Height',
             this.guiSettings.mapHeight,
-            this.guiSettings.mapHeightMMS.min,
-            this.guiSettings.mapHeightMMS.max,
-            this.guiSettings.mapHeightMMS.step,
+            this.guiSettings.mapHeightMMS,
             () => {
                 const range = this.gui.controls.get(MAP_HEIGHT_CNT)!.element as IApgDomRange;
                 this.guiSettings.mapHeight = parseFloat(range.value);

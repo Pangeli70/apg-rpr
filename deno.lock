@@ -132,7 +132,7 @@
     "https://deno.land/x/mongo@v0.31.2/src/utils/uri.ts": "dcfab8e1dcfcc875c75ada1d9f366664480c03b65594990d6342ed88925452e5",
     "https://deno.land/x/web_bson@v0.3.0/mod.js": "8e14aecd31ee63abd30e2dbaa284b4b67abb7ba51fcef5b96af74727cb7c7940",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/classes/ApgDirMarkdownMaker.ts": "09cd438191fa18d1648240bbec90ac2c7cd340ff3150236ea9cd6914bf0e3b71",
-    "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/data/ApgDirEntries.ts": "575ba8a163986973f9910b44b888b12fa12a19cddc07c9673aa2fe64189b560f",
+    "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/data/ApgDirEntries.ts": "66ecc2655a35529b22e35ff77ddc9e6fdff67b5d4b6241246ea789fdcd8b7744",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/deps.ts": "7531418a83cf4a384957fa19992241aeed7a6401e3d5a8babe3f5804a77ecdad",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/enums/eApgDirDeploys.ts": "92548ce006893711df06715cfa3752b36ab18e20fc0d504ba791af68bba4de5b",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/enums/eApgDirEntriesIds.ts": "1270f1dddaa3588f7ba73fe5d7d8ac098976cac9773f67f65749f34e4cc6ec42",

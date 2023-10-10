@@ -24,7 +24,7 @@ import {
 } from './ApgDom.ts';
 
 import {
-    ApgWgl_Layers,
+    ApgWgl_eLayers,
     ApgWgl_Viewer
 } from "./ApgWgl_Viewer.ts";
 
@@ -189,7 +189,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
                 userData.mapOfCollidersAssocToThisInstancedMesh = new Map();
                 instancedMesh.count = 0;
                 instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-                instancedMesh.layers.set(ApgWgl_Layers.instancedColliders);
+                instancedMesh.layers.set(ApgWgl_eLayers.instancedColliders);
                 instancedMesh.castShadow = true;
                 instancedMesh.receiveShadow = true;
 
@@ -507,7 +507,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
                 });
                 const mesh = new THREE.Mesh(geometry, material);
 
-                mesh.layers.set(ApgWgl_Layers.meshColliders);
+                mesh.layers.set(ApgWgl_eLayers.colliders);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
 

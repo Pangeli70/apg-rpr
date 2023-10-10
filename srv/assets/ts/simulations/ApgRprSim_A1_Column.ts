@@ -266,9 +266,7 @@ class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
             BLOCKS_REST_CNT,
             'Restitution',
             this.guiSettings.blocksRestitution,
-            this.guiSettings.blocksRestitutionMMS.min,
-            this.guiSettings.blocksRestitutionMMS.max,
-            this.guiSettings.blocksRestitutionMMS.step,
+            this.guiSettings.blocksRestitutionMMS,
             () => {
                 const range = this.gui.controls.get(BLOCKS_REST_CNT)!.element as IApgDomRange;
                 this.guiSettings.blocksRestitution = parseFloat(range.value);
@@ -283,9 +281,7 @@ class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
             BLOCKS_FRIC_CNT,
             'Friction',
             this.guiSettings.blocksFriction,
-            this.guiSettings.blocksFrictionMMS.min,
-            this.guiSettings.blocksFrictionMMS.max,
-            this.guiSettings.blocksFrictionMMS.step,
+            this.guiSettings.blocksFrictionMMS,
             () => {
                 const range = this.gui.controls.get(BLOCKS_FRIC_CNT)!.element as IApgDomRange;
                 this.guiSettings.blocksFriction = parseFloat(range.value);
@@ -301,9 +297,7 @@ class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
             COL_NUM_BLKS_CNT,
             'Number',
             this.guiSettings.numBlocks,
-            this.guiSettings.numBlocksMMS.min,
-            this.guiSettings.numBlocksMMS.max,
-            this.guiSettings.numBlocksMMS.step,
+            this.guiSettings.numBlocksMMS,
             () => {
                 const range = this.gui.controls.get(COL_NUM_BLKS_CNT)!.element as IApgDomRange;
                 this.guiSettings.numBlocks = parseFloat(range.value);
@@ -319,9 +313,7 @@ class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
             COL_BLK_HGT_CNT,
             'Height',
             this.guiSettings.blockHeight,
-            this.guiSettings.blockHeightMMS.min,
-            this.guiSettings.blockHeightMMS.max,
-            this.guiSettings.blockHeightMMS.step,
+            this.guiSettings.blockHeightMMS,
             () => {
                 const range = this.gui.controls.get(COL_BLK_HGT_CNT)!.element as IApgDomRange;
                 this.guiSettings.blockHeight = parseFloat(range.value);
@@ -332,7 +324,7 @@ class ApgRprSim_Column_GuiBuilder extends ApgRprSim_GuiBuilder {
         );
 
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "blocksGroupControl",
             "Blocks:",
             [

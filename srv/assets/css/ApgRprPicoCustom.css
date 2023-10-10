@@ -7,7 +7,7 @@
     --primary-focus: rgba(94, 53, 177, 0.125);
     --primary-inverse: #FFF;
     /*APG*/
-    --modal-overlay-background-color: rgba(94, 53, 177, 0.25);
+    --modal-overlay-background-color: rgba(94, 53, 177, 0.05);
 }
 
 /* Deep-purple Dark scheme (Auto) */
@@ -19,7 +19,7 @@
         --primary-focus: rgba(94, 53, 177, 0.25);
         --primary-inverse: #FFF;
         /*APG*/
-        --modal-overlay-background-color: rgba(94, 53, 177, 0.25);
+        --modal-overlay-background-color: rgba(94, 53, 177, 0.05);
     }
 }
 
@@ -31,7 +31,7 @@
     --primary-focus: rgba(94, 53, 177, 0.25);
     --primary-inverse: #FFF;
     /*APG*/
-    --modal-overlay-background-color: rgba(94, 53, 177, 0.25);
+    --modal-overlay-background-color: rgba(94, 53, 177, 0.05);
 }
 
 /* Deep-purple (Common styles) */
@@ -43,4 +43,9 @@
 
     /*APG*/
     --modal-overlay-backdrop-filter: blur(1px);
+}
+
+/*APG*/
+details[open] {
+    background: rgb(216, 203, 255);
 }

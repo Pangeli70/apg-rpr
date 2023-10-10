@@ -11,7 +11,8 @@ import { Edr } from "../deps.ts";
 export class ApgRprAssetTextureResource extends Edr.ApgEdrStaticResource {
 
   public override paths = [
-    "/assets/img/gltf/.*\.(jpg|jpeg|png|exr|hdr)",
+    "/assets/env/.*\.(jpg|exr|hdr)",
+    "/assets/glb/.*\.(jpg|png)",
   ];
 
   public async GET(request: Edr.Drash.Request, response: Edr.Drash.Response) {

@@ -118,9 +118,7 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
       CUBES_REST_CNT,
       "Restitution",
       this.guiSettings.cubesRestitution,
-      this.guiSettings.cubesRestitutionMMS.min,
-      this.guiSettings.cubesRestitutionMMS.max,
-      this.guiSettings.cubesRestitutionMMS.step,
+      this.guiSettings.cubesRestitutionMMS,
       () => {
         const range = this.gui.controls.get(CUBES_REST_CNT).element;
         this.guiSettings.cubesRestitution = parseFloat(range.value);
@@ -133,9 +131,7 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
       COL_BLK_HGT_CNT,
       "Block height",
       this.guiSettings.blockHeight,
-      this.guiSettings.blockHeightMMS.min,
-      this.guiSettings.blockHeightMMS.max,
-      this.guiSettings.blockHeightMMS.step,
+      this.guiSettings.blockHeightMMS,
       () => {
         const range = this.gui.controls.get(COL_BLK_HGT_CNT).element;
         this.guiSettings.blockHeight = parseFloat(range.value);
@@ -143,7 +139,7 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
         output.innerHTML = range.value;
       }
     );
-    const r = this.buildGroupControl(
+    const r = this.buildDetailsControl(
       "cubesGroupControl",
       "Cubes:",
       [

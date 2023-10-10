@@ -1,29 +1,38 @@
 import {
   THREE,
-  THREE_OrbitControls
+  THREE_EXRLoader,
+  THREE_OrbitControls,
+  THREE_RGBELoader
 } from "./ApgWgl_Deps.ts";
-export class ApgWgl_Layers {
-  static helpers = 1;
-  static lights = 2;
-  static characters = 3;
-  static meshColliders = 4;
-  static instancedColliders = 5;
-}
+export var ApgWgl_eEnvMapMode = /* @__PURE__ */ ((ApgWgl_eEnvMapMode2) => {
+  ApgWgl_eEnvMapMode2["NONE"] = "none";
+  ApgWgl_eEnvMapMode2["HDR"] = "hdr";
+  ApgWgl_eEnvMapMode2["EXR"] = "exr";
+  ApgWgl_eEnvMapMode2["LDR"] = "ldr";
+  return ApgWgl_eEnvMapMode2;
+})(ApgWgl_eEnvMapMode || {});
+export var ApgWgl_eLayers = /* @__PURE__ */ ((ApgWgl_eLayers2) => {
+  ApgWgl_eLayers2[ApgWgl_eLayers2["unassigned"] = 0] = "unassigned";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["helpers"] = 1] = "helpers";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["lights"] = 2] = "lights";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["characters"] = 3] = "characters";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["colliders"] = 4] = "colliders";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["instancedColliders"] = 5] = "instancedColliders";
+  return ApgWgl_eLayers2;
+})(ApgWgl_eLayers || {});
 export class ApgWgl_Viewer {
   /** We don't like global objects */
   window;
   /** We don't like global objects */
   document;
   EYE_HEIGHT = 1.65;
-  WORLD_SIZE = 2e3;
-  // 1 km radious!! 
+  WORLD_SIZE = 1e3;
+  // 5 km radious!! 
   APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY = "APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY";
   DEFAULT_SETTINGS = {
     worldSize: this.WORLD_SIZE,
     fogColor: new THREE.Color(8947848),
-    fogLinear: true,
-    fogNear: 0.8,
-    fogFar: 1,
+    fogDensity: 25e-5,
     toneMapping: THREE.LinearToneMapping,
     toneMappingExposure: 1,
     outputColorSpace: THREE.SRGBColorSpace,
@@ -32,13 +41,13 @@ export class ApgWgl_Viewer {
     shadowMapType: THREE.BasicShadowMap,
     shadowMapRadious: 4,
     shadowMapSize: 1024 * 4,
-    clearColor: 2697513,
+    anisotropy: 4,
+    clearColor: new THREE.Color(2697513),
     perspCameraFov: 45,
     perspCameraNear: 0.1,
     // 100mm
     perspCameraFar: this.WORLD_SIZE / 2,
     perspCameraPosition: new THREE.Vector3(0, this.EYE_HEIGHT, 5),
-    useEnvMapInsteadThanLights: false,
     ambLightEnabled: true,
     ambLightIntensity: 0.2,
     ambLightColor: new THREE.Color(16777215),
@@ -55,6 +64,12 @@ export class ApgWgl_Viewer {
     camLightPosition: new THREE.Vector3(0, 0, 0),
     camLightDistance: this.WORLD_SIZE / 10,
     camLightIsDetachedFromCamera: false,
+    envMapLighting: false,
+    envMapMode: "exr" /* EXR */,
+    envMaps: ["a.jpg", "a.hdr", "a.exr"],
+    envMapLightingIntensity: 1,
+    envMapBackgroundBlurryness: 0,
+    envMapBackgroundIntensity: 1,
     orbControlsTarget: new THREE.Vector3(0, 0, 0),
     orbControlsMinDistance: 0.1,
     orbControlsMaxDistance: this.WORLD_SIZE / 2,
@@ -62,7 +77,7 @@ export class ApgWgl_Viewer {
     orbControlsMaxPolarAngle: Math.PI,
     orbControlsEnableDamping: true,
     orbControlsDampingFactor: 0.2,
-    layers: [true, true, true, true]
+    layers: /* @__PURE__ */ new Map()
   };
   settings;
   prevSettingsStamp;
@@ -80,6 +95,14 @@ export class ApgWgl_Viewer {
   sunLight;
   camLight;
   raycaster;
+  /** Texture management */
+  textureLoader = null;
+  textureMaps = [];
+  bumpMaps = [];
+  normalMaps = [];
+  ldrMaps = [];
+  hdrLoader = null;
+  exrLoader = null;
   constructor(awindow, adocument, aviewerElement) {
     this.window = awindow;
     this.document = adocument;
@@ -92,6 +115,9 @@ export class ApgWgl_Viewer {
     this.#initScene();
     this.#initLights();
     this.#initOrbitControls();
+    this.#initTextureLoaders();
+    this.updateEnvMap();
+    this.updateLayers();
     this.raycaster = new THREE.Raycaster();
     this.window.addEventListener("resize", () => {
       this.resize();
@@ -109,12 +135,13 @@ export class ApgWgl_Viewer {
     this.updateRenderer();
   }
   updateRenderer() {
+    this.renderer.setClearColor(this.settings.clearColor, 1);
     this.renderer.toneMapping = this.settings.toneMapping;
     this.renderer.toneMappingExposure = this.settings.toneMappingExposure;
     this.renderer.outputColorSpace = this.settings.outputColorSpace;
     this.renderer.shadowMap.enabled = this.settings.areShadowsEnabled;
     this.renderer.shadowMap.type = this.settings.shadowMapType;
-    this.renderer.setClearColor(this.settings.clearColor, 1);
+    const deviceMaxAnysotropy = this.renderer.capabilities.getMaxAnisotropy();
   }
   #initCamera() {
     this.camera = new THREE.PerspectiveCamera();
@@ -136,59 +163,50 @@ export class ApgWgl_Viewer {
   }
   #initScene() {
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.Fog(
+    this.scene.fog = new THREE.FogExp2(
       this.settings.fogColor,
-      this.WORLD_SIZE * this.settings.fogNear,
-      this.WORLD_SIZE * this.settings.fogFar
+      this.settings.fogDensity * this.WORLD_SIZE / 100
     );
   }
   updateFog() {
-    const fog = this.scene.fog;
-    fog.color.set(this.settings.fogColor);
-    if (this.settings.fogNear > this.settings.fogFar) {
-      const t = this.settings.fogNear;
-      this.settings.fogNear = this.settings.fogFar;
-      this.settings.fogFar = t;
-    }
-    if (this.settings.fogNear == this.settings.fogFar) {
-      this.settings.fogFar = 1;
-    }
-    fog.near = this.WORLD_SIZE * this.settings.fogNear;
-    fog.far = this.WORLD_SIZE * this.settings.fogFar;
+    this.scene.fog = new THREE.FogExp2(
+      this.settings.fogColor,
+      this.settings.fogDensity * this.WORLD_SIZE / 100
+    );
   }
   #initLights() {
     this.ambLight = new THREE.AmbientLight();
-    this.ambLight.layers.set(ApgWgl_Layers.lights);
+    this.ambLight.layers.set(2 /* lights */);
     this.updateAmbLight();
     this.scene.add(this.ambLight);
     this.sunLight = new THREE.DirectionalLight();
-    this.sunLight.layers.set(ApgWgl_Layers.lights);
+    this.sunLight.layers.set(2 /* lights */);
     this.updateSunLight();
     this.sunLight.castShadow = true;
     this.scene.add(this.sunLight);
     const sunLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 100, 16711680);
-    sunLightHelper.layers.set(ApgWgl_Layers.helpers);
+    sunLightHelper.layers.set(1 /* helpers */);
     this.scene.add(sunLightHelper);
     const sunLightShadowCameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
-    sunLightShadowCameraHelper.layers.set(ApgWgl_Layers.helpers);
+    sunLightShadowCameraHelper.layers.set(1 /* helpers */);
     this.scene.add(sunLightShadowCameraHelper);
     this.camLight = new THREE.PointLight();
     this.updateCamLight();
-    this.camLight.layers.set(ApgWgl_Layers.lights);
+    this.camLight.layers.set(2 /* lights */);
     this.scene.add(this.camLight);
     const camLightHelper = new THREE.PointLightHelper(this.camLight, 1, 255);
-    camLightHelper.layers.set(ApgWgl_Layers.helpers);
+    camLightHelper.layers.set(1 /* helpers */);
     this.scene.add(camLightHelper);
   }
   updateAmbLight() {
     this.ambLight.color = this.settings.ambLightColor;
     this.ambLight.intensity = this.settings.ambLightIntensity;
-    this.ambLight.visible = !this.settings.useEnvMapInsteadThanLights && this.settings.ambLightEnabled;
+    this.ambLight.visible = !this.settings.envMapLighting && this.settings.ambLightEnabled;
   }
   updateSunLight() {
     this.sunLight.color = this.settings.sunLightColor;
     this.sunLight.intensity = this.settings.sunLightIntensity;
-    this.sunLight.visible = !this.settings.useEnvMapInsteadThanLights && this.settings.sunLightEnabled;
+    this.sunLight.visible = !this.settings.envMapLighting && this.settings.sunLightEnabled;
     this.sunLight.position.set(
       this.settings.sunLightPosition.x,
       this.settings.sunLightPosition.y,
@@ -208,7 +226,7 @@ export class ApgWgl_Viewer {
   updateCamLight() {
     this.camLight.color = this.settings.camLightColor;
     this.camLight.intensity = this.settings.camLightIntensity;
-    this.camLight.visible = !this.settings.useEnvMapInsteadThanLights && this.settings.camLightEnabled;
+    this.camLight.visible = !this.settings.envMapLighting && this.settings.camLightEnabled;
     this.camLight.distance = this.settings.camLightDistance;
     this.camLight.position.set(
       this.camera.position.x,
@@ -231,6 +249,111 @@ export class ApgWgl_Viewer {
     this.orbitControls.dampingFactor = this.settings.orbControlsDampingFactor;
     this.orbitControls.update();
   }
+  #initTextureLoaders() {
+    if (this.textureLoader == null) {
+      this.textureLoader = new THREE.TextureLoader();
+      this.textureLoader.crossOrigin = "";
+      this.textureLoader.setCrossOrigin("anonymous");
+    }
+    if (this.hdrLoader == null) {
+      this.hdrLoader = new THREE_RGBELoader();
+      this.hdrLoader.crossOrigin = "";
+      this.hdrLoader.setCrossOrigin("anonymous");
+    }
+    if (this.exrLoader == null) {
+      this.exrLoader = new THREE_EXRLoader();
+      this.exrLoader.crossOrigin = "";
+      this.hdrLoader.setCrossOrigin("anonymous");
+    }
+  }
+  #_loadHdrAsync(aloader, aurl) {
+    const p = new Promise((resolve, reject) => {
+      aloader.load(
+        aurl,
+        (hdrEnvironmentMap) => {
+          resolve(hdrEnvironmentMap);
+        }
+      ), void 0, (reason) => {
+        reject(reason);
+      };
+    });
+    return p;
+  }
+  #_loadExrAsync(aloader, aurl) {
+    const p = new Promise((resolve, reject) => {
+      aloader.load(
+        aurl,
+        (exrEnvironmentMap) => {
+          resolve(exrEnvironmentMap);
+        }
+      ), void 0, (reason) => {
+        reject(reason);
+      };
+    });
+    return p;
+  }
+  async updateEnvMap() {
+    let envMap = null;
+    switch (this.settings.envMapMode) {
+      case "ldr" /* LDR */: {
+        if (this.textureLoader) {
+          const url = "/assets/env/ldr/Psychedelic_1.jpg";
+          envMap = this.textureLoader.load(url);
+        }
+        break;
+      }
+      case "hdr" /* HDR */: {
+        if (this.hdrLoader) {
+          const url = "/assets/env/hdr/Residential_garden_2k.hdr";
+          envMap = await this.#_loadHdrAsync(this.hdrLoader, url);
+        }
+        break;
+      }
+      case "exr" /* EXR */: {
+        if (this.exrLoader) {
+          const url = "/assets/env/exr/Neon_photostudio_1k.exr";
+          envMap = await this.#_loadExrAsync(this.exrLoader, url);
+        }
+        break;
+      }
+      default: {
+        this.scene.background = null;
+        this.scene.environment = null;
+        break;
+      }
+    }
+    if (envMap != null) {
+      envMap.colorSpace = this.settings.outputColorSpace;
+      envMap.mapping = THREE.EquirectangularReflectionMapping;
+      this.scene.background = envMap;
+      if (this.settings.envMapLighting) {
+        this.scene.environment = envMap;
+      }
+      this.scene.backgroundBlurriness = this.settings.envMapBackgroundBlurryness;
+      this.scene.backgroundIntensity = this.settings.envMapBackgroundIntensity;
+      this.#updateAllEnvMapSensitiveMaterialsInTheScene();
+    }
+  }
+  #updateAllEnvMapSensitiveMaterialsInTheScene() {
+    this.scene.traverse((object) => {
+      const mesh = object;
+      if (mesh.isMesh) {
+        const mat = mesh.material;
+        if (mat.isMeshStandardMaterial) {
+          mat.envMapIntensity = this.settings.envMapLightingIntensity;
+        }
+      }
+    });
+  }
+  updateLayers() {
+    for (const [index, layerDescr] of this.settings.layers) {
+      if (layerDescr.visible) {
+        this.camera.layers.enable(index);
+      } else {
+        this.camera.layers.disable(index);
+      }
+    }
+  }
   updateSettings() {
     const strSettingsStamp = JSON.stringify(this.settings);
     if (this.prevSettingsStamp != strSettingsStamp) {
@@ -240,6 +363,8 @@ export class ApgWgl_Viewer {
       this.updateAmbLight();
       this.updateSunLight();
       this.updateCamLight();
+      this.updateEnvMap();
+      this.updateLayers();
       this.prevSettingsStamp = JSON.stringify(this.settings);
     }
   }
@@ -297,15 +422,19 @@ export class ApgWgl_Viewer {
     r.push(` - Far: ${this.camera.far.toFixed(1)}`);
     const fog = this.scene.fog;
     r.push(`Fog:`);
-    r.push(` - Color: ${fog.color.getHex()}`);
-    r.push(` - Near: ${fog.near.toFixed(1)}`);
-    r.push(` - Far: ${fog.far.toFixed(1)}`);
+    r.push(` - Color: ${fog.color.getHexString()}`);
+    r.push(` - Density: ${fog.density.toFixed(1)}`);
     r.push("Lights:");
     r.push(` - Ambient is: ${this.ambLight.visible ? "Enabled" : "Disabled"}`);
+    r.push(` - Ambient color: ${this.ambLight.color.getHexString()}`);
     r.push(` - Sun is: ${this.sunLight.visible ? "Enabled" : "Disabled"}`);
+    r.push(` - Sun color: ${this.sunLight.color.getHexString()}`);
     r.push(` - Camera is: ${this.camLight.visible ? "Enabled" : "Disabled"}`);
+    r.push(` - Camera color: ${this.camLight.color.getHexString()}`);
     const vp = this.renderer.getViewport(new THREE.Vector4());
     r.push("Renderer:");
+    const cc = new THREE.Color();
+    r.push(` - Clear color: ${this.renderer.getClearColor(cc).getHexString()}`);
     r.push(` - Shadows are: ${this.renderer.shadowMap.enabled ? "Enabled" : "Disabled"}`);
     r.push(` - Dimensions are: ${vp.width.toFixed(1)} x ${vp.height.toFixed(1)}`);
     r.push(` - Pixel ratio is: ${this.renderer.getPixelRatio().toFixed(3)}`);

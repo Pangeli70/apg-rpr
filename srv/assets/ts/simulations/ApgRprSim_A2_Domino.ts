@@ -363,9 +363,7 @@ class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
             CARDS_REST_CNT,
             'Restitution',
             this.guiSettings.cardsRestitution,
-            this.guiSettings.cardsRestitutionMMS.min,
-            this.guiSettings.cardsRestitutionMMS.max,
-            this.guiSettings.cardsRestitutionMMS.step,
+            this.guiSettings.cardsRestitutionMMS,
             () => {
                 const range = this.gui.controls.get(CARDS_REST_CNT)!.element as IApgDomRange;
                 this.guiSettings.cardsRestitution = parseFloat(range.value);
@@ -380,9 +378,7 @@ class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
             CARD_HGT_CNT,
             'Cards number',
             this.guiSettings.cardsNumber,
-            this.guiSettings.cardsNumberMMS.min,
-            this.guiSettings.cardsNumberMMS.max,
-            this.guiSettings.cardsNumberMMS.step,
+            this.guiSettings.cardsNumberMMS,
             () => {
                 const range = this.gui.controls.get(CARD_HGT_CNT)!.element as IApgDomRange;
                 this.guiSettings.cardsNumber = parseFloat(range.value);
@@ -411,7 +407,7 @@ class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
         );
 
 
-        const r = this.buildGroupControl(
+        const r = this.buildDetailsControl(
             "cardsGroupControl",
             "Domino Cards:",
             [

@@ -231,6 +231,13 @@ export interface IApgDom2DRenderingContext {
 }
 
 
+export interface IApgDomDetails extends IApgDomElement {
+
+    open: boolean;
+
+}
+
+
 export interface IApgDomDialog extends IApgDomElement {
 
     close(): void;
