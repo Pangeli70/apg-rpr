@@ -293,12 +293,14 @@ export class ApgRpr_Simulator {
 
 
     /** 
-     * Called to allow the DOM to refresh when is changed diamically.
+     * Called to allow the DOM to refresh when is changed dinamically.
      * It delays the event loop calling setTimeout
      */
     updateViewerHud(ahtml: string) {
 
-        // @WARNING This is a stub we don't have a hud yet -- APG 20230916
+        this.gui.isRefreshing = true;
+
+        this.gui.hudElement.innerHTML = ahtml;
 
         setTimeout(() => {
             this.gui.isRefreshing = false;

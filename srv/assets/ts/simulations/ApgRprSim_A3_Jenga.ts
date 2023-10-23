@@ -195,14 +195,14 @@ export class ApgRprSim_Jenga_GuiBuilder extends ApgRprSim_GuiBuilder {
     }
 
 
-    override buildHtml() {
+    override buildPanel() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
 
         const cubesGroupControl = this.#buildCubesGroupControl();
 
-        const simControls = super.buildHtml();
+        const simControls = super.buildPanel();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,

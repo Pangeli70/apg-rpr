@@ -24,4 +24,12 @@ export class ApgUtils {
   static AssertNot(acondition, aerrorMessage) {
     this.Assert(!acondition, aerrorMessage);
   }
+  static GetPropertyName(obj, selector) {
+    const keyRecord = Object.keys(obj).reduce((res, key) => {
+      const typedKey = key;
+      res[typedKey] = typedKey;
+      return res;
+    }, {});
+    return selector(keyRecord);
+  }
 }

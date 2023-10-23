@@ -219,7 +219,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
     }
 
 
-    override buildHtml() {
+    override buildPanel() {
 
 
         const simulationChangeControl = this.buildSimulationChangeControl();
@@ -227,7 +227,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRprSim_GuiBuild
 
         const cubesGroupControl = this.#buildCubesGroupControl();
 
-        const simControls = super.buildHtml();
+        const simControls = super.buildPanel();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,

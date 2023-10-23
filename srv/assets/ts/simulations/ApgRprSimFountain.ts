@@ -264,7 +264,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
     }
 
 
-    override buildHtml() {
+    override buildPanel() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
@@ -272,7 +272,7 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
         const bodiesGroupControl = this.#buildBodiesGroupControl();
         const groundGroupControl = this.#buildGroundGroupControl();
 
-        const simControls = super.buildHtml();
+        const simControls = super.buildPanel();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,

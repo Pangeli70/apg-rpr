@@ -141,12 +141,12 @@ export class ApgRprSim_Fountain_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  buildHtml() {
+  buildPanel() {
     const simulationChangeControl = this.buildSimulationChangeControl();
     const restartSimulationButtonControl = this.buildRestartButtonControl();
     const bodiesGroupControl = this.#buildBodiesGroupControl();
     const groundGroupControl = this.#buildGroundGroupControl();
-    const simControls = super.buildHtml();
+    const simControls = super.buildPanel();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
       [

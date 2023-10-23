@@ -33,7 +33,7 @@ import {
 
 
 /**
- * Base class for building dynamic GUIs dynamically directly at runtime in the browser
+ * Base class for building dynamic GUIs directly at runtime in the browser
  */
 export class ApgGui_Builder {
 
@@ -193,7 +193,7 @@ export class ApgGui_Builder {
         const range = this.gui.controls.get(acontrolId)!.element as IApgDomRange;
         const output = this.gui.controls.get(`${acontrolId}Value`)!.element as IApgDomElement;
         output.innerHTML = range.value;
-        this.gui.devLog(`${acontrolId} = ${range.value}`);
+        this.gui.logDev(`${acontrolId} = ${range.value}`);
         return parseFloat(range.value);
     }
 
@@ -246,7 +246,7 @@ export class ApgGui_Builder {
         const colorPicker = this.gui.controls.get(acontrolId)!.element as IApgDomColorPicker;
         const output = this.gui.controls.get(`${acontrolId}Value`)!.element as IApgDomElement;
         output.innerHTML = colorPicker.value;
-        this.gui.devLog(`${acontrolId} = ${colorPicker.value}`);
+        this.gui.logDev(`${acontrolId} = ${colorPicker.value}`);
         return parseInt(colorPicker.value.replace("#", "0x"), 16);
     }
 
@@ -285,7 +285,7 @@ export class ApgGui_Builder {
         acontrolId: string,
     ): boolean {
         const checkBox = this.gui.controls.get(acontrolId)!.element as IApgDomCheckBox;
-        this.gui.devLog(`${acontrolId} = ${checkBox.checked}`);
+        this.gui.logDev(`${acontrolId} = ${checkBox.checked}`);
         return checkBox.checked;
     }
 
@@ -349,7 +349,7 @@ export class ApgGui_Builder {
         acontrolId: string,
     ): string {
         const select = this.gui.controls.get(acontrolId)!.element as IApgDomSelect;
-        this.gui.devLog(`${acontrolId} = ${select.value}`);
+        this.gui.logDev(`${acontrolId} = ${select.value}`);
         return select.value;
     }
 
@@ -596,13 +596,22 @@ export class ApgGui_Builder {
 
     /**
      * Virtual method that has to be overriden by the descendants of this class
-     * @param acontainer The element that will contain this GUI. Usually a <div> in the DOM
+    */
+    protected buildPanel() {
+
+        const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
+
+        return r;
+    }
+
+    /**
+     * Virtual method that has to be overriden by the descendants of this class
      */
-    protected buildHtml(acontainer: IApgDomElement) {
+    protected buildHud(acontainer: IApgDomElement) {
 
-        const r = "<p>Override the ApgGui_Builder.build() method to get the GUI</p>";
+        const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
 
-        acontainer.innerHTML = r;
+        return r;
     }
 
 }

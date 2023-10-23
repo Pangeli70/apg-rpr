@@ -75,11 +75,11 @@ export class ApgRprSim_Pyramid_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  buildHtml() {
+  buildPanel() {
     const simulationChangeControl = this.buildSimulationChangeControl();
     const restartSimulationButtonControl = this.buildRestartButtonControl();
     const cubesGroupControl = this.#buildCubesGroupControl();
-    const simControls = super.buildHtml();
+    const simControls = super.buildPanel();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
       [

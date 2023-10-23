@@ -54,8 +54,10 @@ export class ApgRprSim_Base {
       this.simulator.gui,
       this.params
     );
-    const html = guiBuilder.buildHtml();
-    this.simulator.updateViewerPanel(html);
+    const panelHtml = guiBuilder.buildPanel();
+    this.simulator.updateViewerPanel(panelHtml);
+    const hudHtml = guiBuilder.buildHud();
+    this.simulator.updateViewerHud(hudHtml);
     guiBuilder.bindControls();
     this.simulator.gui.log("Sim Gui built");
   }

@@ -62,6 +62,8 @@ export interface ApgWgl_IViewerSettings {
 
     /** Overall diameter size of the world */
     worldSize: number;
+    /** Height position of the camera for the character head */
+    eyeHeight: number;
 
     /** Color of the fog */
     fogColor: THREE.Color;
@@ -96,29 +98,27 @@ export interface ApgWgl_IViewerSettings {
     perspCameraFar: number;
     perspCameraPosition: THREE.Vector3;
 
-
-
+    ambLightEnabled: boolean;
     ambLightColor: THREE.Color;
     ambLightIntensity: number;
-    ambLightEnabled: boolean;
 
+    sunLightEnabled: boolean;
     sunLightColor: THREE.Color;
     sunLightIntensity: number;
     sunLightPosition: THREE.Vector3;
     sunLightShadowMapCameraSize: number,
     sunLightShadowMapCameraNear: number,
     sunLightShadowMapCameraFar: number,
-    sunLightEnabled: boolean;
 
+    camLightEnabled: boolean;
     camLightColor: THREE.Color;
     camLightIntensity: number;
     camLightDistance: number;
     camLightPosition: THREE.Vector3;
-    camLightEnabled: boolean;
     camLightIsDetachedFromCamera: boolean;
 
-    envMapMode: ApgWgl_eEnvMapMode;
     envMapLighting: boolean;
+    envMapMode: ApgWgl_eEnvMapMode;
     envMaps: string[];
     envMapLightingIntensity: number,
     envMapBackgroundBlurryness: number,
@@ -144,74 +144,7 @@ export class ApgWgl_Viewer {
     /** We don't like global objects */
     protected document: IApgDomDocument;
 
-    readonly EYE_HEIGHT = 1.65;
-    readonly WORLD_SIZE = 1000; // 5 km radious!! 
-
     readonly APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY = 'APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY';
-
-    readonly DEFAULT_SETTINGS: ApgWgl_IViewerSettings = {
-
-        worldSize: this.WORLD_SIZE,
-
-        fogColor: new THREE.Color(0x888888),
-        fogDensity: 0.00025,
-
-        toneMapping: THREE.LinearToneMapping,
-        toneMappingExposure: 1,
-
-        outputColorSpace: THREE.SRGBColorSpace,
-
-        areShadowsEnabled: false,
-        // shadowMapType: THREE.PCFSoftShadowMap,
-        shadowMapType: THREE.BasicShadowMap,
-        shadowMapRadious: 4,
-        shadowMapSize: 1024 * 4,
-        anisotropy: 4,
-
-        clearColor: new THREE.Color(0x292929),
-
-        perspCameraFov: 45,
-        perspCameraNear: 0.1, // 100mm
-        perspCameraFar: this.WORLD_SIZE / 2,
-        perspCameraPosition: new THREE.Vector3(0, this.EYE_HEIGHT, 5),
-
-        ambLightEnabled: true,
-        ambLightIntensity: 0.2,
-        ambLightColor: new THREE.Color(0xffffff),
-
-        sunLightEnabled: true,
-        sunLightIntensity: 0.5,
-        sunLightColor: new THREE.Color(0xffffaa),
-        sunLightPosition: new THREE.Vector3(this.WORLD_SIZE / 4, this.WORLD_SIZE / 2.5, this.WORLD_SIZE / 4),
-        sunLightShadowMapCameraSize: this.WORLD_SIZE / 40,
-        sunLightShadowMapCameraNear: this.WORLD_SIZE / 3.5,
-        sunLightShadowMapCameraFar: this.WORLD_SIZE / 1.5,
-
-        camLightEnabled: false,
-        camLightIntensity: 0.5,
-        camLightColor: new THREE.Color(0xaaffff),
-        camLightPosition: new THREE.Vector3(0, 0, 0),
-        camLightDistance: this.WORLD_SIZE / 10,
-        camLightIsDetachedFromCamera: false,
-
-        envMapLighting: false,
-        envMapMode: ApgWgl_eEnvMapMode.EXR,
-        envMaps: ['a.jpg', 'a.hdr', 'a.exr'],
-        envMapLightingIntensity: 1,
-        envMapBackgroundBlurryness: 0,
-        envMapBackgroundIntensity: 1,
-
-        orbControlsTarget: new THREE.Vector3(0, 0, 0),
-        orbControlsMinDistance: 0.1,
-        orbControlsMaxDistance: this.WORLD_SIZE / 2,
-        orbControlsMinPolarAngle: 0,
-        orbControlsMaxPolarAngle: Math.PI,
-        orbControlsEnableDamping: true,
-        orbControlsDampingFactor: 0.2,
-
-        layers: new Map()
-
-    }
 
     settings: ApgWgl_IViewerSettings;
     prevSettingsStamp: string;
@@ -235,10 +168,10 @@ export class ApgWgl_Viewer {
 
     /** Texture management */
     protected textureLoader: THREE.TextureLoader | null = null;
-    protected textureMaps: (THREE.Texture | null)[] = [];
-    protected bumpMaps: (THREE.Texture | null)[] = [];
-    protected normalMaps: (THREE.Texture | null)[] = [];
-    protected ldrMaps: (THREE.Texture | null)[] = [];
+    protected textureMaps: THREE.Texture[] = [];
+    protected bumpMaps: THREE.Texture[] = [];
+    protected normalMaps: THREE.Texture[] = [];
+
     protected hdrLoader: THREE_RGBELoader | null = null;
     protected exrLoader: THREE_EXRLoader | null = null;
 
@@ -246,12 +179,14 @@ export class ApgWgl_Viewer {
         awindow: IApgDomBrowserWindow,
         adocument: IApgDomDocument,
         aviewerElement: IApgDomElement,
+        aworldSize = 1000,
+        ayeHeight = 1.65
     ) {
         this.window = awindow;
         this.document = adocument;
         this.viewerElement = aviewerElement;
 
-        this.settings = { ...this.DEFAULT_SETTINGS }
+        this.settings = ApgWgl_Viewer.GetDefaultSettings(aworldSize, ayeHeight)
         this.prevSettingsStamp = JSON.stringify(this.settings);
 
         this.#initCanvas();
@@ -270,6 +205,75 @@ export class ApgWgl_Viewer {
         this.window.addEventListener("resize", () => { this.resize() }, false);
     }
 
+
+    static GetDefaultSettings(aworldSize: number, aeyeHeight: number) {
+        const r: ApgWgl_IViewerSettings = {
+
+            worldSize: aworldSize,
+            eyeHeight: aeyeHeight,
+
+            fogColor: new THREE.Color(0x888888),
+            fogDensity: 0.00025,
+
+            toneMapping: THREE.LinearToneMapping,
+            toneMappingExposure: 1,
+
+            outputColorSpace: THREE.SRGBColorSpace,
+
+            areShadowsEnabled: false,
+            // shadowMapType: THREE.PCFSoftShadowMap,
+            shadowMapType: THREE.BasicShadowMap,
+            shadowMapRadious: 4,
+            shadowMapSize: 1024 * 4,
+            anisotropy: 4,
+
+            clearColor: new THREE.Color(0x292929),
+
+            perspCameraFov: 45,
+            perspCameraNear: 0.1, // 100mm
+            perspCameraFar: aworldSize / 2,
+            perspCameraPosition: new THREE.Vector3(0, aeyeHeight, 5),
+
+            ambLightEnabled: true,
+            ambLightIntensity: 0.2,
+            ambLightColor: new THREE.Color(0xffffff),
+
+            sunLightEnabled: true,
+            sunLightIntensity: 0.5,
+            sunLightColor: new THREE.Color(0xffffaa),
+            sunLightPosition: new THREE.Vector3(aworldSize / 4, aworldSize / 2.5, aworldSize / 4),
+            sunLightShadowMapCameraSize: aworldSize / 40,
+            sunLightShadowMapCameraNear: aworldSize / 3.5,
+            sunLightShadowMapCameraFar: aworldSize / 1.5,
+
+            camLightEnabled: false,
+            camLightIntensity: 0.5,
+            camLightColor: new THREE.Color(0xaaffff),
+            camLightPosition: new THREE.Vector3(0, 0, 0),
+            camLightDistance: aworldSize / 10,
+            camLightIsDetachedFromCamera: false,
+
+            envMapLighting: false,
+            envMapMode: ApgWgl_eEnvMapMode.EXR,
+            envMaps: [],
+            envMapLightingIntensity: 1,
+            envMapBackgroundBlurryness: 0,
+            envMapBackgroundIntensity: 1,
+
+            orbControlsTarget: new THREE.Vector3(0, 0, 0),
+            orbControlsMinDistance: 0.1,
+            orbControlsMaxDistance: aworldSize / 2,
+            orbControlsMinPolarAngle: 0,
+            orbControlsMaxPolarAngle: Math.PI,
+            orbControlsEnableDamping: true,
+            orbControlsDampingFactor: 0.2,
+
+            layers: new Map()
+
+        }
+        return r;
+    }
+    
 
     #initCanvas(): void {
         this.viewerCanvasElement = this.document.createElement('canvas') as IApgDomCanvas;
@@ -329,7 +333,7 @@ export class ApgWgl_Viewer {
 
         this.scene.fog = new THREE.FogExp2(
             this.settings.fogColor,
-            this.settings.fogDensity * this.WORLD_SIZE / 100
+            this.settings.fogDensity * this.settings.worldSize / 100
         );
 
     }
@@ -338,7 +342,7 @@ export class ApgWgl_Viewer {
     updateFog(): void {
         this.scene.fog = new THREE.FogExp2(
             this.settings.fogColor,
-            this.settings.fogDensity * this.WORLD_SIZE / 100
+            this.settings.fogDensity * this.settings.worldSize / 100
         );
     }
 
@@ -562,6 +566,7 @@ export class ApgWgl_Viewer {
 
     }
 
+
     #updateAllEnvMapSensitiveMaterialsInTheScene() {
 
         this.scene.traverse((object: THREE.Object3D) => {
@@ -603,7 +608,7 @@ export class ApgWgl_Viewer {
             this.updateCamLight();
             this.updateEnvMap();
             this.updateLayers();
-            this.prevSettingsStamp = JSON.stringify(this.settings);
+            this.prevSettingsStamp = strSettingsStamp;
         }
     }
 

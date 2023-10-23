@@ -44,7 +44,7 @@ export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
     }
 
 
-    override buildHtml() {
+    override buildPanel() {
 
         const debugInfoDialogControl = this.#buildDebugInfoDialogControl();
 

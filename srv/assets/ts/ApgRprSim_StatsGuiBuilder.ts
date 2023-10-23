@@ -31,7 +31,7 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
 
     }
 
-    override buildHtml(): string {
+    override buildPanel(): string {
 
         const statsGroupControl = this.#buildStatsGroupControl();
 

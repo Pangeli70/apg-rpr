@@ -181,11 +181,11 @@ class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
     super(agui, aparams);
     this.guiSettings = this.params.guiSettings;
   }
-  buildHtml() {
+  buildPanel() {
     const simulationChangeControl = this.buildSimulationChangeControl();
     const restartSimulationButtonControl = this.buildRestartButtonControl();
     const cubesGroupControl = this.#buildCardsGroupControl();
-    const simControls = super.buildHtml();
+    const simControls = super.buildPanel();
     const r = this.buildPanelControl(
       `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,
       [
@@ -196,6 +196,17 @@ class ApgRprSim_Domino_GuiBuilder extends ApgRprSim_GuiBuilder {
       ]
     );
     return r;
+  }
+  buildHud() {
+    const THROW_BALL_HUD_BTN = "throwBallHudControl";
+    const throwBallControl = this.buildButtonControl(
+      THROW_BALL_HUD_BTN,
+      "Throw ball",
+      () => {
+        this.guiSettings.throwBallPressed = true;
+      }
+    );
+    return throwBallControl;
   }
   #buildCardsGroupControl() {
     const THROW_BALL_BTN = "throwBallControl";

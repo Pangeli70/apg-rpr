@@ -12,7 +12,7 @@ export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
     super(agui, "Pippo debug");
     this.debugInfo = ainfo;
   }
-  buildHtml() {
+  buildPanel() {
     const debugInfoDialogControl = this.#buildDebugInfoDialogControl();
     const DEBUG_INFO_OPEN_BTN_CNT = "debugInfoOpenButtonControl";
     const debugInfoOpenButtonControl = this.buildButtonControl(

@@ -78,7 +78,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
    * 
    * @returns 
    */
-  buildHtml() {
+  buildPanel() {
     const viewerSettingsDialogControl = this.#buildViewerSettingsDialogControl();
     const VIEWER_SETTINGS_BTN_CNT = "ViewerSettingsButtonControl";
     const viewerSettingsButtonControl = this.buildButtonControl(
@@ -128,14 +128,6 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
       ]
     );
     return r;
-  }
-  getPropertyName(obj, selector) {
-    const keyRecord = Object.keys(obj).reduce((res, key) => {
-      const typedKey = key;
-      res[typedKey] = typedKey;
-      return res;
-    }, {});
-    return selector(keyRecord);
   }
   #buildRendererDetails() {
     const RENDERER_CLEAR_COLOR_CNT = "RendererClearColorPicker_Control";

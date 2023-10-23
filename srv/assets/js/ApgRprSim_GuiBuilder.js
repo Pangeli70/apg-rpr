@@ -21,10 +21,10 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
    * 
    * @returns 
    */
-  buildHtml() {
+  buildPanel() {
     const simulationGroupControl = this.#buildSimulationGroupControl();
-    const statsGroupControl = new ApgRprSim_StatsGuiBuilder(this.gui, this.params).buildHtml();
-    const debugGroupControl = new ApgRprSim_DebugGuiBuilder(this.gui, this.params.debugInfo).buildHtml();
+    const statsGroupControl = new ApgRprSim_StatsGuiBuilder(this.gui, this.params).buildPanel();
+    const debugGroupControl = new ApgRprSim_DebugGuiBuilder(this.gui, this.params.debugInfo).buildPanel();
     const FULLSCREEN_BTN_CNT = "fullscreenButtonControl";
     const fullscreenButtonControl = this.buildButtonControl(
       FULLSCREEN_BTN_CNT,
@@ -68,7 +68,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
         dialog.showModal();
       }
     );
-    const viewerSettingsControls = new ApgWgl_GuiBuilder(this.gui, this.name, this.params.viewer).buildHtml();
+    const viewerSettingsControls = new ApgWgl_GuiBuilder(this.gui, this.name, this.params.viewer).buildPanel();
     const controls = [
       simulationGroupControl,
       statsGroupControl,
@@ -81,6 +81,9 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     ];
     const r = controls.join("\n");
     return r;
+  }
+  buildHud() {
+    return "";
   }
   buildSimulationChangeControl() {
     const simulationsKVs = /* @__PURE__ */ new Map();

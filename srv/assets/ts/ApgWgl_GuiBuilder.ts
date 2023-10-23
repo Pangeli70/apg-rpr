@@ -30,84 +30,106 @@ import {
 
 export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
 
-    worldSize: number;
+    // - worldSize: number;
     worldSizeMMS: ApgGui_IMinMaxStep;
 
-    fogColor: THREE.Color;
+    // - fogColor: THREE.Color;
+    // - fogDensity: number;
     fogDensityMMS: ApgGui_IMinMaxStep;
 
-
-    toneMapping: THREE.ToneMapping;
+    // - toneMapping: THREE.ToneMapping;
     toneMappingValues: ApgGui_TSelectValuesMap;
-
-    toneMappingExposure: number;
+    // - toneMappingExposure: number;
     toneMappingExposureMMS: ApgGui_IMinMaxStep;
-
-    outputColorSpace: THREE.ColorSpace;
+    
+    // - outputColorSpace: THREE.ColorSpace;
     outputColorSpaceValues: ApgGui_TSelectValuesMap;
 
-    areShadowsEnabled: boolean;
-    shadowMapType: THREE.ShadowMapType;
+    // - areShadowsEnabled: boolean;
+    // - shadowMapType: THREE.ShadowMapType;
     shadowMapTypeValues: ApgGui_TSelectValuesMap;
-    shadowMapRadious: number;
-    shadowMapSize: number;
+    //shadowMapRadious: number;
+    //shadowMapSize: number;
+    
+    //anisotropy: number;
+    //anisotropyMMS: ApgGui_IMinMaxStep;
 
-    clearColor: THREE.Color;
+    // - clearColor: THREE.Color;
 
-    perspCameraFov: number;
+    //perspCameraFov: number;
     //perspCameraFovMMS: ApgGui_IMinMaxStep;
-    perspCameraNear: number;
+    //perspCameraNear: number;
     //perspCameraNearMMS: ApgGui_IMinMaxStep;
-    perspCameraFar: number;
+    //perspCameraFar: number;
     //perspCameraFarMMS: ApgGui_IMinMaxStep;
+    //perspCameraPosition: THREE.Vector3;
+    //perspCameraPositionXMMS: ApgGui_IMinMaxStep;
+    //perspCameraPositionYMMS: ApgGui_IMinMaxStep;
+    //perspCameraPositionZMMS: ApgGui_IMinMaxStep;
 
-    perspCameraPosition: THREE.Vector3;
-
-
+    // - ambLightEnabled: boolean;
+    // - ambLightColor: THREE.Color;
+    // - ambLightIntensity: number;
     ambLightIntensityMMS: ApgGui_IMinMaxStep;
 
+    // - sunLightColor: THREE.Color;
+    // - sunLightEnabled: boolean;
+    // - sunLightIntensity: number;
     sunLightIntensityMMS: ApgGui_IMinMaxStep;
+    //sunLightPosition: THREE.Vector3;
+    //sunLightPositionXMMS: ApgGui_IMinMaxStep;
+    //sunLightPositionYMMS: ApgGui_IMinMaxStep;
+    //sunLightPositionZMMS: ApgGui_IMinMaxStep;
+    //sunLightShadowMapCameraSize: number,
+    //sunLightShadowMapCameraNear: number,
+    //sunLightShadowMapCameraFar: number,
 
-    sunLightPosition: THREE.Vector3;
-    sunLightShadowMapCameraSize: number,
-    sunLightShadowMapCameraNear: number,
-    sunLightShadowMapCameraFar: number,
-
+    // - camLightEnabled: boolean;
+    // - camLightColor: THREE.Color;
+    // - camLightIntensity: number;
     camLightIntensityMMS: ApgGui_IMinMaxStep;
-    camLightDistance: number;
+    //camLightDistance: number;
     //camLightDistanceMMS: ApgGui_IMinMaxStep;
-    camLightPosition: THREE.Vector3;
-    camLightIsDetachedFromCamera: boolean;
+    //camLightPosition: THREE.Vector3;
+    //camLightPositionXMMS: ApgGui_IMinMaxStep;
+    //camLightPositionYMMS: ApgGui_IMinMaxStep;
+    //camLightPositionZMMS: ApgGui_IMinMaxStep;
+    //camLightIsDetachedFromCamera: boolean;
 
-    envMapLighting: boolean;
-    envMapMode: ApgWgl_eEnvMapMode;
+    // - envMapLighting: boolean;
+    // - envMapMode: ApgWgl_eEnvMapMode;
     envMapModeValues: ApgGui_TSelectValuesMap;
-    envMaps: string[];
-    envMapLightingIntensity: number,
+    //envMaps: string[];
+    // - envMapLightingIntensity: number,
     envMapLightingIntensityMMS: ApgGui_IMinMaxStep,
-    envMapBackgroundBlurryness: number,
+    // - envMapBackgroundBlurryness: number,
     envMapBackgroundBlurrynessMMS: ApgGui_IMinMaxStep,
-    envMapBackgroundIntensity: number,
+    // - envMapBackgroundIntensity: number,
     envMapBackgroundIntensityMMS: ApgGui_IMinMaxStep,
 
+    //orbControlsTarget: THREE.Vector3;
+    //orbControlsTargetPositionXMMS: ApgGui_IMinMaxStep;
+    //orbControlsTargetPositionYMMS: ApgGui_IMinMaxStep;
+    //orbControlsTargetPositionZMMS: ApgGui_IMinMaxStep;
+    //orbControlsMinDistance: number;
+    //orbControlsMinDistanceMMS: ApgGui_IMinMaxStep;
+    //orbControlsMaxDistance: number;
+    //orbControlsMaxDistanceMMS: ApgGui_IMinMaxStep;
+    //orbControlsMinPolarAngle: number;
+    //orbControlsMinPolarAngleMMS: ApgGui_IMinMaxStep;
+    //orbControlsMaxPolarAngle: number;
+    //orbControlsMaxPolarAngleMMS: ApgGui_IMinMaxStep;
+    //orbControlsEnableDamping: boolean;
+    //orbControlsDampingFactor: number;
+    //orbControlsDampingFactorMMS: ApgGui_IMinMaxStep;
 
-    orbControlsTarget: THREE.Vector3;
-    orbControlsMinDistance: number;
-    orbControlsMaxDistance: number;
-    orbControlsMinPolarAngle: number;
-    orbControlsMaxPolarAngle: number;
-    orbControlsEnableDamping: boolean;
-    orbControlsDampingFactor: number;
-
-    layers: Map<ApgWgl_eLayers, ApgWgl_ILayerDescr>;
+    //layers: Map<ApgWgl_eLayers, ApgWgl_ILayerDescr>;
 
 }
 
+
 /**
- * This is the basic simulation gui Builder that contains the elements shared by
- * all the simulations. It prepares the controls that allows to change the simulation, 
- * to tweak the simulation settings, to create the stats panels and the the credits 
- * dialog
+ * This is the basic Web GL gui Builder that contains the viewer settings.
  */
 export class ApgWgl_GuiBuilder extends ApgGui_Builder {
 
@@ -203,7 +225,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
      * 
      * @returns 
      */
-    override buildHtml() {
+    override buildPanel() {
 
         const viewerSettingsDialogControl = this.#buildViewerSettingsDialogControl();
 
@@ -271,17 +293,6 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             ],
         );
         return r;
-    }
-
-
-
-    getPropertyName<T extends object>(obj: T, selector: (x: Record<keyof T, keyof T>) => keyof T): keyof T {
-        const keyRecord = Object.keys(obj).reduce((res, key) => {
-            const typedKey = key as keyof T
-            res[typedKey] = typedKey
-            return res
-        }, {} as Record<keyof T, keyof T>)
-        return selector(keyRecord)
     }
 
 
@@ -506,7 +517,6 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
     }
 
 
-
     #buildLayersDetails() {
 
 
@@ -542,6 +552,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         return fogDetails_Control;
     }
 
+
     #buildLightsDetails() {
         const ambLightControl = this.#buildAmbienLightFieldSet();
 
@@ -562,6 +573,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
 
         return lightsDetails_Control;
     }
+
 
     #buildInfoDetails() {
 

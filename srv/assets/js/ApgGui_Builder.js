@@ -117,7 +117,7 @@ export class ApgGui_Builder {
     const range = this.gui.controls.get(acontrolId).element;
     const output = this.gui.controls.get(`${acontrolId}Value`).element;
     output.innerHTML = range.value;
-    this.gui.devLog(`${acontrolId} = ${range.value}`);
+    this.gui.logDev(`${acontrolId} = ${range.value}`);
     return parseFloat(range.value);
   }
   buildColorPickerControl(acontrolId, acaption, avalue, ainputCallback) {
@@ -160,7 +160,7 @@ export class ApgGui_Builder {
     const colorPicker = this.gui.controls.get(acontrolId).element;
     const output = this.gui.controls.get(`${acontrolId}Value`).element;
     output.innerHTML = colorPicker.value;
-    this.gui.devLog(`${acontrolId} = ${colorPicker.value}`);
+    this.gui.logDev(`${acontrolId} = ${colorPicker.value}`);
     return parseInt(colorPicker.value.replace("#", "0x"), 16);
   }
   buildCheckBoxControl(acontrolId, acaption, avalue, achangeCallback) {
@@ -189,7 +189,7 @@ export class ApgGui_Builder {
   }
   readCheckBoxControl(acontrolId) {
     const checkBox = this.gui.controls.get(acontrolId).element;
-    this.gui.devLog(`${acontrolId} = ${checkBox.checked}`);
+    this.gui.logDev(`${acontrolId} = ${checkBox.checked}`);
     return checkBox.checked;
   }
   /**
@@ -237,7 +237,7 @@ export class ApgGui_Builder {
   }
   readSelectControl(acontrolId) {
     const select = this.gui.controls.get(acontrolId).element;
-    this.gui.devLog(`${acontrolId} = ${select.value}`);
+    this.gui.logDev(`${acontrolId} = ${select.value}`);
     return select.value;
   }
   // #endregion
@@ -416,10 +416,16 @@ export class ApgGui_Builder {
   }
   /**
    * Virtual method that has to be overriden by the descendants of this class
-   * @param acontainer The element that will contain this GUI. Usually a <div> in the DOM
+  */
+  buildPanel() {
+    const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
+    return r;
+  }
+  /**
+   * Virtual method that has to be overriden by the descendants of this class
    */
-  buildHtml(acontainer) {
-    const r = "<p>Override the ApgGui_Builder.build() method to get the GUI</p>";
-    acontainer.innerHTML = r;
+  buildHud(acontainer) {
+    const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
+    return r;
   }
 }

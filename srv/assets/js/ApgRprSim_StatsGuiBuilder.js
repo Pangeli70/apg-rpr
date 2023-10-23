@@ -7,7 +7,7 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
     this.params = aparams;
     this.stats = this.params.stats;
   }
-  buildHtml() {
+  buildPanel() {
     const statsGroupControl = this.#buildStatsGroupControl();
     const controls = [
       statsGroupControl

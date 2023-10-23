@@ -172,12 +172,12 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
     }
 
 
-    override buildHtml() {
+    override buildPanel() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
 
-        const simControls = super.buildHtml();
+        const simControls = super.buildPanel();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this.guiSettings.name}_SettingsPanelId`,

@@ -171,10 +171,12 @@ export class ApgRpr_Simulator {
     }, 0);
   }
   /** 
-   * Called to allow the DOM to refresh when is changed diamically.
+   * Called to allow the DOM to refresh when is changed dinamically.
    * It delays the event loop calling setTimeout
    */
   updateViewerHud(ahtml) {
+    this.gui.isRefreshing = true;
+    this.gui.hudElement.innerHTML = ahtml;
     setTimeout(() => {
       this.gui.isRefreshing = false;
     }, 0);
