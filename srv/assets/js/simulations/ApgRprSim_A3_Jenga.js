@@ -1,15 +1,15 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_Jenga extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_Jenga extends ApgRprSimulation {
   currentCube = 0;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Jenga_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -21,7 +21,7 @@ export class ApgRprSim_Jenga extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groundBodyDesc);
     const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30, 0.1, 30);

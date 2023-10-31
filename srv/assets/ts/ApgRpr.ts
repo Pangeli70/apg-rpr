@@ -27,7 +27,7 @@ import {
 export async function ApgRpr(
     awindow: IApgDomBrowserWindow,
     adocument: IApgDomDocument,
-    aguiPanelElementId: string,
+    aguiElementId: string,
     aviewerElementId: string,
 ) {
 
@@ -38,7 +38,7 @@ export async function ApgRpr(
     const simulator = new ApgRpr_Simulator(
         awindow,
         adocument,
-        aguiPanelElementId,
+        aguiElementId,
         aviewerElementId,
         simulations,
         ApgRpr_eSimulationName.A0_PYRAMID

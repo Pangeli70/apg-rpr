@@ -19,7 +19,7 @@ import {
 
 import {
     ApgRpr_IDebugInfo
-} from "./ApgRprInterfaces.ts";
+} from "./ApgRpr_Interfaces.ts";
 
 import {
     RAPIER

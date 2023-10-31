@@ -29,14 +29,17 @@ import {
 } from "./ApgWgl_Viewer.ts";
 
 import {
-    ApgUtils
-} from "./ApgUtils.ts";
+    ApgUts
+} from "./ApgUts.ts";
+import { ApgUts_Logger } from "./ApgUts_Logger.ts";
+
 
 
 interface ApgRpr_IInstancedMeshUserData {
     isRprInstancedMesh: boolean;
     mapOfCollidersAssocToThisInstancedMesh: Map<number, RAPIER.Collider>;
 }
+
 
 
 enum ApgRpr_eCollidersColorPalette {
@@ -48,6 +51,8 @@ enum ApgRpr_eCollidersColorPalette {
     HIGHLIGHTED = 5
 }
 
+
+
 export enum ApgRpr_eInstancedMeshesGroups {
     BOXES = 0,
     BALLS = 1,
@@ -58,7 +63,16 @@ export enum ApgRpr_eInstancedMeshesGroups {
 
 
 
-export interface IApgRpr_InstanceDesc {
+export interface ApgRpr_IEntity {
+    collider: RAPIER.Collider,
+    body: RAPIER.RigidBody,
+    mesh: THREE.Mesh
+}
+
+
+
+/** Descriptor of the instanced meshes */
+export interface ApgRpr_IInstancedMeshDesc {
 
     /** Group of instanced Meshes ID */
     groupId: ApgRpr_eInstancedMeshesGroups;
@@ -75,19 +89,21 @@ export interface IApgRpr_InstanceDesc {
 
 }
 
+
 export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
     // Maximum count of colliders mesh instances
     readonly COLLIDERS_MESH_INSTANCES_MAX = 250;
 
     /** Collections used to relate colliders and rigidbodies with meshes */
-    mapOfInstancedMeshDescriptorsByColliderHandle: Map<number, IApgRpr_InstanceDesc>;
+    mapOfInstancedMeshDescriptorsByColliderHandle: Map<number, ApgRpr_IInstancedMeshDesc>;
     mapOfMeshesByColliderHandle: Map<number, THREE.InstancedMesh | THREE.Mesh>;
     mapOfCollidersByRigidBodyHandle: Map<number, RAPIER.Collider[]>;
 
     /** Colors for the instanced colliders meshes */
     collidersPalette: Map<ApgRpr_eCollidersColorPalette, { colors: number[], offset: number }>;
 
+    /** Random generator */
     rng: PRANDO;
 
     /** Is used for highlighing the colliders that are picked with the mouse */
@@ -100,12 +116,23 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     /** Set of reusable meshes used to represent the standard colliders */
     instancedMeshesGroups: Map<ApgRpr_eInstancedMeshesGroups, THREE.InstancedMesh[]>;
 
+
+    /** To log data properly */
+    static readonly RPR_VIEWER_NAME = 'Rapier Viewer';
+
+
+
     constructor(
         awindow: IApgDomBrowserWindow,
         adocument: IApgDomDocument,
         aviewerElement: IApgDomElement,
+        alogger: ApgUts_Logger,
+        asceneSize: number,
     ) {
-        super(awindow, adocument, aviewerElement);
+
+        super(awindow, adocument, aviewerElement, alogger, asceneSize);
+        
+        this.logger.addLogger(ApgRpr_Viewer.RPR_VIEWER_NAME)
 
         this.rng = new PRANDO('ApgRprThreeViewer');
 
@@ -129,7 +156,10 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         this.lines = new THREE.LineSegments(geometry, material);
         this.scene.add(this.lines);
 
+        this.logger.logDev('Constructor has built', ApgRpr_Viewer.RPR_VIEWER_NAME);
+
     }
+
 
 
     #initInstanceMeshesGroups() {
@@ -140,7 +170,10 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CONES, this.COLLIDERS_MESH_INSTANCES_MAX);
         this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CAPSULES, this.COLLIDERS_MESH_INSTANCES_MAX);
 
+        this.logger.logDev('Instanced meshes was build ', ApgRpr_Viewer.RPR_VIEWER_NAME);
+
     }
+
 
 
     #initCollidersPalette() {
@@ -151,7 +184,10 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         this.collidersPalette.set(ApgRpr_eCollidersColorPalette.CCD_ENABLED, { colors: [0xffff00], offset: 6 });
         this.collidersPalette.set(ApgRpr_eCollidersColorPalette.SENSOR, { colors: [0x00ff00], offset: 7 });
         this.collidersPalette.set(ApgRpr_eCollidersColorPalette.HIGHLIGHTED, { colors: [0xff0000], offset: 8 });
+
+        this.logger.logDev('Colliders palette initialized', ApgRpr_Viewer.RPR_VIEWER_NAME);
     }
+
 
 
     #buildInstancedMeshesGroup(agroup: ApgRpr_eInstancedMeshesGroups, amaxInstances: number) {
@@ -233,20 +269,21 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
 
 
-
     highlightedInstanceId() {
         return 7; //this.colorPalette.length - 1;
     }
 
 
+
     highlightCollider(handle: number) {
+
         if (handle == this.highlightedCollider)
             // Avoid flickering when moving the mouse on a single collider.
             return;
         if (this.highlightedCollider != null) {
             const desc = this.mapOfInstancedMeshDescriptorsByColliderHandle.get(this.highlightedCollider);
             if (desc) {
-                desc.highlighted = false; // ???? TODO
+                desc.highlighted = false; // ???? @TODO
                 const instancedGroup = this.instancedMeshesGroups.get(desc.groupId)!;
                 instancedGroup[this.highlightedInstanceId()].count = 0;
             }
@@ -261,6 +298,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         }
         this.highlightedCollider = handle;
     }
+
 
 
     updateCollidersPositions(world: RAPIER.World) {
@@ -285,7 +323,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
                 tempObj.updateMatrix();
                 instance.setMatrixAt(instancedMeshDesc.count, tempObj.matrix);
 
-                // TODO Review this highlighted management is incomplete -- APG 20230926
+                // @TODO Review this highlighted management is incomplete -- APG 20230926
                 const highlightInstance = instancedGroup[this.highlightedInstanceId()];
                 if (instancedMeshDesc.highlighted) {
                     highlightInstance.count = 1;
@@ -298,7 +336,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
                 const mesh = this.mapOfMeshesByColliderHandle.get(collider.handle);
 
-                ApgUtils.Assert(
+                ApgUts.Assert(
                     mesh != undefined,
                     `$$257: We have an unmapped collider here! (${collider.handle}), where does it come from?`
                 )
@@ -310,6 +348,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
             }
         });
     }
+
 
 
     reset() {
@@ -343,6 +382,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     }
 
 
+
     removeRigidBody(arigidBody: RAPIER.RigidBody) {
 
         const colliders = this.mapOfCollidersByRigidBodyHandle.get(arigidBody.handle);
@@ -357,6 +397,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         }
 
     }
+
 
 
     removeCollider(acollider: RAPIER.Collider) {
@@ -380,7 +421,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
                 instancedMesh.count -= 1;
 
-                // TODO Check all this stuff seems obscure and very incomplete -- APG 20230815
+                // @TODO Check all this stuff seems obscure and very incomplete -- APG 20230815
                 const userData = instancedMesh.userData as ApgRpr_IInstancedMeshUserData;
 
                 const collAssocMap = userData.mapOfCollidersAssocToThisInstancedMesh;
@@ -401,12 +442,12 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     }
 
 
-    addCollider(acollider: RAPIER.Collider) {
 
+    addCollider(acollider: RAPIER.Collider) {
 
         const rigidBodyParentOfCollider: RAPIER.RigidBody = acollider.parent();
 
-        const palette = this.getPaletteByRigidBodyType(rigidBodyParentOfCollider);
+        const palette = this.#getPaletteByRigidBodyType(rigidBodyParentOfCollider);
 
         let colliders = this.mapOfCollidersByRigidBodyHandle.get(rigidBodyParentOfCollider.handle);
         if (colliders) {
@@ -417,9 +458,9 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
             this.mapOfCollidersByRigidBodyHandle.set(rigidBodyParentOfCollider.handle, colliders);
         }
 
-        const instanceDesc: IApgRpr_InstanceDesc = {
+        const instanceDesc: ApgRpr_IInstancedMeshDesc = {
             groupId: 0,
-            indexInGroup: this.getInstanceIdByPalette(palette),
+            indexInGroup: this.#getRandomInstanceIdByPalette(palette),
             colliderHandle: 0,
             count: 0,
             highlighted: false,
@@ -544,15 +585,21 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         }
     }
 
-    private getInstanceIdByPalette(palette: {
+
+
+    #getRandomInstanceIdByPalette(palette: {
         colors: number[];
         offset: number;
     }) {
+
         const instanceId = Math.trunc(this.rng.next() * palette.colors.length) + palette.offset;
         return instanceId;
     }
 
-    private getPaletteByRigidBodyType(rigidBodyParentOfCollider: RAPIER.RigidBody) {
+
+
+    #getPaletteByRigidBodyType(rigidBodyParentOfCollider: RAPIER.RigidBody) {
+
         let paletteIndex: ApgRpr_eCollidersColorPalette;
         if (rigidBodyParentOfCollider.isFixed()) {
             paletteIndex = ApgRpr_eCollidersColorPalette.FIXED;

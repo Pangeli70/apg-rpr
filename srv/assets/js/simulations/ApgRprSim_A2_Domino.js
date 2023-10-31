@@ -1,15 +1,15 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
 var ApgRprSim_Domino_eCardsPatterns = /* @__PURE__ */ ((ApgRprSim_Domino_eCardsPatterns2) => {
   ApgRprSim_Domino_eCardsPatterns2["RANDOM"] = "Random";
   ApgRprSim_Domino_eCardsPatterns2["LINEAR"] = "Linear";
   ApgRprSim_Domino_eCardsPatterns2["STAR"] = "Star";
   return ApgRprSim_Domino_eCardsPatterns2;
 })(ApgRprSim_Domino_eCardsPatterns || {});
-export class ApgRprSim_Domino extends ApgRprSim_Base {
+export class ApgRprSim_Domino extends ApgRprSimulation {
   _cardWidth = 1;
   _cardDepth = 0.5;
   _cardHeight = 2;
@@ -17,7 +17,7 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Domino_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -28,7 +28,7 @@ export class ApgRprSim_Domino extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const WORLD_SIZE = 60;
     const CARDS_AREA_DIAMETER = WORLD_SIZE * 0.9;
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();

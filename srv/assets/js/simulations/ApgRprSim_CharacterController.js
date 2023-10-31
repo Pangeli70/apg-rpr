@@ -1,9 +1,9 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_CharacterController extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_CharacterController extends ApgRprSimulation {
   character;
   characterCollider;
   characterController;
@@ -14,7 +14,7 @@ export class ApgRprSim_CharacterController extends ApgRprSim_Base {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_CharacterController_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -26,7 +26,7 @@ export class ApgRprSim_CharacterController extends ApgRprSim_Base {
       this.updateCharacter();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groundBodyDesc);
     const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30, 0.1, 30);

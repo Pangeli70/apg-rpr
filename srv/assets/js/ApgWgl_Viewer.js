@@ -25,9 +25,16 @@ export class ApgWgl_Viewer {
   window;
   /** We don't like global objects */
   document;
-  APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY = "APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY";
+  /** Logger */
+  logger;
+  /** Settings that can update THREE objects using a GUI */
   settings;
   prevSettingsStamp;
+  /** Metrics of the visualizable and interactable space */
+  metrics;
+  static APG_WGL_DEFAULT_SCENE_SIZE = 10;
+  static APG_WGL_DEFAULT_EYE_HEIGHT = 1.65;
+  static APG_WGL_DEFAULT_WORLD_FACTOR = 10;
   /** Dom Elements*/
   viewerElement;
   viewerCanvasElement;
@@ -47,32 +54,42 @@ export class ApgWgl_Viewer {
   textureMaps = [];
   bumpMaps = [];
   normalMaps = [];
+  /** Env map management */
   hdrLoader = null;
   exrLoader = null;
-  constructor(awindow, adocument, aviewerElement, aworldSize = 1e3, ayeHeight = 1.65) {
+  /** Logger name */
+  static WGL_VIEWER_NAME = "Web GL Viewer";
+  /** To store settings in local storage */
+  APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY = "APG_WGL_VIEWER_OPTIONS_LOCAL_STORAGE_KEY";
+  constructor(awindow, adocument, aviewerElement, alogger, asceneSize = ApgWgl_Viewer.APG_WGL_DEFAULT_SCENE_SIZE, aworldFactor = ApgWgl_Viewer.APG_WGL_DEFAULT_WORLD_FACTOR, aeyeHeight = ApgWgl_Viewer.APG_WGL_DEFAULT_EYE_HEIGHT) {
     this.window = awindow;
     this.document = adocument;
     this.viewerElement = aviewerElement;
-    this.settings = ApgWgl_Viewer.GetDefaultSettings(aworldSize, ayeHeight);
+    this.logger = alogger;
+    this.logger.addLogger(ApgWgl_Viewer.WGL_VIEWER_NAME);
+    this.metrics = this.#initMetrics(asceneSize, aworldFactor, aeyeHeight);
+    this.settings = ApgWgl_Viewer.GetDefaultSettings(this.metrics);
     this.prevSettingsStamp = JSON.stringify(this.settings);
     this.#initCanvas();
     this.#initRenderer();
     this.#initCamera();
     this.#initScene();
+    this.#initGrids();
     this.#initLights();
     this.#initOrbitControls();
     this.#initTextureLoaders();
-    this.updateEnvMap();
-    this.updateLayers();
+    this.#updateEnvMap();
+    this.#updateLayers();
     this.raycaster = new THREE.Raycaster();
     this.window.addEventListener("resize", () => {
       this.resize();
     }, false);
+    this.logger.logDev("Constructor has built", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  static GetDefaultSettings(aworldSize, aeyeHeight) {
+  static GetDefaultSettings(ametrics) {
     const r = {
-      worldSize: aworldSize,
-      eyeHeight: aeyeHeight,
+      worldSize: ametrics.worldSize,
+      eyeHeight: ametrics.eyeHeight,
       fogColor: new THREE.Color(8947848),
       fogDensity: 25e-5,
       toneMapping: THREE.LinearToneMapping,
@@ -88,23 +105,23 @@ export class ApgWgl_Viewer {
       perspCameraFov: 45,
       perspCameraNear: 0.1,
       // 100mm
-      perspCameraFar: aworldSize / 2,
-      perspCameraPosition: new THREE.Vector3(0, aeyeHeight, 5),
+      perspCameraFar: ametrics.worldSize / 2,
+      perspCameraPosition: new THREE.Vector3(0, ametrics.eyeHeight, 5),
       ambLightEnabled: true,
       ambLightIntensity: 0.2,
       ambLightColor: new THREE.Color(16777215),
       sunLightEnabled: true,
       sunLightIntensity: 0.5,
       sunLightColor: new THREE.Color(16777130),
-      sunLightPosition: new THREE.Vector3(aworldSize / 4, aworldSize / 2.5, aworldSize / 4),
-      sunLightShadowMapCameraSize: aworldSize / 40,
-      sunLightShadowMapCameraNear: aworldSize / 3.5,
-      sunLightShadowMapCameraFar: aworldSize / 1.5,
+      sunLightPosition: new THREE.Vector3(ametrics.worldSize / 4, ametrics.worldSize / 2.5, ametrics.worldSize / 4),
+      sunLightShadowMapCameraSize: ametrics.worldSize / 40,
+      sunLightShadowMapCameraNear: ametrics.worldSize / 3.5,
+      sunLightShadowMapCameraFar: ametrics.worldSize / 1.5,
       camLightEnabled: false,
       camLightIntensity: 0.5,
       camLightColor: new THREE.Color(11206655),
       camLightPosition: new THREE.Vector3(0, 0, 0),
-      camLightDistance: aworldSize / 10,
+      camLightDistance: ametrics.worldSize / 10,
       camLightIsDetachedFromCamera: false,
       envMapLighting: false,
       envMapMode: "exr" /* EXR */,
@@ -114,7 +131,7 @@ export class ApgWgl_Viewer {
       envMapBackgroundIntensity: 1,
       orbControlsTarget: new THREE.Vector3(0, 0, 0),
       orbControlsMinDistance: 0.1,
-      orbControlsMaxDistance: aworldSize / 2,
+      orbControlsMaxDistance: ametrics.worldSize / 2,
       orbControlsMinPolarAngle: 0,
       orbControlsMaxPolarAngle: Math.PI,
       orbControlsEnableDamping: true,
@@ -123,18 +140,36 @@ export class ApgWgl_Viewer {
     };
     return r;
   }
+  #initMetrics(asceneSize, aworldFactor, aeyeHeight) {
+    const worldSize = asceneSize * aworldFactor;
+    const r = {
+      sceneSize: asceneSize,
+      worldSize,
+      sightSize: worldSize + asceneSize,
+      universeSize: 2 * worldSize + asceneSize,
+      eyeHeight: aeyeHeight
+    };
+    this.logger.logDev(` - Scene size: ${r.sceneSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+    this.logger.logDev(` - World size: ${r.worldSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+    this.logger.logDev(` - Sight size: ${r.sightSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+    this.logger.logDev(` - Universe size: ${r.universeSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+    this.logger.logDev("Scene metrics initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
+    return r;
+  }
   #initCanvas() {
     this.viewerCanvasElement = this.document.createElement("canvas");
     this.viewerCanvasElement.id = "ApgWglViewerCanvas";
     this.viewerElement.appendChild(this.viewerCanvasElement);
+    this.logger.logDev("Canvas initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #initRenderer() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.viewerCanvasElement });
     this.renderer.setSize(this.viewerElement.clientWidth, this.viewerElement.clientHeight);
     this.renderer.setPixelRatio(this.window.devicePixelRatio);
-    this.updateRenderer();
+    this.#updateRenderer();
+    this.logger.logDev("Renderer initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  updateRenderer() {
+  #updateRenderer() {
     this.renderer.setClearColor(this.settings.clearColor, 1);
     this.renderer.toneMapping = this.settings.toneMapping;
     this.renderer.toneMappingExposure = this.settings.toneMappingExposure;
@@ -142,6 +177,7 @@ export class ApgWgl_Viewer {
     this.renderer.shadowMap.enabled = this.settings.areShadowsEnabled;
     this.renderer.shadowMap.type = this.settings.shadowMapType;
     const deviceMaxAnysotropy = this.renderer.capabilities.getMaxAnisotropy();
+    this.logger.logDev("Renderer updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #initCamera() {
     this.camera = new THREE.PerspectiveCamera();
@@ -151,15 +187,17 @@ export class ApgWgl_Viewer {
       this.settings.perspCameraPosition.z
     );
     this.camera.layers.enableAll();
-    this.updateCamera();
+    this.#updateCamera();
+    this.logger.logDev("Camera initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  updateCamera() {
+  #updateCamera() {
     this.camera.fov = this.settings.perspCameraFov;
     const aspectRatio = this.viewerElement.clientWidth / this.viewerElement.clientHeight;
     this.camera.aspect = aspectRatio;
     this.camera.near = this.settings.perspCameraNear;
     this.camera.far = this.settings.perspCameraFar;
     this.camera.updateProjectionMatrix();
+    this.logger.logDev("Camera updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #initScene() {
     this.scene = new THREE.Scene();
@@ -167,21 +205,36 @@ export class ApgWgl_Viewer {
       this.settings.fogColor,
       this.settings.fogDensity * this.settings.worldSize / 100
     );
+    this.logger.logDev("Scene initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  updateFog() {
+  #updateFog() {
     this.scene.fog = new THREE.FogExp2(
       this.settings.fogColor,
       this.settings.fogDensity * this.settings.worldSize / 100
     );
+    this.logger.logDev("Fog updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
+  }
+  #initGrids() {
+    const xzGridHelper = new THREE.GridHelper(this.metrics.sceneSize, 10, 16776960, 16776960);
+    xzGridHelper.layers.enable(1 /* helpers */);
+    this.scene.add(xzGridHelper);
+    const xyGridHelper = new THREE.GridHelper(this.metrics.sceneSize, 10, 16711935, 16711935);
+    xyGridHelper.layers.enable(1 /* helpers */);
+    xyGridHelper.rotateZ(Math.PI / 2);
+    this.scene.add(xyGridHelper);
+    const zyGridHelper = new THREE.GridHelper(this.metrics.sceneSize, 10, 65535, 65535);
+    zyGridHelper.layers.enable(1 /* helpers */);
+    zyGridHelper.rotateX(Math.PI / 2);
+    this.scene.add(zyGridHelper);
   }
   #initLights() {
     this.ambLight = new THREE.AmbientLight();
     this.ambLight.layers.set(2 /* lights */);
-    this.updateAmbLight();
+    this.#updateAmbLight();
     this.scene.add(this.ambLight);
     this.sunLight = new THREE.DirectionalLight();
     this.sunLight.layers.set(2 /* lights */);
-    this.updateSunLight();
+    this.#updateSunLight();
     this.sunLight.castShadow = true;
     this.scene.add(this.sunLight);
     const sunLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 100, 16711680);
@@ -191,19 +244,21 @@ export class ApgWgl_Viewer {
     sunLightShadowCameraHelper.layers.set(1 /* helpers */);
     this.scene.add(sunLightShadowCameraHelper);
     this.camLight = new THREE.PointLight();
-    this.updateCamLight();
+    this.#updateCamLight();
     this.camLight.layers.set(2 /* lights */);
     this.scene.add(this.camLight);
     const camLightHelper = new THREE.PointLightHelper(this.camLight, 1, 255);
     camLightHelper.layers.set(1 /* helpers */);
     this.scene.add(camLightHelper);
+    this.logger.logDev("Light initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  updateAmbLight() {
+  #updateAmbLight() {
     this.ambLight.color = this.settings.ambLightColor;
     this.ambLight.intensity = this.settings.ambLightIntensity;
     this.ambLight.visible = !this.settings.envMapLighting && this.settings.ambLightEnabled;
+    this.logger.logDev("Ambient light updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  updateSunLight() {
+  #updateSunLight() {
     this.sunLight.color = this.settings.sunLightColor;
     this.sunLight.intensity = this.settings.sunLightIntensity;
     this.sunLight.visible = !this.settings.envMapLighting && this.settings.sunLightEnabled;
@@ -222,8 +277,9 @@ export class ApgWgl_Viewer {
     this.sunLight.shadow.camera.left = -this.settings.sunLightShadowMapCameraSize;
     this.sunLight.shadow.camera.near = this.settings.sunLightShadowMapCameraNear;
     this.sunLight.shadow.camera.far = this.settings.sunLightShadowMapCameraFar;
+    this.logger.logDev("Sun light updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  updateCamLight() {
+  #updateCamLight() {
     this.camLight.color = this.settings.camLightColor;
     this.camLight.intensity = this.settings.camLightIntensity;
     this.camLight.visible = !this.settings.envMapLighting && this.settings.camLightEnabled;
@@ -233,6 +289,7 @@ export class ApgWgl_Viewer {
       this.camera.position.y,
       this.camera.position.z
     );
+    this.logger.logDev("Camera light updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #initOrbitControls() {
     this.orbitControls = new THREE_OrbitControls(this.camera, this.renderer.domElement);
@@ -248,6 +305,7 @@ export class ApgWgl_Viewer {
     this.orbitControls.enableDamping = this.settings.orbControlsEnableDamping;
     this.orbitControls.dampingFactor = this.settings.orbControlsDampingFactor;
     this.orbitControls.update();
+    this.logger.logDev("Orbit controls initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #initTextureLoaders() {
     if (this.textureLoader == null) {
@@ -265,6 +323,7 @@ export class ApgWgl_Viewer {
       this.exrLoader.crossOrigin = "";
       this.hdrLoader.setCrossOrigin("anonymous");
     }
+    this.logger.logDev("Texture loaders initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #_loadHdrAsync(aloader, aurl) {
     const p = new Promise((resolve, reject) => {
@@ -292,8 +351,9 @@ export class ApgWgl_Viewer {
     });
     return p;
   }
-  async updateEnvMap() {
+  async #updateEnvMap() {
     let envMap = null;
+    this.logger.logDev("Env map loading started", ApgWgl_Viewer.WGL_VIEWER_NAME);
     switch (this.settings.envMapMode) {
       case "ldr" /* LDR */: {
         if (this.textureLoader) {
@@ -333,6 +393,7 @@ export class ApgWgl_Viewer {
       this.scene.backgroundIntensity = this.settings.envMapBackgroundIntensity;
       this.#updateAllEnvMapSensitiveMaterialsInTheScene();
     }
+    this.logger.logDev("Env map updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #updateAllEnvMapSensitiveMaterialsInTheScene() {
     this.scene.traverse((object) => {
@@ -345,7 +406,7 @@ export class ApgWgl_Viewer {
       }
     });
   }
-  updateLayers() {
+  #updateLayers() {
     for (const [index, layerDescr] of this.settings.layers) {
       if (layerDescr.visible) {
         this.camera.layers.enable(index);
@@ -353,19 +414,21 @@ export class ApgWgl_Viewer {
         this.camera.layers.disable(index);
       }
     }
+    this.logger.logDev("Layers updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   updateSettings() {
     const strSettingsStamp = JSON.stringify(this.settings);
     if (this.prevSettingsStamp != strSettingsStamp) {
-      this.updateRenderer();
-      this.updateFog();
-      this.updateCamera();
-      this.updateAmbLight();
-      this.updateSunLight();
-      this.updateCamLight();
-      this.updateEnvMap();
-      this.updateLayers();
+      this.#updateRenderer();
+      this.#updateFog();
+      this.#updateCamera();
+      this.#updateAmbLight();
+      this.#updateSunLight();
+      this.#updateCamLight();
+      this.#updateEnvMap();
+      this.#updateLayers();
       this.prevSettingsStamp = strSettingsStamp;
+      this.logger.logDev("Settings updated", ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
   }
   /**
@@ -378,22 +441,23 @@ export class ApgWgl_Viewer {
       this.camera.aspect = this.viewerElement.clientWidth / this.viewerElement.clientHeight;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(this.viewerElement.clientWidth, this.viewerElement.clientHeight);
+      this.logger.logDev("Vieport resized", ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
   }
   /**
-   * Move the camera associated with the orbit control
-   * @param anewPosition 
+   * Move the camera associated to the orbit control
+   * @param anewParams 
    */
-  setOrbControlsParams(anewPosition) {
+  moveCamera(anewParams) {
     this.camera.position.set(
-      anewPosition.eye.x,
-      anewPosition.eye.y,
-      anewPosition.eye.z
+      anewParams.eye.x,
+      anewParams.eye.y,
+      anewParams.eye.z
     );
     this.orbitControls.target.set(
-      anewPosition.target.x,
-      anewPosition.target.y,
-      anewPosition.target.z
+      anewParams.target.x,
+      anewParams.target.y,
+      anewParams.target.z
     );
     this.orbitControls.update();
   }

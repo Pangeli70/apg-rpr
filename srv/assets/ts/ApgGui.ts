@@ -13,9 +13,9 @@ import {
     eApgDomFormElementType,
     eApgDomInputType
 } from "./ApgDom.ts";
-import { ApgGui_Logger } from "./ApgGui_Logger.ts";
+import { ApgUts_Logger } from "./ApgUts_Logger.ts";
 
-import { ApgUtils } from "./ApgUtils.ts";
+import { ApgUts } from "./ApgUts.ts";
 
 
 
@@ -91,29 +91,31 @@ export class ApgGui {
     hudElement: IApgDomElement;
 
     /** The multipurpose logger */
-    logger: ApgGui_Logger;
+    logger: ApgUts_Logger;
 
 
     /** Name of the logger */
-    private static readonly LOGGER_NAME = 'ApgGuiLogger';
+    private static readonly LOGGER_NAME = 'Gui';
 
-    
+
     constructor(
         adocument: IApgDomDocument,
         apanelElementId: string,
         aviewerElementId: string,
+        alogger: ApgUts_Logger
     ) {
 
         this.document = adocument;
+        this.logger = alogger;
 
         this.panelElement = this.document.getElementById(apanelElementId);
-        ApgUtils.Assert(
+        ApgUts.Assert(
             this.panelElement != undefined,
             `The element for the GUI panel with id ${apanelElementId} was not found in the DOM. `
         );
 
         this.viewerElement = this.document.getElementById(aviewerElementId);
-        ApgUtils.Assert(
+        ApgUts.Assert(
             this.viewerElement != undefined,
             `The element for the Viewer canvas with id ${aviewerElementId} was not found in the DOM. `
         );
@@ -122,7 +124,6 @@ export class ApgGui {
         this.hudElement.style.cssText = "position: absolute; bottom: 2.5%; left: 22.5%; width: 75%; height:15%; background-color: #385167bd;";
         this.viewerElement.appendChild(this.hudElement);
 
-        this.logger = new ApgGui_Logger(this.document, this.viewerElement);
         this.logger.addLogger(ApgGui.LOGGER_NAME);
         this.logger.log('ApgGui created', ApgGui.LOGGER_NAME)
 
@@ -143,7 +144,7 @@ export class ApgGui {
 
 
     clearControls() {
-        // TODO do we need to perfom some cleanup on DOM and especially on event Handlers? -- APG 20230927
+        // @TODO do we need to perfom some cleanup on DOM and especially on event Handlers? -- APG 20230927
         this.controls.clear();
     }
 

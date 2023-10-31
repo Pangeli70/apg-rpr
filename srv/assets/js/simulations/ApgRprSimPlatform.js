@@ -1,16 +1,16 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_Platform extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_Platform extends ApgRprSimulation {
   platformBody;
   t = 0;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Platform_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
       asimulator.resetCamera(settings.cameraPosition);
@@ -22,7 +22,7 @@ export class ApgRprSim_Platform extends ApgRprSim_Base {
       this.#movePlatform();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const numberOfColumns = 10;
     const numberOfRows = 10;
     const scales = new RAPIER.Vector3(40, 4, 40);

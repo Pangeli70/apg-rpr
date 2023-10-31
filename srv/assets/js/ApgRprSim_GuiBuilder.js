@@ -4,6 +4,7 @@ import {
 import {
   ApgRprSim_DebugGuiBuilder
 } from "./ApgRprSim_DebugGuiBuilder.ts";
+import { ApgRprSim_LoggerGuiBuilder } from "./ApgRprSim_LoggerGuiBuilder.ts";
 import {
   ApgRprSim_StatsGuiBuilder
 } from "./ApgRprSim_StatsGuiBuilder.ts";
@@ -25,6 +26,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
     const simulationGroupControl = this.#buildSimulationGroupControl();
     const statsGroupControl = new ApgRprSim_StatsGuiBuilder(this.gui, this.params).buildPanel();
     const debugGroupControl = new ApgRprSim_DebugGuiBuilder(this.gui, this.params.debugInfo).buildPanel();
+    const loggerGroupControl = new ApgRprSim_LoggerGuiBuilder(this.gui, this.gui.logger).buildPanel();
     const FULLSCREEN_BTN_CNT = "fullscreenButtonControl";
     const fullscreenButtonControl = this.buildButtonControl(
       FULLSCREEN_BTN_CNT,
@@ -73,6 +75,7 @@ export class ApgRprSim_GuiBuilder extends ApgGui_Builder {
       simulationGroupControl,
       statsGroupControl,
       debugGroupControl,
+      loggerGroupControl,
       fullscreenButtonControl,
       getUrlButtonControl,
       creditsDialogControl,

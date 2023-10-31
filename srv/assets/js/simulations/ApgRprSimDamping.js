@@ -1,9 +1,9 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_Damping extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_Damping extends ApgRprSimulation {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Damping_GuiBuilder);

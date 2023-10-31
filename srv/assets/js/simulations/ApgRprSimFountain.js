@@ -5,8 +5,8 @@ import {
   ApgRprSim_GuiBuilder
 } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
 var ApgRprSim_Fountain_eGroundType = /* @__PURE__ */ ((ApgRprSim_Fountain_eGroundType2) => {
   ApgRprSim_Fountain_eGroundType2["CYL"] = "Cylinder";
   ApgRprSim_Fountain_eGroundType2["CONE"] = "Cone";
@@ -15,7 +15,7 @@ var ApgRprSim_Fountain_eGroundType = /* @__PURE__ */ ((ApgRprSim_Fountain_eGroun
   ApgRprSim_Fountain_eGroundType2["RHF"] = "Random heightfield";
   return ApgRprSim_Fountain_eGroundType2;
 })(ApgRprSim_Fountain_eGroundType || {});
-export class ApgRprSim_Fountain extends ApgRprSim_Base {
+export class ApgRprSim_Fountain extends ApgRprSimulation {
   spawnCounter;
   SPAWN_EVERY_N_STEPS = 5;
   MAX_RIGID_BODIES = 400;
@@ -25,7 +25,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
     this.spawnCounter = 0;
     this.buildGui(ApgRprSim_Fountain_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
       asimulator.resetCamera(settings.cameraPosition);
@@ -37,7 +37,7 @@ export class ApgRprSim_Fountain extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const rad = 40;
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groundBodyDesc);

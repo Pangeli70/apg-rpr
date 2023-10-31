@@ -1,14 +1,14 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_Joints extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_Joints extends ApgRprSimulation {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Joints_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -19,7 +19,7 @@ export class ApgRprSim_Joints extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     this.#createPrismaticJoints(new RAPIER.Vector3(20, 10, 0), 9);
     this.#createFixedJoints(new RAPIER.Vector3(0, 10, 0), 9);
     this.#createRevoluteJoints(new RAPIER.Vector3(20, 0, 0), 3);

@@ -27,8 +27,8 @@ import {
 } from "./ApgGui.ts";
 
 import {
-    ApgUtils
-} from "./ApgUtils.ts";
+    ApgUts
+} from "./ApgUts.ts";
 
 
 
@@ -48,26 +48,166 @@ export class ApgGui_Builder {
         this.name = aname;
     }
 
+    // #region Controls Management --------------------------------------------
 
+
+    /**
+     * Adds safely a control checking if it is already in the map of controls
+     * @param acontrolId 
+     * @param acontrol 
+     */
     #addControl(acontrolId: string, acontrol: ApgGui_IControl) {
 
-        if (this.gui.controls.has(acontrolId)) {
-            const message = `The control ${acontrolId} is already in the map. Maybe you are adding a control with the same name!`;
-            alert(message);
-            throw new Error(message);
-        }
+        ApgUts.AssertNot(
+            this.gui.controls.has(acontrolId),
+            `$$0063 The control ${acontrolId} is already in the map. Maybe you are adding a control with the same name!`
+        )
 
         this.gui.controls.set(acontrolId, acontrol);
+
     }
 
 
+    /**
+     * Adds reactivity to a control
+     * @param acontrolId Identifier of the control that has to become reactive
+     * @param astate State object that contains the property associated to the reactive control
+     * @param aprop Name of the property associated to the reactive control
+     */
+    protected addReactivityToControl(
+        acontrolId: string,
+        astate: ApgGui_TReactiveState,
+        aprop: string
+    ): void {
+
+        const control = this.gui.controls.get(acontrolId);
+        ApgUts.Assert(
+            control != undefined,
+            `$$0087 The control with id (${acontrolId}) is not registered in the GUI!`
+        );
+
+        ApgUts.Assert(
+            astate[aprop] != undefined,
+            `$$092 The property (${aprop}), is undefined in state object passed for reactivity!`
+        );
+
+        const propType = typeof astate[aprop];
+        ApgUts.Assert(
+            (propType == "string" || propType == "number" || propType == "boolean"),
+            `$$0098 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`);
+
+        control!.reactive = { state: astate, prop: aprop };
+
+    }
+
+
+
+    /**
+     * After the dinamic insertion of the ApgGui controls in the DOM as elements 
+     * this method binds each control with its element and if provided adds to the
+     * element the appropriate event listeners.
+     */
+    bindControls(): void {
+
+        for (const id of this.gui.controls.keys()) {
+
+            const control = this.gui.controls.get(id)!;
+            const element = this.gui.document.getElementById(id);
+
+            control.element = element;
+
+            if (control.type == eApgDomFormElementType.DIV) {
+                if (control.injected) {
+                    element.appendChild(control.injected);
+                }
+            }
+
+            if (control.callback) {
+
+                if (control.type == eApgDomFormElementType.INPUT) {
+
+                    ApgUts.AssertNot(
+                        control.inputType == undefined,
+                        `$$0132 Input type of control ${control.element.id} is not defined`
+                    )
+
+                    switch (control.inputType) {
+
+                        case eApgDomInputType.RANGE: {
+                            (element as IApgDomRange).addEventListener('input', control.callback as TApgDomEventCallback);
+                            this.gui.logDev(`${control.element.id} Range input event bound`);
+                            break;
+                        }
+                        case eApgDomInputType.CHECK_BOX: {
+                            (element as IApgDomCheckBox).addEventListener('change', control.callback as TApgDomEventCallback);
+                            this.gui.logDev(`${control.element.id} Checkbox change event bound`);
+                            break;
+                        }
+                        case eApgDomInputType.COLOR: {
+                            (element as IApgDomColorPicker).addEventListener('change', control.callback as TApgDomEventCallback);
+                            this.gui.logDev(`${control.element.id} Color picker change event bound`);
+                            break;
+                        }
+                    }
+
+                }
+
+                if (control.type == eApgDomFormElementType.DETAILS) {
+                    (element as IApgDomButton).addEventListener('toggle', control.callback as TApgDomEventCallback);
+                    this.gui.logDev(`${control.element.id} Details toggle event bound`);
+                }
+
+            }
+
+            if (control.type == eApgDomFormElementType.BUTTON) {
+                (element as IApgDomButton).addEventListener('click', control.callback as TApgDomEventCallback);
+                this.gui.logDev(`${control.element.id} Button click event bound`);
+            }
+
+            if (control.type == eApgDomFormElementType.SELECT) {
+                (element as IApgDomInput).addEventListener('change', control.callback as TApgDomEventCallback);
+                this.gui.logDev(`${control.element.id} Select change event bound`);
+            }
+
+        }
+    }
+
+
+
+    /**
+     * Virtual method that has to be overriden by the descendants of this class
+     */
+    protected buildPanel() {
+
+        const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
+
+        return r;
+    }
+
+
+
+    /**
+     * Virtual method that has to be overriden by the descendants of this class
+     */
+    protected buildHud(acontainer: IApgDomElement) {
+
+        const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
+
+        return r;
+    }
+
+    // #endregion
+
     // #region Basic controls -----------------------------------------------
+
+
 
     protected buildParagraphControl(
         acontrolId: string,
         acontent: string,
         astyle?: string
     ): string {
+
         const paragraphControl: ApgGui_IControl = {
             element: null,
             type: eApgDomFormElementType.PARAGRAPH,
@@ -81,6 +221,7 @@ export class ApgGui_Builder {
             ${acontent}
         </p>
         `;
+
         return r;
     }
 
@@ -90,7 +231,7 @@ export class ApgGui_Builder {
         acontent: string,
         astyle = "",
         ainjected?: IApgDomElement
-    ): string {
+    ) {
         const paragraphControl: ApgGui_IControl = {
             element: null,
             type: eApgDomFormElementType.DIV,
@@ -106,15 +247,18 @@ export class ApgGui_Builder {
             ${acontent}
         </div>
         `;
+
         return r;
     }
+
 
 
     protected buildButtonControl(
         acontrolId: string,
         acaption: string,
         aclickCallback: TApgDomEventCallback
-    ): string {
+    ) {
+
         const buttonControl: ApgGui_IControl = {
             element: null,
             type: eApgDomFormElementType.BUTTON,
@@ -131,6 +275,7 @@ export class ApgGui_Builder {
             >${acaption}</button>
         </p>
         `;
+
         return r;
     }
 
@@ -139,13 +284,14 @@ export class ApgGui_Builder {
     // #region Data controls -----------------------------------------------
 
 
+
     protected buildRangeControl(
         acontrolId: string,
         acaption: string,
         avalue: number,
         aminMaxStep: ApgGui_IMinMaxStep,
         ainputCallback: TApgDomEventCallback
-    ): string {
+    ) {
 
         const rangeControl: ApgGui_IControl = {
             element: null,
@@ -160,6 +306,7 @@ export class ApgGui_Builder {
             type: eApgDomFormElementType.OUTPUT,
         };
         this.#addControl(`${acontrolId}Value`, outputControl);
+
         const r = `
         <p style="margin-bottom: 0.25rem">
             <label
@@ -184,18 +331,24 @@ export class ApgGui_Builder {
             />
         </p>
         `;
+
         return r;
     }
+
+
 
     protected readRangeControl(
         acontrolId: string,
     ): number {
+
         const range = this.gui.controls.get(acontrolId)!.element as IApgDomRange;
         const output = this.gui.controls.get(`${acontrolId}Value`)!.element as IApgDomElement;
         output.innerHTML = range.value;
-        this.gui.logDev(`${acontrolId} = ${range.value}`);
+        this.gui.logDev(`Read ${acontrolId} value = ${range.value}`);
+
         return parseFloat(range.value);
     }
+
 
 
     protected buildColorPickerControl(
@@ -203,7 +356,8 @@ export class ApgGui_Builder {
         acaption: string,
         avalue: number,
         ainputCallback: TApgDomEventCallback
-    ): string {
+    ) {
+
         const colorControl: ApgGui_IControl = {
             element: null,
             type: eApgDomFormElementType.INPUT,
@@ -237,18 +391,25 @@ export class ApgGui_Builder {
             />
         </p>
         `;
+
         return r;
     }
 
+
+
     protected readColorPickerControl(
         acontrolId: string,
-    ): number {
+    ) {
+
         const colorPicker = this.gui.controls.get(acontrolId)!.element as IApgDomColorPicker;
         const output = this.gui.controls.get(`${acontrolId}Value`)!.element as IApgDomElement;
         output.innerHTML = colorPicker.value;
-        this.gui.logDev(`${acontrolId} = ${colorPicker.value}`);
+        this.gui.logDev(`Read ${acontrolId} value = ${colorPicker.value}`);
+
         return parseInt(colorPicker.value.replace("#", "0x"), 16);
+
     }
+
 
 
     protected buildCheckBoxControl(
@@ -257,6 +418,7 @@ export class ApgGui_Builder {
         avalue: boolean,
         achangeCallback: TApgDomEventCallback
     ): string {
+
         const checkBoxControl: ApgGui_IControl = {
             element: null,
             type: eApgDomFormElementType.INPUT,
@@ -278,14 +440,19 @@ export class ApgGui_Builder {
             >${acaption}</label>
         </p>
         `;
+
         return r;
     }
 
+
+
     protected readCheckBoxControl(
         acontrolId: string,
-    ): boolean {
+    ) {
+
         const checkBox = this.gui.controls.get(acontrolId)!.element as IApgDomCheckBox;
-        this.gui.logDev(`${acontrolId} = ${checkBox.checked}`);
+        this.gui.logDev(`Read ${acontrolId} value = ${checkBox.checked}`);
+
         return checkBox.checked;
     }
 
@@ -338,24 +505,33 @@ export class ApgGui_Builder {
             <select 
                 id="${acontrolId}"
                 style="padding: 0.125rem; margin: 0px;"
-            >${options.join()}</select>
+            >
+            ${options.join('\n')}
+            </select>
 
         </p>
         `;
+
         return r;
     }
+
+
 
     protected readSelectControl(
         acontrolId: string,
     ): string {
+
         const select = this.gui.controls.get(acontrolId)!.element as IApgDomSelect;
-        this.gui.logDev(`${acontrolId} = ${select.value}`);
+        this.gui.logDev(`Read ${acontrolId} value = ${select.value}`);
+
         return select.value;
     }
 
     // #endregion
 
     // #region Grouping controls -----------------------------------------------
+
+
 
     /**
      *  Build a FieldSet control (<fieldset> and <legend> + other controls)
@@ -369,14 +545,17 @@ export class ApgGui_Builder {
         acaption: string,
         acontrols: string[]
     ): string {
+
         const r = `
         <fieldset id="${acontrolId}">
             <legend>${acaption}</legend>
             ${acontrols.join("\n")}
         </fieldset>
         `;
+
         return r;
     }
+
 
 
     /**
@@ -418,6 +597,7 @@ export class ApgGui_Builder {
     }
 
 
+
     /**
      * Build a panel control (<p> as title a <div> after it)
      * @param acontrolId Identifier
@@ -448,8 +628,10 @@ export class ApgGui_Builder {
         >${acontrols.join("\n")}</div>
         
         `;
+
         return r;
     }
+
 
 
     /**
@@ -464,6 +646,7 @@ export class ApgGui_Builder {
         acaption: string,
         acontrols: string[]
     ): string {
+
         const dialogControl: ApgGui_IControl = {
             element: null,
             type: eApgDomFormElementType.DIALOG,
@@ -485,134 +668,11 @@ export class ApgGui_Builder {
             </article>
         </dialog>
         `;
+
         return r;
     }
 
     // #endregion
-
-
-    /**
-     * Adds reactivity to a control
-     * @param acontrolId Identifier of the control that has to become reactive
-     * @param astate State object that contains the property associated to the reactive control
-     * @param aprop Name of the property associated to the reactive control
-     */
-    protected addReactivityToControl(
-        acontrolId: string,
-        astate: ApgGui_TReactiveState,
-        aprop: string
-    ): void {
-
-        const control = this.gui.controls.get(acontrolId);
-        ApgUtils.Assert(
-            control != undefined,
-            `$$451 the control with id (${acontrolId}) is not registered in the GUI!`
-        );
-
-        ApgUtils.Assert(
-            astate[aprop] != undefined,
-            `$$456 The property (${aprop}), is undefined in state object passed for reactivity!`
-        );
-
-        const propType = typeof astate[aprop];
-        ApgUtils.Assert(
-            (propType == "string" || propType == "number" || propType == "boolean"),
-            `$$462 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`);
-
-        control!.reactive = { state: astate, prop: aprop };
-
-    }
-
-
-    /**
-     * After the dinamic insertion of the ApgGui controls in the DOM as elements 
-     * this method binds each control with its element and if provided adds to the
-     * element the appropriate event listeners.
-     */
-    bindControls(): void {
-        for (const id of this.gui.controls.keys()) {
-
-            const control = this.gui.controls.get(id)!;
-            const element = this.gui.document.getElementById(id);
-
-            control.element = element;
-
-            if (control.type == eApgDomFormElementType.DIV) {
-                if (control.injected) {
-                    element.appendChild(control.injected);
-                }
-            }
-
-            if (control.callback) {
-
-                if (control.type == eApgDomFormElementType.INPUT) {
-
-                    if (control.inputType == undefined) {
-                        const message = `Input type of control ${control.element.id} is not defined`
-                        alert(message);
-                        throw new Error(message);
-                    }
-
-                    switch (control.inputType) {
-
-                        case eApgDomInputType.RANGE: {
-                            (element as IApgDomRange).addEventListener('input', control.callback as TApgDomEventCallback);
-                            //alert(`${control.element.id} Range bound`);
-                            break;
-                        }
-                        case eApgDomInputType.CHECK_BOX: {
-                            (element as IApgDomCheckBox).addEventListener('change', control.callback as TApgDomEventCallback);
-                            //alert(`${control.element.id} Checkbox bound`);
-                            break;
-                        }
-                        case eApgDomInputType.COLOR: {
-                            (element as IApgDomColorPicker).addEventListener('change', control.callback as TApgDomEventCallback);
-                            //alert(`${control.element.id} Color picker bound`);
-                            break;
-                        }
-                    }
-
-                }
-
-                if (control.type == eApgDomFormElementType.DETAILS) {
-                    (element as IApgDomButton).addEventListener('toggle', control.callback as TApgDomEventCallback);
-                    //alert(`${control.element.id} Details group bound`);
-                }
-
-            }
-
-            if (control.type == eApgDomFormElementType.BUTTON) {
-                (element as IApgDomButton).addEventListener('click', control.callback as TApgDomEventCallback);
-                //alert(`${control.element.id} Button bound`);
-            }
-
-            if (control.type == eApgDomFormElementType.SELECT) {
-                (element as IApgDomInput).addEventListener('change', control.callback as TApgDomEventCallback);
-                //alert(`${control.element.id} Select bound`);
-            }
-
-        }
-    }
-
-    /**
-     * Virtual method that has to be overriden by the descendants of this class
-    */
-    protected buildPanel() {
-
-        const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
-
-        return r;
-    }
-
-    /**
-     * Virtual method that has to be overriden by the descendants of this class
-     */
-    protected buildHud(acontainer: IApgDomElement) {
-
-        const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
-
-        return r;
-    }
 
 }
 

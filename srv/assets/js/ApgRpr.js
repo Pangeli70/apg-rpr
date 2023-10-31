@@ -8,13 +8,13 @@ import {
 import {
   ApgRpr_Simulator
 } from "./ApgRpr_Simulator.ts";
-export async function ApgRpr(awindow, adocument, aguiPanelElementId, aviewerElementId) {
+export async function ApgRpr(awindow, adocument, aguiElementId, aviewerElementId) {
   await RAPIER.init();
   const simulations = ApgRpr_PrepareSimulations();
   const simulator = new ApgRpr_Simulator(
     awindow,
     adocument,
-    aguiPanelElementId,
+    aguiElementId,
     aviewerElementId,
     simulations,
     ApgRpr_eSimulationName.A0_PYRAMID

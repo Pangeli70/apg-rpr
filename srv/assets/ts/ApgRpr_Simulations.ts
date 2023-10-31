@@ -5,25 +5,25 @@
  * -----------------------------------------------------------------------
 */
 
-import { ApgRprSim_Base } from './ApgRprSim_Base.ts';
+import { ApgRpr_Simulation } from './ApgRpr_Simulation.ts';
 
 
-import { ApgRprSim_Pyramid } from "./simulations/ApgRprSim_A0_Pyramid.ts";
-import { ApgRprSim_Column } from "./simulations/ApgRprSim_A1_Column.ts";
-import { ApgRprSim_Domino } from "./simulations/ApgRprSim_A2_Domino.ts";
-import { ApgRprSim_Jenga } from "./simulations/ApgRprSim_A3_Jenga.ts";
-import { ApgRprSim_Fountain } from "./simulations/ApgRprSimFountain.ts";
-import { ApgRprSim_LockedRotations } from "./simulations/ApgRprSimLockedRotations.ts";
-import { ApgRprSim_Damping } from "./simulations/ApgRprSimDamping.ts";
-import { ApgRprSim_CollisionGroups } from "./simulations/ApgRprSimCollisionGroups.ts";
-import { ApgRprSim_TrimeshTerrain } from "./simulations/ApgRprSimTrimeshTerrain.ts";
-import { ApgRprSim_PngTerrain } from "./simulations/ApgRprSimPngTerrain.ts";
+import { ApgRpr_A0_Pyramid_Simulation } from "./simulations/ApgRpr_A0_Pyramid.ts";
+import { ApgRpr_A1_Column_Simulation } from "./simulations/ApgRpr_A1_Column.ts";
+import { ApgRpr_A2_Domino_Simulation } from "./simulations/ApgRpr_A2_Domino.ts";
+import { ApgRpr_A3_Jenga_Simulation } from "./simulations/ApgRpr_A3_Jenga.ts";
+import { ApgRpr_B0_Fountain_Simulation } from "./simulations/ApgRpr_B0_Fountain.ts";
+import { ApgRpr_C0_LockedRotations_Simulation } from "./simulations/ApgRpr_C0_LockedRotations.ts";
+import { ApgRpr_C1_Damping_Simulation } from "./simulations/ApgRpr_C1_Damping.ts";
+import { ApgRpr_D0_CollisionGroups_Simulation } from "./simulations/ApgRpr_D0_CollisionGroups.ts";
+import { ApgRpr_E0_TrimeshTerrain_Simulation } from "./simulations/ApgRpr_E0_TrimeshTerrain.ts";
+import { ApgRpr_E1_PngTerrain_Simulation } from "./simulations/ApgRpr_E1_PngTerrain.ts";
 // import * as Keva from "./simulations/ApgRprSimKeva.ts";
-import { ApgRprSim_ConvexPolyhedron } from "./simulations/ApgRprSimConvexPolyhedron.ts";
-import { ApgRprSim_Platform } from "./simulations/ApgRprSimPlatform.ts";
-import { ApgRprSim_CCDs } from "./simulations/ApgRprSimCCDs.ts";
-import { ApgRprSim_Joints } from "./simulations/ApgRprSimJoints.ts";
-import { ApgRprSim_CharacterController } from "./simulations/ApgRprSim_CharacterController.ts";
+import { ApgRpr_E2_ConvexPolyhedron_Simulation } from "./simulations/ApgRpr_E2_ConvexPolyhedron.ts";
+import { ApgRpr_F0_Platform_Simulation } from "./simulations/ApgRpr_F0_Platform.ts";
+import { ApgRpr_G0_CCDs_Simulation } from "./simulations/ApgRpr_G0_CCDs.ts";
+import { ApgRpr_H0_Joints_Simulation } from "./simulations/ApgRpr_H0_Joints.ts";
+import { ApgRpr_I0_CharacterController_Simulation } from "./simulations/ApgRpr_I0_CharacterController.ts";
 
 
 export enum ApgRpr_eSimulationName {
@@ -48,23 +48,23 @@ export enum ApgRpr_eSimulationName {
 
 
 export function ApgRpr_PrepareSimulations() {
-    const simulations: Map<ApgRpr_eSimulationName, typeof ApgRprSim_Base> = new Map();
+    const simulations: Map<ApgRpr_eSimulationName, typeof ApgRpr_Simulation> = new Map();
 
-    simulations.set(ApgRpr_eSimulationName.A0_PYRAMID, ApgRprSim_Pyramid);
-    simulations.set(ApgRpr_eSimulationName.A1_COLUMN, ApgRprSim_Column);
-    simulations.set(ApgRpr_eSimulationName.A2_DOMINO, ApgRprSim_Domino);
-    simulations.set(ApgRpr_eSimulationName.A3_JENGA, ApgRprSim_Jenga);
-    simulations.set(ApgRpr_eSimulationName.B_FOUNTAIN, ApgRprSim_Fountain);
-    simulations.set(ApgRpr_eSimulationName.C_LOCKED_ROTATIONS, ApgRprSim_LockedRotations);
-    simulations.set(ApgRpr_eSimulationName.D_DAMPING, ApgRprSim_Damping);
-    simulations.set(ApgRpr_eSimulationName.E_COLLISION_GROUPS, ApgRprSim_CollisionGroups);
-    simulations.set(ApgRpr_eSimulationName.F_TRI_MESH_TERRAIN, ApgRprSim_TrimeshTerrain);
-    simulations.set(ApgRpr_eSimulationName.G_PNG_MESH_TERRAIN, ApgRprSim_PngTerrain);
-    simulations.set(ApgRpr_eSimulationName.H_CONVEX_POLYHEDRONS, ApgRprSim_ConvexPolyhedron);
-    simulations.set(ApgRpr_eSimulationName.I_PLATFORM, ApgRprSim_Platform);
-    simulations.set(ApgRpr_eSimulationName.J_CCDs, ApgRprSim_CCDs);
-    simulations.set(ApgRpr_eSimulationName.K_JOINTS, ApgRprSim_Joints);
-    simulations.set(ApgRpr_eSimulationName.L_CHARACTER_CONTROLLER, ApgRprSim_CharacterController);
+    simulations.set(ApgRpr_eSimulationName.A0_PYRAMID, ApgRpr_A0_Pyramid_Simulation);
+    simulations.set(ApgRpr_eSimulationName.A1_COLUMN, ApgRpr_A1_Column_Simulation);
+    simulations.set(ApgRpr_eSimulationName.A2_DOMINO, ApgRpr_A2_Domino_Simulation);
+    simulations.set(ApgRpr_eSimulationName.A3_JENGA, ApgRpr_A3_Jenga_Simulation);
+    simulations.set(ApgRpr_eSimulationName.B_FOUNTAIN, ApgRpr_B0_Fountain_Simulation);
+    simulations.set(ApgRpr_eSimulationName.C_LOCKED_ROTATIONS, ApgRpr_C0_LockedRotations_Simulation);
+    simulations.set(ApgRpr_eSimulationName.D_DAMPING, ApgRpr_C1_Damping_Simulation);
+    simulations.set(ApgRpr_eSimulationName.E_COLLISION_GROUPS, ApgRpr_D0_CollisionGroups_Simulation);
+    simulations.set(ApgRpr_eSimulationName.F_TRI_MESH_TERRAIN, ApgRpr_E0_TrimeshTerrain_Simulation);
+    simulations.set(ApgRpr_eSimulationName.G_PNG_MESH_TERRAIN, ApgRpr_E1_PngTerrain_Simulation);
+    simulations.set(ApgRpr_eSimulationName.H_CONVEX_POLYHEDRONS, ApgRpr_E2_ConvexPolyhedron_Simulation);
+    simulations.set(ApgRpr_eSimulationName.I_PLATFORM, ApgRpr_F0_Platform_Simulation);
+    simulations.set(ApgRpr_eSimulationName.J_CCDs, ApgRpr_G0_CCDs_Simulation);
+    simulations.set(ApgRpr_eSimulationName.K_JOINTS, ApgRpr_H0_Joints_Simulation);
+    simulations.set(ApgRpr_eSimulationName.L_CHARACTER_CONTROLLER, ApgRpr_I0_CharacterController_Simulation);
 
     return simulations;
 }

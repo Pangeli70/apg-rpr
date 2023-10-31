@@ -2,19 +2,19 @@ import {
   RAPIER
 } from "../ApgRpr_Deps.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
 import {
   ApgRprSim_GuiBuilder
 } from "../ApgRprSim_GuiBuilder.ts";
-export class ApgRprSim_PngTerrain extends ApgRprSim_Base {
+export class ApgRprSim_PngTerrain extends ApgRprSimulation {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_PngTerrain_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const pngResourceUrl = "./assets/img/png/" + asettings.heightMap + ".png";
     const image = this.simulator.document.createElement("img");
     image.src = pngResourceUrl;

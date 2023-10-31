@@ -2,8 +2,7 @@ import {
   eApgDomFormElementType,
   eApgDomInputType
 } from "./ApgDom.ts";
-import { ApgGui_Logger } from "./ApgGui_Logger.ts";
-import { ApgUtils } from "./ApgUtils.ts";
+import { ApgUts } from "./ApgUts.ts";
 export class ApgGui {
   /** A status flag that is used to pause some other stuff while the Gui is refreshing */
   isRefreshing = false;
@@ -20,23 +19,23 @@ export class ApgGui {
   /** The multipurpose logger */
   logger;
   /** Name of the logger */
-  static LOGGER_NAME = "ApgGuiLogger";
-  constructor(adocument, apanelElementId, aviewerElementId) {
+  static LOGGER_NAME = "Gui";
+  constructor(adocument, apanelElementId, aviewerElementId, alogger) {
     this.document = adocument;
+    this.logger = alogger;
     this.panelElement = this.document.getElementById(apanelElementId);
-    ApgUtils.Assert(
+    ApgUts.Assert(
       this.panelElement != void 0,
       `The element for the GUI panel with id ${apanelElementId} was not found in the DOM. `
     );
     this.viewerElement = this.document.getElementById(aviewerElementId);
-    ApgUtils.Assert(
+    ApgUts.Assert(
       this.viewerElement != void 0,
       `The element for the Viewer canvas with id ${aviewerElementId} was not found in the DOM. `
     );
     this.hudElement = this.document.createElement("div");
     this.hudElement.style.cssText = "position: absolute; bottom: 2.5%; left: 22.5%; width: 75%; height:15%; background-color: #385167bd;";
     this.viewerElement.appendChild(this.hudElement);
-    this.logger = new ApgGui_Logger(this.document, this.viewerElement);
     this.logger.addLogger(ApgGui.LOGGER_NAME);
     this.logger.log("ApgGui created", ApgGui.LOGGER_NAME);
   }

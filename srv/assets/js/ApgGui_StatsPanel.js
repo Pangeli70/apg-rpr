@@ -1,3 +1,6 @@
+import {
+  ApgUts
+} from "./ApgUts.ts";
 export class ApgGui_StatsPanel {
   current = 0;
   min = 1e4;
@@ -159,6 +162,7 @@ export class ApgGui_Stats {
   container;
   width;
   pixelRatio;
+  isStatsPanelOpened = true;
   constructor(adocument, adevicePixelRatio, awidth) {
     this.document = adocument;
     this.width = awidth;
@@ -196,11 +200,10 @@ export class ApgGui_Stats {
   }
   showPanel(apanelIndex) {
     const panelsNames = Array.from(this.panels.keys());
-    if (apanelIndex >= panelsNames.length) {
-      const message = `Out of bounds: We can't show the panel with index: ${apanelIndex}`;
-      alert(message);
-      throw new Error(message);
-    }
+    ApgUts.Assert(
+      apanelIndex < panelsNames.length,
+      `Out of bounds: We can't show the panel with index: ${apanelIndex}`
+    );
     this.currentPanelIndex = apanelIndex;
     const panelName = panelsNames[this.currentPanelIndex];
     for (const [key, value] of this.panels) {

@@ -3,8 +3,8 @@ import {
   eApgDomInputType
 } from "./ApgDom.ts";
 import {
-  ApgUtils
-} from "./ApgUtils.ts";
+  ApgUts
+} from "./ApgUts.ts";
 export class ApgGui_Builder {
   gui;
   name;
@@ -12,14 +12,111 @@ export class ApgGui_Builder {
     this.gui = agui;
     this.name = aname;
   }
+  // #region Controls Management --------------------------------------------
+  /**
+   * Adds safely a control checking if it is already in the map of controls
+   * @param acontrolId 
+   * @param acontrol 
+   */
   #addControl(acontrolId, acontrol) {
-    if (this.gui.controls.has(acontrolId)) {
-      const message = `The control ${acontrolId} is already in the map. Maybe you are adding a control with the same name!`;
-      alert(message);
-      throw new Error(message);
-    }
+    ApgUts.AssertNot(
+      this.gui.controls.has(acontrolId),
+      `$$0063 The control ${acontrolId} is already in the map. Maybe you are adding a control with the same name!`
+    );
     this.gui.controls.set(acontrolId, acontrol);
   }
+  /**
+   * Adds reactivity to a control
+   * @param acontrolId Identifier of the control that has to become reactive
+   * @param astate State object that contains the property associated to the reactive control
+   * @param aprop Name of the property associated to the reactive control
+   */
+  addReactivityToControl(acontrolId, astate, aprop) {
+    const control = this.gui.controls.get(acontrolId);
+    ApgUts.Assert(
+      control != void 0,
+      `$$0087 The control with id (${acontrolId}) is not registered in the GUI!`
+    );
+    ApgUts.Assert(
+      astate[aprop] != void 0,
+      `$$092 The property (${aprop}), is undefined in state object passed for reactivity!`
+    );
+    const propType = typeof astate[aprop];
+    ApgUts.Assert(
+      propType == "string" || propType == "number" || propType == "boolean",
+      `$$0098 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`
+    );
+    control.reactive = { state: astate, prop: aprop };
+  }
+  /**
+   * After the dinamic insertion of the ApgGui controls in the DOM as elements 
+   * this method binds each control with its element and if provided adds to the
+   * element the appropriate event listeners.
+   */
+  bindControls() {
+    for (const id of this.gui.controls.keys()) {
+      const control = this.gui.controls.get(id);
+      const element = this.gui.document.getElementById(id);
+      control.element = element;
+      if (control.type == eApgDomFormElementType.DIV) {
+        if (control.injected) {
+          element.appendChild(control.injected);
+        }
+      }
+      if (control.callback) {
+        if (control.type == eApgDomFormElementType.INPUT) {
+          ApgUts.AssertNot(
+            control.inputType == void 0,
+            `$$0132 Input type of control ${control.element.id} is not defined`
+          );
+          switch (control.inputType) {
+            case eApgDomInputType.RANGE: {
+              element.addEventListener("input", control.callback);
+              this.gui.logDev(`${control.element.id} Range input event bound`);
+              break;
+            }
+            case eApgDomInputType.CHECK_BOX: {
+              element.addEventListener("change", control.callback);
+              this.gui.logDev(`${control.element.id} Checkbox change event bound`);
+              break;
+            }
+            case eApgDomInputType.COLOR: {
+              element.addEventListener("change", control.callback);
+              this.gui.logDev(`${control.element.id} Color picker change event bound`);
+              break;
+            }
+          }
+        }
+        if (control.type == eApgDomFormElementType.DETAILS) {
+          element.addEventListener("toggle", control.callback);
+          this.gui.logDev(`${control.element.id} Details toggle event bound`);
+        }
+      }
+      if (control.type == eApgDomFormElementType.BUTTON) {
+        element.addEventListener("click", control.callback);
+        this.gui.logDev(`${control.element.id} Button click event bound`);
+      }
+      if (control.type == eApgDomFormElementType.SELECT) {
+        element.addEventListener("change", control.callback);
+        this.gui.logDev(`${control.element.id} Select change event bound`);
+      }
+    }
+  }
+  /**
+   * Virtual method that has to be overriden by the descendants of this class
+   */
+  buildPanel() {
+    const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
+    return r;
+  }
+  /**
+   * Virtual method that has to be overriden by the descendants of this class
+   */
+  buildHud(acontainer) {
+    const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
+    return r;
+  }
+  // #endregion
   // #region Basic controls -----------------------------------------------
   buildParagraphControl(acontrolId, acontent, astyle) {
     const paragraphControl = {
@@ -117,7 +214,7 @@ export class ApgGui_Builder {
     const range = this.gui.controls.get(acontrolId).element;
     const output = this.gui.controls.get(`${acontrolId}Value`).element;
     output.innerHTML = range.value;
-    this.gui.logDev(`${acontrolId} = ${range.value}`);
+    this.gui.logDev(`Read ${acontrolId} value = ${range.value}`);
     return parseFloat(range.value);
   }
   buildColorPickerControl(acontrolId, acaption, avalue, ainputCallback) {
@@ -160,7 +257,7 @@ export class ApgGui_Builder {
     const colorPicker = this.gui.controls.get(acontrolId).element;
     const output = this.gui.controls.get(`${acontrolId}Value`).element;
     output.innerHTML = colorPicker.value;
-    this.gui.logDev(`${acontrolId} = ${colorPicker.value}`);
+    this.gui.logDev(`Read ${acontrolId} value = ${colorPicker.value}`);
     return parseInt(colorPicker.value.replace("#", "0x"), 16);
   }
   buildCheckBoxControl(acontrolId, acaption, avalue, achangeCallback) {
@@ -189,7 +286,7 @@ export class ApgGui_Builder {
   }
   readCheckBoxControl(acontrolId) {
     const checkBox = this.gui.controls.get(acontrolId).element;
-    this.gui.logDev(`${acontrolId} = ${checkBox.checked}`);
+    this.gui.logDev(`Read ${acontrolId} value = ${checkBox.checked}`);
     return checkBox.checked;
   }
   /**
@@ -229,7 +326,9 @@ export class ApgGui_Builder {
             <select 
                 id="${acontrolId}"
                 style="padding: 0.125rem; margin: 0px;"
-            >${options.join()}</select>
+            >
+            ${options.join("\n")}
+            </select>
 
         </p>
         `;
@@ -237,7 +336,7 @@ export class ApgGui_Builder {
   }
   readSelectControl(acontrolId) {
     const select = this.gui.controls.get(acontrolId).element;
-    this.gui.logDev(`${acontrolId} = ${select.value}`);
+    this.gui.logDev(`Read ${acontrolId} value = ${select.value}`);
     return select.value;
   }
   // #endregion
@@ -342,90 +441,4 @@ export class ApgGui_Builder {
     return r;
   }
   // #endregion
-  /**
-   * Adds reactivity to a control
-   * @param acontrolId Identifier of the control that has to become reactive
-   * @param astate State object that contains the property associated to the reactive control
-   * @param aprop Name of the property associated to the reactive control
-   */
-  addReactivityToControl(acontrolId, astate, aprop) {
-    const control = this.gui.controls.get(acontrolId);
-    ApgUtils.Assert(
-      control != void 0,
-      `$$451 the control with id (${acontrolId}) is not registered in the GUI!`
-    );
-    ApgUtils.Assert(
-      astate[aprop] != void 0,
-      `$$456 The property (${aprop}), is undefined in state object passed for reactivity!`
-    );
-    const propType = typeof astate[aprop];
-    ApgUtils.Assert(
-      propType == "string" || propType == "number" || propType == "boolean",
-      `$$462 The type (${propType}) of the property (${aprop}) in state object passed for reactivity is not a managed one!`
-    );
-    control.reactive = { state: astate, prop: aprop };
-  }
-  /**
-   * After the dinamic insertion of the ApgGui controls in the DOM as elements 
-   * this method binds each control with its element and if provided adds to the
-   * element the appropriate event listeners.
-   */
-  bindControls() {
-    for (const id of this.gui.controls.keys()) {
-      const control = this.gui.controls.get(id);
-      const element = this.gui.document.getElementById(id);
-      control.element = element;
-      if (control.type == eApgDomFormElementType.DIV) {
-        if (control.injected) {
-          element.appendChild(control.injected);
-        }
-      }
-      if (control.callback) {
-        if (control.type == eApgDomFormElementType.INPUT) {
-          if (control.inputType == void 0) {
-            const message = `Input type of control ${control.element.id} is not defined`;
-            alert(message);
-            throw new Error(message);
-          }
-          switch (control.inputType) {
-            case eApgDomInputType.RANGE: {
-              element.addEventListener("input", control.callback);
-              break;
-            }
-            case eApgDomInputType.CHECK_BOX: {
-              element.addEventListener("change", control.callback);
-              break;
-            }
-            case eApgDomInputType.COLOR: {
-              element.addEventListener("change", control.callback);
-              break;
-            }
-          }
-        }
-        if (control.type == eApgDomFormElementType.DETAILS) {
-          element.addEventListener("toggle", control.callback);
-        }
-      }
-      if (control.type == eApgDomFormElementType.BUTTON) {
-        element.addEventListener("click", control.callback);
-      }
-      if (control.type == eApgDomFormElementType.SELECT) {
-        element.addEventListener("change", control.callback);
-      }
-    }
-  }
-  /**
-   * Virtual method that has to be overriden by the descendants of this class
-  */
-  buildPanel() {
-    const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
-    return r;
-  }
-  /**
-   * Virtual method that has to be overriden by the descendants of this class
-   */
-  buildHud(acontainer) {
-    const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
-    return r;
-  }
 }

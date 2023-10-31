@@ -8,28 +8,36 @@
 import {
     IApgDomSelect
 } from "./ApgDom.ts";
-import { ApgGui } from "./ApgGui.ts";
 
-import { ApgGui_Builder } from "./ApgGui_Builder.ts";
-import { ApgGui_Stats } from "./ApgGui_StatsPanel.ts";
-import { IApgRprSim_Params } from "./ApgRprSim_Base.ts";
+import {
+    ApgGui
+} from "./ApgGui.ts";
+
+import {
+    ApgGui_Builder
+} from "./ApgGui_Builder.ts";
+
+import {
+    ApgGui_Stats
+} from "./ApgGui_StatsPanel.ts";
+
+
 
 export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
 
-    params: IApgRprSim_Params;
     stats: ApgGui_Stats;
 
     constructor(
         agui: ApgGui,
-        aparams: IApgRprSim_Params,
+        astats: ApgGui_Stats,
     ) {
 
-        super(agui, aparams.simulation);
+        super(agui, 'Stats gui builder');
 
-        this.params = aparams;
-        this.stats = this.params.stats!;
+        this.stats = astats;
 
     }
+
 
     override buildPanel(): string {
 
@@ -45,6 +53,7 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
     }
 
 
+
     #buildStatsGroupControl(): string {
 
         const panelsNames = Array.from(this.stats.panels.keys());
@@ -52,7 +61,7 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
         for (let i = 0; i < panelsNames.length; i++) {
             keyValues.set(`${i}`, panelsNames[i]);
         }
-        
+
         const STAT_PANEL_SELECT_CNT = 'statPanelSelectControl';
         const statPanelSelectControl = this.buildSelectControl(
             STAT_PANEL_SELECT_CNT,
@@ -83,10 +92,10 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
                 statPanelSelectControl,
                 statDivControl
             ],
-            this.params.guiSettings!.isStatsGroupOpened,
+            this.stats.isStatsPanelOpened,
             () => {
                 if (!this.gui.isRefreshing) {
-                    this.params.guiSettings!.isStatsGroupOpened = !this.params.guiSettings!.isStatsGroupOpened
+                    this.stats.isStatsPanelOpened = !this.stats.isStatsPanelOpened
                     this.gui.logNoTime('Stats group toggled');
                 }
             }

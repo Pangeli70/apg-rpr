@@ -1,9 +1,9 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_Column extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_Column extends ApgRprSimulation {
   _currentRotation = -1;
   _rotationDelta = 0;
   _currentBlock = 0;
@@ -12,7 +12,7 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Column_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     this.simulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -28,7 +28,7 @@ export class ApgRprSim_Column extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     this._rotationDelta = 2 / asettings.numBlocks;
     this._maxBlocks = asettings.numBlocks;
     const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();

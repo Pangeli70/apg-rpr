@@ -1,14 +1,14 @@
 import { RAPIER } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_TrimeshTerrain extends ApgRprSimulation {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_Pyramid_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -19,7 +19,7 @@ export class ApgRprSim_TrimeshTerrain extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const platformBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const platformBody = this.world.createRigidBody(platformBodyDesc);
     const heightMap = this.generateRandomTrimshHeightMap("Trimesh Height map", 21, 21, 70, 4, 70);

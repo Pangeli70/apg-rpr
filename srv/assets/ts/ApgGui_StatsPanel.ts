@@ -9,6 +9,10 @@ import {
     IApgDomElement
 } from "./ApgDom.ts";
 
+import {
+    ApgUts
+} from "./ApgUts.ts";
+
 
 
 export class ApgGui_StatsPanel {
@@ -184,6 +188,7 @@ export class ApgGui_StatsPanel {
 }
 
 
+
 export class ApgGui_Ms_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
@@ -210,6 +215,7 @@ export class ApgGui_Ms_StatsPanel extends ApgGui_StatsPanel {
     }
 
 }
+
 
 
 export class ApgGui_Fps_StatsPanel extends ApgGui_StatsPanel {
@@ -254,6 +260,7 @@ export class ApgGui_Fps_StatsPanel extends ApgGui_StatsPanel {
 }
 
 
+
 export class ApgGui_Mem_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
@@ -293,6 +300,7 @@ export class ApgGui_Mem_StatsPanel extends ApgGui_StatsPanel {
 }
 
 
+
 export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
@@ -320,6 +328,7 @@ export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
 }
 
 
+
 export class ApgRpr_Colliders_StatsPanel extends ApgGui_StatsPanel {
 
     constructor(
@@ -341,6 +350,7 @@ export class ApgRpr_Colliders_StatsPanel extends ApgGui_StatsPanel {
 }
 
 
+
 export class ApgGui_Stats {
 
     document: IApgDomDocument;
@@ -355,6 +365,8 @@ export class ApgGui_Stats {
 
     width: number;
     pixelRatio: number;
+
+    isStatsPanelOpened = true;
 
     constructor(
         adocument: IApgDomDocument,
@@ -411,11 +423,11 @@ export class ApgGui_Stats {
 
         const panelsNames = Array.from(this.panels.keys());
 
-        if (apanelIndex >= panelsNames.length) {
-            const message = `Out of bounds: We can't show the panel with index: ${apanelIndex}`;
-            alert(message);
-            throw new Error(message);
-        }
+        ApgUts.Assert(
+            apanelIndex < panelsNames.length,
+            `Out of bounds: We can't show the panel with index: ${apanelIndex}`
+        )
+
         this.currentPanelIndex = apanelIndex;
 
         const panelName = panelsNames[this.currentPanelIndex];

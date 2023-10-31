@@ -2,7 +2,7 @@ import {
   PRANDO,
   RAPIER
 } from "./ApgRpr_Deps.ts";
-export class ApgRprSim_Base {
+export class ApgRprSimulation {
   /** The Rapier world*/
   world;
   /** The Apg Rapier simulator */
@@ -44,6 +44,17 @@ export class ApgRprSim_Base {
     this.world.integrationParameters.allowedLinearError = this.params.guiSettings.linearError;
     this.world.integrationParameters.erp = this.params.guiSettings.errorReductionRatio;
     this.world.integrationParameters.predictionDistance = this.params.guiSettings.predictionDistance;
+  }
+  createGround() {
+    const size = this.simulator.viewer.metrics.universeSize;
+    const GROUND_HEIGHT = 10;
+    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed().setUserData("ground");
+    const body = this.world.createRigidBody(groundBodyDesc);
+    const groundColliderDesc = RAPIER.ColliderDesc.cylinder(size, GROUND_HEIGHT).setSensor(true).setTranslation(0, -GROUND_HEIGHT / 2, 0);
+    this.world.createCollider(groundColliderDesc, body);
+  }
+  createWorld(_asettings) {
+    this.createGround();
   }
   /**
    * Create the Gui for the current simulation

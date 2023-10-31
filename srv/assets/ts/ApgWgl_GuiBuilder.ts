@@ -128,6 +128,7 @@ export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
 }
 
 
+
 /**
  * This is the basic Web GL gui Builder that contains the viewer settings.
  */
@@ -148,7 +149,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         this.viewer = aviewer;
         this.settings = aviewer.settings as ApgWgl_IViewerGuiSettings;
 
-        // @NOTE we are injecting GUI properties in the original settings object !!! -- APG 20230930
+        // @WARNING we are injecting GUI properties in the original settings object !!! -- APG 20230930
 
         this.settings.worldSizeMMS = { min: 500, max: 2000, step: 500 };
 

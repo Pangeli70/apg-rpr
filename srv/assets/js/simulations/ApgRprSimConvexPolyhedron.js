@@ -1,14 +1,14 @@
 import { RAPIER, PRANDO } from "../ApgRpr_Deps.ts";
 import { ApgRprSim_GuiBuilder } from "../ApgRprSim_GuiBuilder.ts";
 import {
-  ApgRprSim_Base
-} from "../ApgRprSim_Base.ts";
-export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
+  ApgRprSimulation
+} from "../ApgRpr_Simulation.ts";
+export class ApgRprSim_ConvexPolyhedron extends ApgRprSimulation {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRprSim_ConvexPolyhedrons_GuiBuilder);
     const settings = this.params.guiSettings;
-    this.#createWorld(settings);
+    this.createWorld(settings);
     asimulator.addWorld(this.world);
     if (!this.params.restart) {
       this.simulator.resetCamera(settings.cameraPosition);
@@ -19,7 +19,7 @@ export class ApgRprSim_ConvexPolyhedron extends ApgRprSim_Base {
       this.updateFromGui();
     });
   }
-  #createWorld(asettings) {
+  createWorld(asettings) {
     const groudBodyDesc = RAPIER.RigidBodyDesc.fixed();
     const groundBody = this.world.createRigidBody(groudBodyDesc);
     const rad = 20;
