@@ -32,57 +32,27 @@ export class ApgRpr_Simulation {
     this.rng = new PRANDO(this.params.simulation);
     this.saveParams();
     this.world = new RAPIER.World(this.params.settings.gravity);
-    this.#applyGuiSettingsToWorld();
-  }
-  #applyGuiSettingsToWorld() {
-    this.world.maxVelocityIterations = this.params.settings.velocityIterations;
-    this.world.maxVelocityFrictionIterations = this.params.settings.frictionIterations;
-    this.world.maxStabilizationIterations = this.params.settings.stabilizationIterations;
-    this.world.integrationParameters.allowedLinearError = this.params.settings.linearError;
-    this.world.integrationParameters.erp = this.params.settings.errorReductionRatio;
-    this.world.integrationParameters.predictionDistance = this.params.settings.predictionDistance;
-  }
-  createGround() {
-    const groundRadious = this.simulator.viewer.metrics.worldSize;
-    const GROUND_HEIGHT = 1;
-    const userData = {
-      color: 48127
-    };
-    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed().setUserData(userData);
-    const body = this.world.createRigidBody(groundBodyDesc);
-    const groundColliderDesc = RAPIER.ColliderDesc.cylinder(GROUND_HEIGHT / 2, groundRadious).setTranslation(0, -GROUND_HEIGHT / 2, 0);
-    this.world.createCollider(groundColliderDesc, body);
-  }
-  createWorld(_asettings) {
-    this.createGround();
-  }
-  /**
-   * Create the Gui for the current simulation
-   * @param aguiBuilderType The class derived from the standard GuiBuilder
-   */
-  buildGui(aguiBuilderType) {
-    const guiBuilder = new aguiBuilderType(
-      this.simulator,
-      this.params.settings
-    );
-    const panelHtml = guiBuilder.buildPanel();
-    this.simulator.updateViewerPanel(panelHtml);
-    const hudHtml = guiBuilder.buildHud();
-    this.simulator.updateViewerHud(hudHtml);
-    guiBuilder.bindControls();
-    this.logger.log("Simulation Gui built", ApgRpr_Simulation.RPR_SIMULATION_NAME);
+    this.#applySettingsToWorld();
+    if (this.params.settings.doRestart) {
+      this.simulator.resetCamera(this.params.settings.cameraPosition);
+      this.params.settings.doRestart = false;
+    }
+    if (this.params.settings.doResetCamera) {
+      this.simulator.resetCamera(this.params.settings.cameraPosition);
+      this.params.settings.doResetCamera = false;
+    }
   }
   /** 
    * Set up the default Gui settings for the simulator. This method can be overridden 
    * and extended by derived classes to add more settings specific of the single simulation. 
    */
   defaultSettings() {
-    return ApgRpr_Simulation.DefaultSettings(this.params.simulation, this.simulator);
+    return this.#defaultSettings(this.params.simulation, this.simulator);
   }
-  static DefaultSettings(asimulation, asimulator) {
+  #defaultSettings(asimulation, asimulator) {
     const r = {
       simulation: asimulation,
-      isSimulationGroupOpened: false,
+      isSimulatorDetailsOpened: false,
       gravity: new RAPIER.Vector3(0, -9.81, 0),
       gravityXMMS: {
         min: -5,
@@ -141,17 +111,55 @@ export class ApgRpr_Simulation {
         max: asimulator.MAX_SLOWDOWN,
         step: 1
       },
-      debugMode: false,
-      doResetToDefaults: false,
-      isStatsGroupOpened: false,
+      isDebugMode: false,
       cameraPosition: {
         eye: { x: -80, y: 10, z: 80 },
         target: { x: 0, y: 0, z: 0 }
       },
       doResetCamera: false,
-      doRestart: true
+      doResetToDefaults: false,
+      doRestart: false,
+      isStatsGroupOpened: false
     };
     return r;
+  }
+  #applySettingsToWorld() {
+    this.world.maxVelocityIterations = this.params.settings.velocityIterations;
+    this.world.maxVelocityFrictionIterations = this.params.settings.frictionIterations;
+    this.world.maxStabilizationIterations = this.params.settings.stabilizationIterations;
+    this.world.integrationParameters.allowedLinearError = this.params.settings.linearError;
+    this.world.integrationParameters.erp = this.params.settings.errorReductionRatio;
+    this.world.integrationParameters.predictionDistance = this.params.settings.predictionDistance;
+  }
+  createGround() {
+    const groundRadious = this.simulator.viewer.metrics.worldSize;
+    const GROUND_HEIGHT = 1;
+    const userData = {
+      color: 48127
+    };
+    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed().setUserData(userData);
+    const body = this.world.createRigidBody(groundBodyDesc);
+    const groundColliderDesc = RAPIER.ColliderDesc.cylinder(GROUND_HEIGHT / 2, groundRadious).setTranslation(0, -GROUND_HEIGHT / 2, 0);
+    this.world.createCollider(groundColliderDesc, body);
+  }
+  createWorld(_asettings) {
+    this.createGround();
+  }
+  /**
+   * Create the Gui for the current simulation
+   * @param aguiBuilderType The class derived from the standard GuiBuilder
+   */
+  buildGui(aguiBuilderType) {
+    const guiBuilder = new aguiBuilderType(
+      this.simulator,
+      this.params.settings
+    );
+    const guiHtml = guiBuilder.buildControls();
+    this.simulator.updateViewerPanel(guiHtml);
+    const hudHtml = guiBuilder.buildControlsToContainer();
+    this.simulator.updateViewerHud(hudHtml);
+    guiBuilder.bindControls();
+    this.logger.log("Simulation Gui built", ApgRpr_Simulation.RPR_SIMULATION_NAME);
   }
   /** 
    * Update the simulation params accordingly with the Gui settings. This method 
@@ -162,6 +170,7 @@ export class ApgRpr_Simulation {
     if (this.needsUpdate()) {
       this.updateSimulatorFromGui();
       this.saveParams();
+      this.simulator.gui.updateReactiveControls();
     }
   }
   /** 
@@ -170,13 +179,17 @@ export class ApgRpr_Simulation {
    */
   updateSimulatorFromGui() {
     this.params.simulation = this.params.settings.simulation;
-    if (this.prevParams.settings.doResetToDefaults != this.params.settings.doResetToDefaults) {
-      this.params.settings.doResetToDefaults = this.prevParams.settings.doResetToDefaults;
-      this.params.settings = this.defaultSettings();
-      this.#applyGuiSettingsToWorld();
+    if (this.params.settings.doResetToDefaults) {
+      const defaultSettings = this.defaultSettings();
+      Object.assign(this.params.settings, defaultSettings);
+    }
+    if (this.params.settings.doResetCamera) {
+      this.simulator.resetCamera(this.params.settings.cameraPosition);
+      this.params.settings.doResetCamera = false;
     }
     if (this.params.settings?.doRestart) {
       this.simulator.setSimulation(this.params);
+      return;
     }
     if (this.prevParams.simulation != this.params.simulation) {
       const params = {
@@ -184,30 +197,14 @@ export class ApgRpr_Simulation {
         settings: null
       };
       this.simulator.setSimulation(params);
+      return;
     }
-    if (this.prevParams.settings.velocityIterations != this.params.settings.velocityIterations) {
-      this.world.maxVelocityIterations = this.params.settings.velocityIterations;
-    }
-    if (this.prevParams.settings.frictionIterations != this.params.settings.frictionIterations) {
-      this.world.maxVelocityFrictionIterations = this.params.settings.frictionIterations;
-    }
-    if (this.prevParams.settings.stabilizationIterations != this.params.settings.stabilizationIterations) {
-      this.world.maxStabilizationIterations = this.params.settings.stabilizationIterations;
-    }
-    if (this.prevParams.settings.linearError != this.params.settings.linearError) {
-      this.world.integrationParameters.allowedLinearError = this.params.settings.linearError;
-    }
-    if (this.prevParams.settings.errorReductionRatio != this.params.settings.errorReductionRatio) {
-      this.world.integrationParameters.erp = this.params.settings.errorReductionRatio;
-    }
-    if (this.prevParams.settings.predictionDistance != this.params.settings.predictionDistance) {
-      this.world.integrationParameters.predictionDistance = this.params.settings.predictionDistance;
-    }
+    this.#applySettingsToWorld();
     if (this.prevParams.settings.slowDownFactor != this.params.settings.slowDownFactor) {
       this.simulator.slowDownFactor = this.params.settings.slowDownFactor;
     }
-    if (this.prevParams.settings.debugMode != this.params.settings.debugMode) {
-      this.simulator.debugMode = this.params.settings.debugMode;
+    if (this.prevParams.settings.isDebugMode != this.params.settings.isDebugMode) {
+      this.simulator.debugMode = this.params.settings.isDebugMode;
     }
   }
   /** 
@@ -217,10 +214,40 @@ export class ApgRpr_Simulation {
    */
   needsUpdate() {
     const r = false;
-    if (this.params.settings?.doRestart) {
+    if (this.params.simulation != this.prevParams.simulation) {
       return true;
     }
-    if (this.params.simulation != this.prevParams.simulation) {
+    if (this.params.settings.isDebugMode != this.prevParams.settings.isDebugMode) {
+      return true;
+    }
+    if (this.params.settings.doRestart) {
+      return true;
+    }
+    if (this.params.settings.doResetToDefaults) {
+      return true;
+    }
+    if (this.params.settings.doResetCamera) {
+      return true;
+    }
+    if (this.params.settings.velocityIterations != this.prevParams.settings.velocityIterations) {
+      return true;
+    }
+    if (this.params.settings.frictionIterations != this.prevParams.settings.frictionIterations) {
+      return true;
+    }
+    if (this.params.settings.stabilizationIterations != this.prevParams.settings.stabilizationIterations) {
+      return true;
+    }
+    if (this.params.settings.linearError != this.prevParams.settings.linearError) {
+      return true;
+    }
+    if (this.params.settings.errorReductionRatio != this.prevParams.settings.errorReductionRatio) {
+      return true;
+    }
+    if (this.params.settings.predictionDistance != this.prevParams.settings.predictionDistance) {
+      return true;
+    }
+    if (this.params.settings.slowDownFactor != this.prevParams.settings.slowDownFactor) {
       return true;
     }
     const currsettings = JSON.stringify(this.params.settings);

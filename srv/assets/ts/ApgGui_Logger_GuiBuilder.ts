@@ -24,7 +24,7 @@ import {
 
 
 
-export class ApgRprSim_LoggerGuiBuilder extends ApgGui_Builder {
+export class ApgGui_Logger_GuiBuilder extends ApgGui_Builder {
 
     logger: ApgUts_Logger;
 
@@ -45,7 +45,7 @@ export class ApgRprSim_LoggerGuiBuilder extends ApgGui_Builder {
 
 
 
-    override buildPanel() {
+    override buildControls() {
 
         const loggerDialogControl = this.#buildLoggerDialogControl();
 
@@ -64,14 +64,11 @@ export class ApgRprSim_LoggerGuiBuilder extends ApgGui_Builder {
             }
         );
 
-        const r = this.buildDetailsControl(
-            "loggerGroupControl",
-            "Logger:",
+        const r = this.joinControls(
             [
                 loggerDialogControl,
                 loggerOpenButtonControl,
             ]
-
         );
         return r;
 

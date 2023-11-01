@@ -16,9 +16,6 @@ export class ApgRpr_F0_Platform_Simulation extends ApgRpr_Simulation {
     const settings = this.params.settings;
     this.createWorld(settings);
     this.simulator.addWorld(this.world);
-    if (!this.params.settings.doRestart) {
-      asimulator.resetCamera(settings.cameraPosition);
-    }
     asimulator.setPreStepAction(() => {
       this.updateFromGui();
       this.#movePlatform();
@@ -103,10 +100,10 @@ class ApgRprSim_Platform_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
     super(asimulator, asettings);
     this._guiSettings = asettings;
   }
-  buildPanel() {
+  buildControls() {
     const simulationChangeControl = this.buildSimulationChangeControl();
     const restartSimulationButtonControl = this.buildRestartButtonControl();
-    const simControls = super.buildPanel();
+    const simControls = super.buildControls();
     const r = this.buildPanelControl(
       `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,
       [

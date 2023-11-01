@@ -19,9 +19,6 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
     const settings = this.params.settings;
     this.createWorld(settings);
     this.simulator.addWorld(this.world);
-    if (!this.params.settings.doRestart) {
-      this.simulator.resetCamera(settings.cameraPosition);
-    }
     this.simulator.document.onkeyup = (event) => {
       if (event.key == " ") {
         this.#spawnNextBlock();
@@ -118,11 +115,11 @@ class ApgRpr_A1_Column_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
     super(asimulator, asettings);
     this._guiSettings = asettings;
   }
-  buildPanel() {
+  buildControls() {
     const simulationChangeControl = this.buildSimulationChangeControl();
     const restartSimulationButtonControl = this.buildRestartButtonControl();
     const cubesGroupControl = this.#buildCubesGroupControl();
-    const simControls = super.buildPanel();
+    const simControls = super.buildControls();
     const r = this.buildPanelControl(
       `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,
       [

@@ -5,6 +5,8 @@
  * -----------------------------------------------------------------------
 */
 import {
+    IApgDom2DRenderingContext,
+    IApgDomCanvas,
     IApgDomDocument,
     IApgDomElement
 } from "./ApgDom.ts";
@@ -15,42 +17,52 @@ import {
 
 
 
+interface ApgGui_IGraphicPanel {
+
+    canvas: IApgDomCanvas;
+    context: IApgDom2DRenderingContext;
+
+    DOT_SIZE: number;
+    WIDTH: number;
+    HEIGHT: number;
+    TEXT_X: number;
+    TEXT_Y: number;
+    GRAPH_X: number;
+    GRAPH_Y: number;
+    GRAPH_WIDTH: number;
+    GRAPH_HEIGHT: number;
+
+    foreGroundFillStyle: string;
+    backGroundFillStyle: string;
+}
+
+
+
 export class ApgGui_StatsPanel {
 
-    current = 0;
-    min = 10000;
-    max = 0;
-    history: number[] = [];
-    historySize = 500;
+    protected current = 0;
+    protected min = 100000;
+    protected max = -100000;
 
-    beginTime = 0;
-    endTime = 0;
-    prevTime = 0;
+    protected history: number[] = [];
+    protected historySize = 500;
+
+    protected beginTime = 0;
+    protected endTime = 0;
+    protected prevTime = 0;
 
     name: string;
-    measureUnit: string;
+    protected measureUnit: string;
+    protected precision = 0;
 
-    text = "";
+    protected text = "";
 
     container: IApgDomElement;
 
-    // canvas: IApgDomCanvas;
-    //context: IApgDom2DRenderingContext;
-    /*    
-        DOT_SIZE: number;
-        WIDTH: number;
-        HEIGHT: number;
-        TEXT_X: number;
-        TEXT_Y: number;
-        GRAPH_X: number;
-        GRAPH_Y: number;
-        GRAPH_WIDTH: number;
-        GRAPH_HEIGHT: number;
-        */
-    foreGroundFillStyle: string;
-    backGroundFillStyle: string;
+    protected graphicPanel: ApgGui_IGraphicPanel;
 
     updateInMainLoop = true;
+
 
     constructor(
         adocument: IApgDomDocument,
@@ -58,63 +70,108 @@ export class ApgGui_StatsPanel {
         awidth: number,
         aname: string,
         ameasureUnit: string,
+        aprecision: number,
         aforeGroundFillStyle: string,
         abackGroundFillStyle: string
     ) {
 
         this.name = aname;
         this.measureUnit = ameasureUnit;
-        this.foreGroundFillStyle = aforeGroundFillStyle;
-        this.backGroundFillStyle = abackGroundFillStyle;
+        this.precision = aprecision;
 
         this.container = adocument.createElement('div') as IApgDomElement;
         this.container.id = this.name.replaceAll(' ', '_') + "_Container";
+        this.container.style.fontSize = '0.75rem';
 
-        // const PIXEL_RATIO = Math.round(adevicePixelRatio || 1);
-        // this.DOT_SIZE = PIXEL_RATIO;
-
-        // this.WIDTH = awidth * PIXEL_RATIO;
-        // const height = awidth / 16 * 9;
-        // this.HEIGHT = height * PIXEL_RATIO;
-
-        // const borderSize = Math.round(this.HEIGHT * 0.02) * PIXEL_RATIO;
-
-        // this.TEXT_X = borderSize;
-        // this.TEXT_Y = borderSize;
-
-        // const fontSize = Math.round(this.HEIGHT * 0.20) * PIXEL_RATIO;
-
-        // this.GRAPH_X = borderSize;
-        // this.GRAPH_Y = borderSize + fontSize + borderSize;
-        // this.GRAPH_WIDTH = this.WIDTH - borderSize - borderSize;
-        // this.GRAPH_HEIGHT = this.HEIGHT - this.GRAPH_Y - borderSize;
-
-        // this.canvas = adocument.createElement('canvas') as IApgDomCanvas;
-        // this.canvas.id = this.container.id + "_Canvas";
-        // this.container.appendChild(this.canvas);
-        // this.canvas.width = this.WIDTH;
-        // this.canvas.height = this.HEIGHT;
-        // this.canvas.style.cssText = `width:${awidth}px;height:${height}px`;
-
-        //const context = this.canvas.getContext('2d');
-        //this.context = context;
-
-        // context.font = `bold ${fontSize}px Helvetica,Arial,sans-serif`;
-        // context.textBaseline = 'top';
-
-        // context.fillStyle = this.backGroundFillStyle;
-        // context.fillRect(0, 0, this.WIDTH, this.HEIGHT);
-
-        // context.fillStyle = this.foreGroundFillStyle;
-        // context.fillText(this.measureUnit, this.TEXT_X, this.TEXT_Y);
-
-        // context.fillRect(this.GRAPH_X, this.GRAPH_Y, this.GRAPH_WIDTH, this.GRAPH_HEIGHT);
-
-        //context.fillStyle = abackGroundFillStyle;
-        //context.globalAlpha = 0.9;
-        //context.fillRect(this.GRAPH_X, this.GRAPH_Y, this.GRAPH_WIDTH, this.GRAPH_HEIGHT);
+        this.graphicPanel = this.#initGrahicPanel(
+            adocument,
+            this.container,
+            awidth,
+            adevicePixelRatio,
+            aforeGroundFillStyle,
+            abackGroundFillStyle,
+            ameasureUnit
+        );
 
     }
+
+
+
+    #initGrahicPanel(
+        adocument: IApgDomDocument,
+        acontainer: IApgDomElement,
+        awidth: number,
+        adevicePixelRatio: number,
+        aforeGroundFillStyle: string,
+        abackGroundFillStyle: string,
+        ameasureUnit: string
+    ) {
+
+        const foreGroundFillStyle = aforeGroundFillStyle;
+        const backGroundFillStyle = abackGroundFillStyle;
+
+        const PIXEL_RATIO = Math.round(adevicePixelRatio || 1);
+        const DOT_SIZE = PIXEL_RATIO;
+
+        const WIDTH = awidth * PIXEL_RATIO;
+        const height = awidth / 16 * 9;
+        const HEIGHT = height * PIXEL_RATIO;
+
+        const borderSize = Math.round(HEIGHT * 0.02) * PIXEL_RATIO;
+
+        const TEXT_X = borderSize;
+        const TEXT_Y = borderSize;
+
+        const fontSize = Math.round(HEIGHT * 0.20) * PIXEL_RATIO;
+
+        const GRAPH_X = borderSize;
+        const GRAPH_Y = borderSize + fontSize + borderSize;
+        const GRAPH_WIDTH = WIDTH - borderSize - borderSize;
+        const GRAPH_HEIGHT = HEIGHT - GRAPH_Y - borderSize;
+
+        const canvas = adocument.createElement('canvas') as IApgDomCanvas;
+        canvas.id = acontainer.id + "_Canvas";
+        acontainer.appendChild(canvas);
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+        canvas.style.cssText = `width:${awidth}px;height:${height}px`;
+
+        const context = canvas.getContext('2d');
+
+        context.font = `bold ${fontSize}px Helvetica,Arial,sans-serif`;
+        context.textBaseline = 'top';
+
+        context.fillStyle = abackGroundFillStyle;
+        context.fillRect(0, 0, WIDTH, HEIGHT);
+
+        context.fillStyle = foreGroundFillStyle;
+        context.fillText(ameasureUnit, TEXT_X, TEXT_Y);
+
+        context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
+
+        context.fillStyle = abackGroundFillStyle;
+        context.globalAlpha = 0.9;
+        context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
+
+        const r: ApgGui_IGraphicPanel = {
+            canvas,
+            context,
+            DOT_SIZE,
+            WIDTH,
+            HEIGHT,
+            TEXT_X,
+            TEXT_Y,
+            GRAPH_X,
+            GRAPH_Y,
+            GRAPH_WIDTH,
+            GRAPH_HEIGHT,
+            foreGroundFillStyle,
+            backGroundFillStyle,
+        }
+
+        return r;
+    }
+
 
 
     begin(abeginTime?: number) {
@@ -124,11 +181,13 @@ export class ApgGui_StatsPanel {
     }
 
 
+
     end(aendTime?: number) {
 
         this.endTime = aendTime || (performance || Date).now();
 
     }
+
 
 
     update(avalue: number) {
@@ -140,49 +199,60 @@ export class ApgGui_StatsPanel {
             this.history.shift();
         }
 
-        this.min = Math.min(this.min, this.current);
-        this.max = Math.max(this.max, this.current);
+        const exponent = 10 ** this.precision;
+        const value = Math.round(this.current / exponent) * exponent;
+        this.min = Math.min(this.min, value);
+        this.max = Math.max(this.max, value);
 
-        this.text =
-            Math.round(this.current) + ' ' +
-            this.measureUnit + ' (' +
-            Math.round(this.min) + '/' +
-            Math.round(this.max) + ')';
+        const toFixed = (this.precision < 0) ? Math.abs(this.precision) : 0;
+
+        this.text = `${value.toFixed(toFixed)} (${this.min.toFixed(toFixed)}/${this.max.toFixed(toFixed)}) ${this.measureUnit}`;
 
         this.container.innerText = this.text;
-        /*
-            this.context.fillStyle = this.backGroundFillStyle;
-            this.context.globalAlpha = 1;
-            let x = 0;
-            let y = 0;
-            let w = this.WIDTH;
-            let h = this.GRAPH_Y;
-            this.context.fillRect(x, y, w, h);
 
-            this.context.fillStyle = this.foreGroundFillStyle;
+        this.#updateGraphics(this.text);
 
-            this.context.fillText(text, this.TEXT_X, this.TEXT_Y);
+    }
 
-            // Clip rectangle of the current canavs content
-            x = this.GRAPH_X + this.DOT_SIZE;
-            y = this.GRAPH_Y;
-            w = this.GRAPH_WIDTH - this.DOT_SIZE;
-            h = this.GRAPH_HEIGHT;
-            const x1 = this.GRAPH_X;
-            // Blt the clipped rectangle
-            this.context.drawImage(this.canvas, x, y, w, h, x1, y, w, h);
 
-            // Draw the last dot istogram bar
-            x = this.GRAPH_X + this.GRAPH_WIDTH - this.DOT_SIZE;
-            w = this.DOT_SIZE;
-            this.context.fillRect(x, y, w, h);
 
-            this.context.fillStyle = this.backGroundFillStyle;
-            this.context.globalAlpha = 0.9;
+    #updateGraphics(atext: string) {
 
-            h = Math.round((1 - (this.current / this.max)) * this.GRAPH_HEIGHT);
-            this.context.fillRect(x, y, w, h);
-            */
+        const gd = this.graphicPanel;
+
+        gd.context.fillStyle = gd.backGroundFillStyle;
+        gd.context.globalAlpha = 1;
+        let x = 0;
+        let y = 0;
+        let w = gd.WIDTH;
+        let h = gd.GRAPH_Y;
+        gd.context.fillRect(x, y, w, h);
+
+        gd.context.fillStyle = gd.foreGroundFillStyle;
+
+        gd.context.fillText(atext, gd.TEXT_X, gd.TEXT_Y);
+
+        // Clip rectangle of the current canavs content
+        x = gd.GRAPH_X + gd.DOT_SIZE;
+        y = gd.GRAPH_Y;
+        w = gd.GRAPH_WIDTH - gd.DOT_SIZE;
+        h = gd.GRAPH_HEIGHT;
+        const x1 = gd.GRAPH_X;
+
+        // Blt the clipped rectangle to the left
+        gd.context.drawImage(gd.canvas, x, y, w, h, x1, y, w, h);
+
+        // Draw the last dot istogram bar
+        x = gd.GRAPH_X + gd.GRAPH_WIDTH - gd.DOT_SIZE;
+        w = gd.DOT_SIZE;
+        gd.context.fillRect(x, y, w, h);
+
+        gd.context.fillStyle = gd.backGroundFillStyle;
+        gd.context.globalAlpha = 0.9;
+
+        h = Math.round((1 - (this.current / this.max)) * gd.GRAPH_HEIGHT);
+        gd.context.fillRect(x, y, w, h);
+
     }
 
 }
@@ -197,12 +267,13 @@ export class ApgGui_Ms_StatsPanel extends ApgGui_StatsPanel {
         awidth: number,
         aname = 'Frame time',
         ameasureUnit = 'ms',
+        aprecision = -2,
         aforeGroundFillStyle = '#f08',
         abackGroundFillStyle = '#201'
     ) {
         super(
             adocument, adevicePixelRatio, awidth,
-            aname, ameasureUnit,
+            aname, ameasureUnit, aprecision,
             aforeGroundFillStyle, abackGroundFillStyle
         );
     }
@@ -220,7 +291,7 @@ export class ApgGui_Ms_StatsPanel extends ApgGui_StatsPanel {
 
 export class ApgGui_Fps_StatsPanel extends ApgGui_StatsPanel {
 
-    frames = 0;
+    protected frames = 0;
 
     constructor(
         adocument: IApgDomDocument,
@@ -228,15 +299,17 @@ export class ApgGui_Fps_StatsPanel extends ApgGui_StatsPanel {
         awidth: number,
         aname = 'Frames per second',
         ameasureUnit = 'fps',
+        aprecision = -1,
         aforeGroundFillStyle = '#0ff',
         abackGroundFillStyle = '#002'
     ) {
         super(
             adocument, adevicePixelRatio, awidth,
-            aname, ameasureUnit,
+            aname, ameasureUnit, aprecision,
             aforeGroundFillStyle, abackGroundFillStyle
         );
     }
+
 
 
     override end(aendTime?: number) {
@@ -269,16 +342,18 @@ export class ApgGui_Mem_StatsPanel extends ApgGui_StatsPanel {
         awidth: number,
         aname = 'Memory usage',
         ameasureUnit = 'Mb',
+        aprecision = -1,
         aforeGroundFillStyle = '#0f0',
         abackGroundFillStyle = '#020'
     ) {
         super(
             adocument, adevicePixelRatio, awidth,
-            aname, ameasureUnit,
+            aname, ameasureUnit, aprecision,
             aforeGroundFillStyle, abackGroundFillStyle
         );
 
     }
+
 
 
     override end(aendTime?: number) {
@@ -301,78 +376,33 @@ export class ApgGui_Mem_StatsPanel extends ApgGui_StatsPanel {
 
 
 
-export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
-
-    constructor(
-        adocument: IApgDomDocument,
-        adevicePixelRatio: number,
-        awidth: number,
-        aname = 'Simulation time',
-        ameasureUnit = 'ms (step)',
-        aforeGroundFillStyle = '#ff8',
-        abackGroundFillStyle = '#221'
-    ) {
-        super(
-            adocument, adevicePixelRatio, awidth,
-            aname, ameasureUnit,
-            aforeGroundFillStyle, abackGroundFillStyle
-        );
-    }
-
-    override end(aendTime?: number) {
-        super.end(aendTime);
-        const ms = this.endTime - this.beginTime;
-        this.update(ms);
-    }
-
-}
-
-
-
-export class ApgRpr_Colliders_StatsPanel extends ApgGui_StatsPanel {
-
-    constructor(
-        adocument: IApgDomDocument,
-        adevicePixelRatio: number,
-        awidth: number,
-        aname = 'Num. of colliders',
-        ameasureUnit = 'pcs',
-        aforeGroundFillStyle = '#f08',
-        abackGroundFillStyle = '#921'
-    ) {
-        super(
-            adocument, adevicePixelRatio, awidth,
-            aname, ameasureUnit,
-            aforeGroundFillStyle, abackGroundFillStyle
-        );
-    }
-
-}
-
-
-
 export class ApgGui_Stats {
 
-    document: IApgDomDocument;
+    SHOW_ALL_PANELS = -1;
 
-    currentPanelIndex = 0;
-    panels: Map<string, ApgGui_StatsPanel> = new Map();
+    protected document: IApgDomDocument;
 
-    currentPanel!: ApgGui_StatsPanel;
+    protected currentPanelIndex = this.SHOW_ALL_PANELS;
+    get currentPanelKey() { return this.currentPanelIndex.toString(); }
 
-    containerId = 'statContainerDivControl';
-    container: IApgDomElement;
+    protected panels: Map<string, ApgGui_StatsPanel> = new Map();
+    get panelsNames() { return Array.from(this.panels.keys()) } 
 
-    width: number;
-    pixelRatio: number;
+    protected containerId = 'statContainerDivControl';
+    protected container: IApgDomElement;
 
-    isStatsPanelOpened = true;
+    protected width: number;
+    protected pixelRatio: number;
+
+    protected isStatsPanelOpened = true;
+
 
     constructor(
         adocument: IApgDomDocument,
         adevicePixelRatio: number,
         awidth: number,
     ) {
+
         this.document = adocument
         this.width = awidth;
         this.pixelRatio = adevicePixelRatio;
@@ -381,17 +411,19 @@ export class ApgGui_Stats {
         this.container.id = this.containerId;
 
         this.#addDefaultPanels(adocument);
+
     }
 
 
+
     #addDefaultPanels(adocument: IApgDomDocument) {
+
         const fpsPanel = new ApgGui_Fps_StatsPanel(
             adocument,
             this.pixelRatio,
             this.width
         );
         this.addPanel(fpsPanel);
-        this.currentPanel = fpsPanel;
 
         const msPanel = new ApgGui_Ms_StatsPanel(
             adocument,
@@ -411,6 +443,7 @@ export class ApgGui_Stats {
     }
 
 
+
     addPanel(apanel: ApgGui_StatsPanel) {
 
         this.container.appendChild(apanel.container);
@@ -419,29 +452,33 @@ export class ApgGui_Stats {
     }
 
 
+
     showPanel(apanelIndex: number) {
 
-        const panelsNames = Array.from(this.panels.keys());
-
+        const panelsKeys = Array.from(this.panels.keys());
+        
         ApgUts.Assert(
-            apanelIndex < panelsNames.length,
+            apanelIndex < panelsKeys.length,
             `Out of bounds: We can't show the panel with index: ${apanelIndex}`
         )
 
         this.currentPanelIndex = apanelIndex;
-
-        const panelName = panelsNames[this.currentPanelIndex];
-
-        for (const [key, value] of this.panels) {
-            let display = 'none';
-            if (panelName === key) {
-                display = 'block';
-                this.currentPanel = value;
+        if (this.currentPanelIndex != this.SHOW_ALL_PANELS) {
+            const newKey = panelsKeys[this.currentPanelIndex];
+                for (const [key, value] of this.panels) {
+                const display = (newKey === key) ? 'inherit' : 'none';
+                value.container.style.display = display;
             }
-            value.container.style.display = display;
         }
+        else { 
+            for (const [_key, value] of this.panels) {
+                value.container.style.display = 'inherit';
+            }
+        }
+        
 
     }
+
 
 
     begin() {
@@ -453,6 +490,7 @@ export class ApgGui_Stats {
         }
 
     }
+
 
 
     end() {

@@ -53,7 +53,6 @@ interface ApgRpr_B0_Fountain_ISimulationSettings extends ApgRpr_ISimulationSetti
     restitution: number;
     restitutionMMS: ApgGui_IMinMaxStep;
 
-
     isGroundGroupOpened: boolean;
     groundType: ApgRprSim_Fountain_eGroundType;
     groundTypes: ApgRprSim_Fountain_eGroundType[];
@@ -83,10 +82,6 @@ export class ApgRpr_B0_Fountain_Simulation extends ApgRpr_Simulation {
         const settings = this.params.settings as ApgRpr_B0_Fountain_ISimulationSettings;
         this.createWorld(settings);
         asimulator.addWorld(this.world);
-
-        if (!this.params.settings!.doRestart) {
-            asimulator.resetCamera(settings.cameraPosition);
-        }
 
         asimulator.setPreStepAction(() => {
             this.#spawnRandomBody(asimulator);
@@ -269,7 +264,7 @@ class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
     }
 
 
-    override buildPanel() {
+    override buildControls() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
@@ -277,7 +272,7 @@ class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
         const bodiesGroupControl = this.#buildBodiesGroupControl();
         const groundGroupControl = this.#buildGroundGroupControl();
 
-        const simControls = super.buildPanel();
+        const simControls = super.buildControls();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,

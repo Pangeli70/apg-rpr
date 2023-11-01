@@ -135,17 +135,17 @@ export class ApgGui_Builder {
 
                         case eApgDomInputType.RANGE: {
                             (element as IApgDomRange).addEventListener('input', control.callback as TApgDomEventCallback);
-                            this.gui.logDev(`${control.element.id} Range input event bound`);
+                            this.gui.devLog(`${control.element.id} Range input event bound`);
                             break;
                         }
                         case eApgDomInputType.CHECK_BOX: {
                             (element as IApgDomCheckBox).addEventListener('change', control.callback as TApgDomEventCallback);
-                            this.gui.logDev(`${control.element.id} Checkbox change event bound`);
+                            this.gui.devLog(`${control.element.id} Checkbox change event bound`);
                             break;
                         }
                         case eApgDomInputType.COLOR: {
                             (element as IApgDomColorPicker).addEventListener('change', control.callback as TApgDomEventCallback);
-                            this.gui.logDev(`${control.element.id} Color picker change event bound`);
+                            this.gui.devLog(`${control.element.id} Color picker change event bound`);
                             break;
                         }
                     }
@@ -154,19 +154,19 @@ export class ApgGui_Builder {
 
                 if (control.type == eApgDomFormElementType.DETAILS) {
                     (element as IApgDomButton).addEventListener('toggle', control.callback as TApgDomEventCallback);
-                    this.gui.logDev(`${control.element.id} Details toggle event bound`);
+                    this.gui.devLog(`${control.element.id} Details toggle event bound`);
                 }
 
             }
 
             if (control.type == eApgDomFormElementType.BUTTON) {
                 (element as IApgDomButton).addEventListener('click', control.callback as TApgDomEventCallback);
-                this.gui.logDev(`${control.element.id} Button click event bound`);
+                this.gui.devLog(`${control.element.id} Button click event bound`);
             }
 
             if (control.type == eApgDomFormElementType.SELECT) {
                 (element as IApgDomInput).addEventListener('change', control.callback as TApgDomEventCallback);
-                this.gui.logDev(`${control.element.id} Select change event bound`);
+                this.gui.devLog(`${control.element.id} Select change event bound`);
             }
 
         }
@@ -176,10 +176,11 @@ export class ApgGui_Builder {
 
     /**
      * Virtual method that has to be overriden by the descendants of this class
+     * to get a chunk of Html made of several GUI controls
      */
-    protected buildPanel() {
+    buildControls() {
 
-        const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
+        const r = "<p>Override the ApgGui_Builder.buildHetml() method to get some controls</p>";
 
         return r;
     }
@@ -188,10 +189,11 @@ export class ApgGui_Builder {
 
     /**
      * Virtual method that has to be overriden by the descendants of this class
+     * to get some controls to be added to a container
      */
-    protected buildHud(acontainer: IApgDomElement) {
+    buildControlsToContainer(acontainer: IApgDomElement) {
 
-        const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
+        const r = "<p>Override the ApgGui_Builder.buildHtmlToContainer() method to inject controls to a container</p>";
 
         return r;
     }
@@ -344,7 +346,7 @@ export class ApgGui_Builder {
         const range = this.gui.controls.get(acontrolId)!.element as IApgDomRange;
         const output = this.gui.controls.get(`${acontrolId}Value`)!.element as IApgDomElement;
         output.innerHTML = range.value;
-        this.gui.logDev(`Read ${acontrolId} value = ${range.value}`);
+        this.gui.devLog(`Read ${acontrolId} value = ${range.value}`);
 
         return parseFloat(range.value);
     }
@@ -404,7 +406,7 @@ export class ApgGui_Builder {
         const colorPicker = this.gui.controls.get(acontrolId)!.element as IApgDomColorPicker;
         const output = this.gui.controls.get(`${acontrolId}Value`)!.element as IApgDomElement;
         output.innerHTML = colorPicker.value;
-        this.gui.logDev(`Read ${acontrolId} value = ${colorPicker.value}`);
+        this.gui.devLog(`Read ${acontrolId} value = ${colorPicker.value}`);
 
         return parseInt(colorPicker.value.replace("#", "0x"), 16);
 
@@ -451,7 +453,7 @@ export class ApgGui_Builder {
     ) {
 
         const checkBox = this.gui.controls.get(acontrolId)!.element as IApgDomCheckBox;
-        this.gui.logDev(`Read ${acontrolId} value = ${checkBox.checked}`);
+        this.gui.devLog(`Read ${acontrolId} value = ${checkBox.checked}`);
 
         return checkBox.checked;
     }
@@ -522,7 +524,7 @@ export class ApgGui_Builder {
     ): string {
 
         const select = this.gui.controls.get(acontrolId)!.element as IApgDomSelect;
-        this.gui.logDev(`Read ${acontrolId} value = ${select.value}`);
+        this.gui.devLog(`Read ${acontrolId} value = ${select.value}`);
 
         return select.value;
     }
@@ -530,6 +532,24 @@ export class ApgGui_Builder {
     // #endregion
 
     // #region Grouping controls -----------------------------------------------
+
+
+    /**
+     * Chains the passed controls without a container element
+     * @param acontrols List of other HTML controls
+     * @returns the full HTML of the controls joined together
+     */
+    protected joinControls(
+        acontrols: string[],
+    ): string {
+
+        const r = `
+        ${acontrols.join("\n")}
+        `;
+
+        return r;
+    }
+
 
 
 

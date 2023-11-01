@@ -72,48 +72,50 @@ export class ApgGui_Builder {
           switch (control.inputType) {
             case eApgDomInputType.RANGE: {
               element.addEventListener("input", control.callback);
-              this.gui.logDev(`${control.element.id} Range input event bound`);
+              this.gui.devLog(`${control.element.id} Range input event bound`);
               break;
             }
             case eApgDomInputType.CHECK_BOX: {
               element.addEventListener("change", control.callback);
-              this.gui.logDev(`${control.element.id} Checkbox change event bound`);
+              this.gui.devLog(`${control.element.id} Checkbox change event bound`);
               break;
             }
             case eApgDomInputType.COLOR: {
               element.addEventListener("change", control.callback);
-              this.gui.logDev(`${control.element.id} Color picker change event bound`);
+              this.gui.devLog(`${control.element.id} Color picker change event bound`);
               break;
             }
           }
         }
         if (control.type == eApgDomFormElementType.DETAILS) {
           element.addEventListener("toggle", control.callback);
-          this.gui.logDev(`${control.element.id} Details toggle event bound`);
+          this.gui.devLog(`${control.element.id} Details toggle event bound`);
         }
       }
       if (control.type == eApgDomFormElementType.BUTTON) {
         element.addEventListener("click", control.callback);
-        this.gui.logDev(`${control.element.id} Button click event bound`);
+        this.gui.devLog(`${control.element.id} Button click event bound`);
       }
       if (control.type == eApgDomFormElementType.SELECT) {
         element.addEventListener("change", control.callback);
-        this.gui.logDev(`${control.element.id} Select change event bound`);
+        this.gui.devLog(`${control.element.id} Select change event bound`);
       }
     }
   }
   /**
    * Virtual method that has to be overriden by the descendants of this class
+   * to get a chunk of Html made of several GUI controls
    */
-  buildPanel() {
-    const r = "<p>Override the ApgGui_Builder.buildPanel() method to get the GUI panel</p>";
+  buildControls() {
+    const r = "<p>Override the ApgGui_Builder.buildHetml() method to get some controls</p>";
     return r;
   }
   /**
    * Virtual method that has to be overriden by the descendants of this class
+   * to get some controls to be added to a container
    */
-  buildHud(acontainer) {
-    const r = "<p>Override the ApgGui_Builder.buildHud() method to get the GUI HUD</p>";
+  buildControlsToContainer(acontainer) {
+    const r = "<p>Override the ApgGui_Builder.buildHtmlToContainer() method to inject controls to a container</p>";
     return r;
   }
   // #endregion
@@ -214,7 +216,7 @@ export class ApgGui_Builder {
     const range = this.gui.controls.get(acontrolId).element;
     const output = this.gui.controls.get(`${acontrolId}Value`).element;
     output.innerHTML = range.value;
-    this.gui.logDev(`Read ${acontrolId} value = ${range.value}`);
+    this.gui.devLog(`Read ${acontrolId} value = ${range.value}`);
     return parseFloat(range.value);
   }
   buildColorPickerControl(acontrolId, acaption, avalue, ainputCallback) {
@@ -257,7 +259,7 @@ export class ApgGui_Builder {
     const colorPicker = this.gui.controls.get(acontrolId).element;
     const output = this.gui.controls.get(`${acontrolId}Value`).element;
     output.innerHTML = colorPicker.value;
-    this.gui.logDev(`Read ${acontrolId} value = ${colorPicker.value}`);
+    this.gui.devLog(`Read ${acontrolId} value = ${colorPicker.value}`);
     return parseInt(colorPicker.value.replace("#", "0x"), 16);
   }
   buildCheckBoxControl(acontrolId, acaption, avalue, achangeCallback) {
@@ -286,7 +288,7 @@ export class ApgGui_Builder {
   }
   readCheckBoxControl(acontrolId) {
     const checkBox = this.gui.controls.get(acontrolId).element;
-    this.gui.logDev(`Read ${acontrolId} value = ${checkBox.checked}`);
+    this.gui.devLog(`Read ${acontrolId} value = ${checkBox.checked}`);
     return checkBox.checked;
   }
   /**
@@ -336,11 +338,22 @@ export class ApgGui_Builder {
   }
   readSelectControl(acontrolId) {
     const select = this.gui.controls.get(acontrolId).element;
-    this.gui.logDev(`Read ${acontrolId} value = ${select.value}`);
+    this.gui.devLog(`Read ${acontrolId} value = ${select.value}`);
     return select.value;
   }
   // #endregion
   // #region Grouping controls -----------------------------------------------
+  /**
+   * Chains the passed controls without a container element
+   * @param acontrols List of other HTML controls
+   * @returns the full HTML of the controls joined together
+   */
+  joinControls(acontrols) {
+    const r = `
+        ${acontrols.join("\n")}
+        `;
+    return r;
+  }
   /**
    *  Build a FieldSet control (<fieldset> and <legend> + other controls)
    * @param acontrolId 

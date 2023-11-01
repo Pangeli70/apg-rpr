@@ -56,7 +56,7 @@ export class ApgUts_Logger {
     this.#log(true, aitem, alogger);
   }
   /** Like standard log but only if in dev mode. Is usefult for debugging purposes  */
-  logDev(aitem, alogger) {
+  devLog(aitem, alogger) {
     if (this._devMode) {
       this.#log(true, aitem, alogger);
     }

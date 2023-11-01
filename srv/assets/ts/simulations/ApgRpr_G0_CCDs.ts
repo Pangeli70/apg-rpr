@@ -83,10 +83,6 @@ export class ApgRpr_G0_CCDs_Simulation extends ApgRpr_Simulation {
         this.createWorld(settings);
         this.simulator.addWorld(this.world);
 
-        if (!this.params.settings!.doRestart) {
-            this.simulator.resetCamera(settings.cameraPosition);
-        }
-
         this.simulator.setPreStepAction(() => { this.updateFromGui(); });
     }
 
@@ -238,7 +234,7 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
 
 
-    override buildPanel() {
+    override buildControls() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
@@ -247,7 +243,7 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
         const wallsGroupControl = this.#buildWallsGroupControl();
 
-        const simControls = super.buildPanel();
+        const simControls = super.buildControls();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,

@@ -72,10 +72,6 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
         this.createWorld(settings);
         this.simulator.addWorld(this.world);
 
-        if (!this.params.settings!.doRestart) {
-            this.simulator.resetCamera(settings.cameraPosition);
-        }
-
         this.simulator.setPreStepAction(() => {
             this.updateFromGui();
             this.updateCharacter();
@@ -83,6 +79,7 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
     }
 
 
+    
     protected override createWorld(asettings: ApgRpr_I0_CharacterController_ISimulationSettings) {
 
         // Create Ground.
@@ -235,7 +232,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulator_G
     }
 
 
-    override buildPanel() {
+    override buildControls() {
 
 
         const simulationChangeControl = this.buildSimulationChangeControl();
@@ -243,7 +240,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulator_G
 
         const cubesGroupControl = this.#buildCubesGroupControl();
 
-        const simControls = super.buildPanel();
+        const simControls = super.buildControls();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,

@@ -56,12 +56,12 @@ export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
 
     // - clearColor: THREE.Color;
 
-    //perspCameraFov: number;
-    //perspCameraFovMMS: ApgGui_IMinMaxStep;
-    //perspCameraNear: number;
-    //perspCameraNearMMS: ApgGui_IMinMaxStep;
-    //perspCameraFar: number;
-    //perspCameraFarMMS: ApgGui_IMinMaxStep;
+    // - perspCameraFov: number;
+    perspCameraFovMMS: ApgGui_IMinMaxStep;
+    // - perspCameraNear: number;
+    perspCameraNearMMS: ApgGui_IMinMaxStep;
+    // - perspCameraFar: number;
+    perspCameraFarMMS: ApgGui_IMinMaxStep;
     //perspCameraPosition: THREE.Vector3;
     //perspCameraPositionXMMS: ApgGui_IMinMaxStep;
     //perspCameraPositionYMMS: ApgGui_IMinMaxStep;
@@ -179,6 +179,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             ['3', 'VSM'],
         ]);
 
+        this.settings.perspCameraFovMMS = { min: 35, max: 75, step: 5 }
+        this.settings.perspCameraNearMMS = { min: 0.1, max: 1, step: 0.1 }
+        this.settings.perspCameraFarMMS = { min: 10, max: 100, step: 5 }
+
         this.settings.ambLightIntensityMMS = { min: 0, max: 1, step: 0.1 }
         this.settings.sunLightIntensityMMS = { min: 0, max: 1, step: 0.1 }
         this.settings.camLightIntensityMMS = { min: 0, max: 1, step: 0.1 }
@@ -226,7 +230,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
      * 
      * @returns 
      */
-    override buildPanel() {
+    override buildControls() {
 
         const viewerSettingsDialogControl = this.#buildViewerSettingsDialogControl();
 
@@ -253,6 +257,8 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
 
     #buildViewerSettingsDialogControl() {
 
+        const cameraControl = this.#buildCameraDetails();
+        
         const rendererControl = this.#buildRendererDetails();
 
         const shadowsControl = this.#buildShadowsDetails();
@@ -283,6 +289,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             this.VIEWER_SETTINGS_DIALOG_CNT,
             "Viewer settings:",
             [
+                cameraControl,
                 rendererControl,
                 envMapControl,
                 shadowsControl,
@@ -515,6 +522,60 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         );
 
         return fogDetails_Control;
+    }
+
+
+    #buildCameraDetails() {
+
+        const CAMERA_FOV_CNT = 'CameraFogRange_Control';
+        const CameraFovRange_Control = this.buildRangeControl(
+            CAMERA_FOV_CNT,
+            'Field of view',
+            this.settings.perspCameraFov,
+            this.settings.perspCameraFovMMS,
+            () => {
+                const value = this.readRangeControl(CAMERA_FOV_CNT);
+                this.settings.perspCameraFov = value;
+            }
+        )
+
+        const CAMERA_NEAR_CNT = 'CameraNearRange_Control';
+        const CameraNearRange_Control = this.buildRangeControl(
+            CAMERA_NEAR_CNT,
+            'Near plane',
+            this.settings.perspCameraNear,
+            this.settings.perspCameraNearMMS,
+            () => {
+                const value = this.readRangeControl(CAMERA_NEAR_CNT);
+                this.settings.perspCameraNear = value;
+            }
+        )
+
+
+        const CAMERA_FAR_CNT = 'CameraFarRange_Control';
+        const CameraFarRange_Control = this.buildRangeControl(
+            CAMERA_FAR_CNT,
+            'Far plane',
+            this.settings.perspCameraFar,
+            this.settings.perspCameraFarMMS,
+            () => {
+                const value = this.readRangeControl(CAMERA_FAR_CNT);
+                this.settings.perspCameraFar = value;
+            }
+        )
+
+        const CAMERA_DETAILS_CNT = 'CameraDetails_Control';
+        const cameraDetails_Control = this.buildDetailsControl(
+            CAMERA_DETAILS_CNT,
+            'Camera',
+            [
+                CameraFovRange_Control,
+                CameraNearRange_Control,
+                CameraFarRange_Control
+            ]
+        );
+
+        return cameraDetails_Control;
     }
 
 

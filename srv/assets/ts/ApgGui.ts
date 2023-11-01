@@ -134,12 +134,16 @@ export class ApgGui {
         this.logger.log(aitem, ApgGui.LOGGER_NAME);
     }
 
-    logDev(aitem: string) {
-        this.logger.logDev(aitem, ApgGui.LOGGER_NAME);
+    devLog(aitem: string) {
+        this.logger.devLog(aitem, ApgGui.LOGGER_NAME);
     }
 
     logNoTime(aitem: string) {
         this.logger.logNoTime(aitem, ApgGui.LOGGER_NAME);
+    }
+
+    devLogNoTime(aitem: string) {
+        this.logger.logDevNoTime(aitem, ApgGui.LOGGER_NAME);
     }
 
 
@@ -148,6 +152,28 @@ export class ApgGui {
         this.controls.clear();
     }
 
+
+    setReactiveControl(
+        acontrolId: string,
+        astate: ApgGui_TReactiveState,
+        aprop: string
+    ) { 
+        const control = this.controls.get(acontrolId);
+        ApgUts.Assert(
+            control != undefined,
+            `$$164 Trying to set reactivity to control ${acontrolId} but it does not exist in the map.`
+        )
+        
+        ApgUts.Assert(
+            control!.reactive == undefined,
+            `$$169 The control ${acontrolId} is already reactive`
+        )
+
+        control!.reactive = {
+            state : astate,
+            prop: aprop
+        }
+    }
 
     /**
      * Refreshes the DOM elements that have reactive GUI controls
@@ -173,6 +199,11 @@ export class ApgGui {
                             }
 
                         }
+                        break;
+                    }
+                    case eApgDomFormElementType.OUTPUT: { 
+                        const output = control.element as IApgDomElement;
+                        output.innerHTML = reactiveValue.toString();
                         break;
                     }
 

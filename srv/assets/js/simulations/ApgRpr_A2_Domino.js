@@ -23,9 +23,6 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     const settings = this.params.settings;
     this.createWorld(settings);
     this.simulator.addWorld(this.world);
-    if (!this.params.settings.doRestart) {
-      this.simulator.resetCamera(settings.cameraPosition);
-    }
     this.simulator.setPreStepAction(() => {
       this.updateFromGui();
     });
@@ -185,11 +182,11 @@ class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
     super(asimulator, asettings);
     this._guiSettings = asettings;
   }
-  buildPanel() {
+  buildControls() {
     const simulationChangeControl = this.buildSimulationChangeControl();
     const restartSimulationButtonControl = this.buildRestartButtonControl();
     const cubesGroupControl = this.#buildCardsGroupControl();
-    const simControls = super.buildPanel();
+    const simControls = super.buildControls();
     const r = this.buildPanelControl(
       `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,
       [
@@ -201,7 +198,7 @@ class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
     );
     return r;
   }
-  buildHud() {
+  buildControlsToContainer() {
     const THROW_BALL_HUD_BTN = "throwBallHudControl";
     const throwBallControl = this.buildButtonControl(
       THROW_BALL_HUD_BTN,

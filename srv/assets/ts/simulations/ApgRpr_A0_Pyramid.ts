@@ -61,10 +61,6 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
         this.createWorld(settings);
         this.simulator.addWorld(this.world);
 
-        if (!this.params.settings!.doRestart) {
-            this.simulator.resetCamera(settings.cameraPosition);
-        }
-
         this.simulator.setPreStepAction(() => {
             this.updateFromGui();
         });
@@ -206,14 +202,14 @@ class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
 
 
-    override buildPanel() {
+    override buildControls() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
 
         const cubesGroupControl = this.#buildCubesGroupControl();
 
-        const simControls = super.buildPanel();
+        const simControls = super.buildControls();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,

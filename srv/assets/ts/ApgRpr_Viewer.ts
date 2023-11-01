@@ -156,7 +156,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         this.lines = new THREE.LineSegments(geometry, material);
         this.scene.add(this.lines);
 
-        this.logger.logDev('Constructor has built', ApgRpr_Viewer.RPR_VIEWER_NAME);
+        this.logger.devLog('Constructor has built', ApgRpr_Viewer.RPR_VIEWER_NAME);
 
     }
 
@@ -170,7 +170,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CONES, this.COLLIDERS_MESH_INSTANCES_MAX);
         this.#buildInstancedMeshesGroup(ApgRpr_eInstancedMeshesGroups.CAPSULES, this.COLLIDERS_MESH_INSTANCES_MAX);
 
-        this.logger.logDev('Instanced meshes was build ', ApgRpr_Viewer.RPR_VIEWER_NAME);
+        this.logger.devLog('Instanced meshes was build ', ApgRpr_Viewer.RPR_VIEWER_NAME);
 
     }
 
@@ -185,7 +185,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         this.collidersPalette.set(ApgRpr_eCollidersColorPalette.SENSOR, { colors: [0x00ff00], offset: 7 });
         this.collidersPalette.set(ApgRpr_eCollidersColorPalette.HIGHLIGHTED, { colors: [0xff0000], offset: 8 });
 
-        this.logger.logDev('Colliders palette initialized', ApgRpr_Viewer.RPR_VIEWER_NAME);
+        this.logger.devLog('Colliders palette initialized', ApgRpr_Viewer.RPR_VIEWER_NAME);
     }
 
 

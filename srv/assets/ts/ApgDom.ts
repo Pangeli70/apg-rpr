@@ -60,6 +60,7 @@ export interface IApgDomBrowserLocation {
 }
 
 export interface IApgDomStyle {
+
     visibility?: string;
 
     position?: string;
@@ -73,6 +74,8 @@ export interface IApgDomStyle {
 
     width?: string;
     height?: string;
+
+    fontSize?: string;
 
     cssText?: string;
 }
@@ -95,12 +98,15 @@ export interface IApgDomBrowserWindow {
 
 
 export interface IApgDomBrowserLocalStorage {
+
     getItem(akey: string): string;
     setItem(akey: string, avalue: string): void;
+    
 }
 
 
 export interface IApgDomElement {
+
     id: string;
     clientWidth: number;
     clientHeight: number;

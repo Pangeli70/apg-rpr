@@ -45,10 +45,6 @@ export class ApgRpr_C1_Damping_Simulation extends ApgRpr_Simulation {
         this.createWorld(settings);
         asimulator.addWorld(this.world);
 
-        if (!this.params.settings!.doRestart) {
-            asimulator.resetCamera(settings.cameraPosition);
-        }
-
         this.simulator.setPreStepAction(() => { this.updateFromGui(); });
 
     }
@@ -139,12 +135,12 @@ export class ApgRpr_C1_Damping_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
 
 
-    override buildPanel() {
+    override buildControls() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
 
-        const simControls = super.buildPanel();
+        const simControls = super.buildControls();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,

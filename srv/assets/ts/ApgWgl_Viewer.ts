@@ -255,7 +255,7 @@ export class ApgWgl_Viewer {
 
         this.window.addEventListener("resize", () => { this.resize() }, false);
 
-        this.logger.logDev('Constructor has built', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Constructor has built', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -286,7 +286,7 @@ export class ApgWgl_Viewer {
             perspCameraFov: 45,
             perspCameraNear: 0.1, // 100mm
             perspCameraFar: ametrics.worldSize / 2,
-            perspCameraPosition: new THREE.Vector3(0, ametrics.eyeHeight, 5),
+            perspCameraPosition: new THREE.Vector3(ametrics.sceneSize, ametrics.eyeHeight, ametrics.sceneSize),
 
             ambLightEnabled: true,
             ambLightIntensity: 0.2,
@@ -314,7 +314,7 @@ export class ApgWgl_Viewer {
             envMapBackgroundBlurryness: 0,
             envMapBackgroundIntensity: 1,
 
-            orbControlsTarget: new THREE.Vector3(0, 0, 0),
+            orbControlsTarget: new THREE.Vector3(0, 1, 0),
             orbControlsMinDistance: 0.1,
             orbControlsMaxDistance: ametrics.worldSize / 2,
             orbControlsMinPolarAngle: 0,
@@ -346,11 +346,11 @@ export class ApgWgl_Viewer {
             eyeHeight: aeyeHeight
         }
 
-        this.logger.logDev(` - Scene size: ${r.sceneSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
-        this.logger.logDev(` - World size: ${r.worldSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
-        this.logger.logDev(` - Sight size: ${r.sightSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
-        this.logger.logDev(` - Universe size: ${r.universeSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
-        this.logger.logDev('Scene metrics initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog(` - Scene size: ${r.sceneSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog(` - World size: ${r.worldSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog(` - Sight size: ${r.sightSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog(` - Universe size: ${r.universeSize}`, ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Scene metrics initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
         return r;
     }
@@ -363,7 +363,7 @@ export class ApgWgl_Viewer {
         this.viewerCanvasElement.id = 'ApgWglViewerCanvas';
         this.viewerElement.appendChild(this.viewerCanvasElement);
 
-        this.logger.logDev('Canvas initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Canvas initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -376,7 +376,7 @@ export class ApgWgl_Viewer {
         this.renderer.setPixelRatio(this.window.devicePixelRatio);
         this.#updateRenderer();
 
-        this.logger.logDev('Renderer initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Renderer initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -391,7 +391,7 @@ export class ApgWgl_Viewer {
         this.renderer.shadowMap.type = this.settings.shadowMapType;
         const deviceMaxAnysotropy = this.renderer.capabilities.getMaxAnisotropy();
 
-        this.logger.logDev('Renderer updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Renderer updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -410,7 +410,7 @@ export class ApgWgl_Viewer {
 
         this.#updateCamera();
 
-        this.logger.logDev('Camera initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Camera initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -424,7 +424,7 @@ export class ApgWgl_Viewer {
         this.camera.far = this.settings.perspCameraFar;
         this.camera.updateProjectionMatrix();
 
-        this.logger.logDev('Camera updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Camera updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -439,7 +439,7 @@ export class ApgWgl_Viewer {
             this.settings.fogDensity * this.settings.worldSize / 100
         );
 
-        this.logger.logDev('Scene initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Scene initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -451,7 +451,7 @@ export class ApgWgl_Viewer {
             this.settings.fogColor,
             this.settings.fogDensity * this.settings.worldSize / 100
         );
-        this.logger.logDev('Fog updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Fog updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -504,7 +504,7 @@ export class ApgWgl_Viewer {
         camLightHelper.layers.set(ApgWgl_eLayers.helpers);
         this.scene.add(camLightHelper);
 
-        this.logger.logDev('Light initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Light initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -516,7 +516,7 @@ export class ApgWgl_Viewer {
         this.ambLight.visible =
             !this.settings.envMapLighting
             && this.settings.ambLightEnabled;
-        this.logger.logDev('Ambient light updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Ambient light updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -546,7 +546,7 @@ export class ApgWgl_Viewer {
         this.sunLight.shadow.camera.left = -this.settings.sunLightShadowMapCameraSize;
         this.sunLight.shadow.camera.near = this.settings.sunLightShadowMapCameraNear;
         this.sunLight.shadow.camera.far = this.settings.sunLightShadowMapCameraFar;
-        this.logger.logDev('Sun light updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Sun light updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -566,7 +566,7 @@ export class ApgWgl_Viewer {
             this.camera.position.y,
             this.camera.position.z
         );
-        this.logger.logDev('Camera light updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Camera light updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -589,7 +589,7 @@ export class ApgWgl_Viewer {
         this.orbitControls.dampingFactor = this.settings.orbControlsDampingFactor;
 
         this.orbitControls.update();
-        this.logger.logDev('Orbit controls initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Orbit controls initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -614,7 +614,7 @@ export class ApgWgl_Viewer {
             this.hdrLoader.setCrossOrigin("anonymous"); // @TODO ??
         }
 
-        this.logger.logDev('Texture loaders initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Texture loaders initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -663,7 +663,7 @@ export class ApgWgl_Viewer {
 
         let envMap: THREE.Texture | THREE.DataTexture | null = null;
 
-        this.logger.logDev('Env map loading started', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Env map loading started', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
         switch (this.settings.envMapMode) {
 
@@ -713,7 +713,7 @@ export class ApgWgl_Viewer {
             this.#updateAllEnvMapSensitiveMaterialsInTheScene();
 
         }
-        this.logger.logDev('Env map updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Env map updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
 
     }
 
@@ -746,7 +746,7 @@ export class ApgWgl_Viewer {
                 this.camera.layers.disable(index)
             }
         }
-        this.logger.logDev('Layers updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+        this.logger.devLog('Layers updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
     }
 
 
@@ -767,7 +767,7 @@ export class ApgWgl_Viewer {
             this.#updateLayers();
             this.prevSettingsStamp = strSettingsStamp;
 
-            this.logger.logDev('Settings updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
+            this.logger.devLog('Settings updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
         }
 
     }
@@ -788,7 +788,7 @@ export class ApgWgl_Viewer {
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(this.viewerElement.clientWidth, this.viewerElement.clientHeight);
 
-            this.logger.logDev('Vieport resized', ApgWgl_Viewer.WGL_VIEWER_NAME);
+            this.logger.devLog('Vieport resized', ApgWgl_Viewer.WGL_VIEWER_NAME);
         }
     }
 

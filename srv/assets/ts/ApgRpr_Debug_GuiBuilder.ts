@@ -26,12 +26,14 @@ import {
 } from "./ApgRpr_Deps.ts";
 
 
-export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
+
+export class ApgRpr_Debug_GuiBuilder extends ApgGui_Builder {
 
     debugInfo: ApgRpr_IDebugInfo;
 
     readonly DEBUG_INFO_DIALOG_CNT = 'debugInfoDialogControl';
     readonly DEBUG_INFO_PAR_CNT = 'debugInfoParagraphControl';
+
 
 
     constructor(
@@ -44,7 +46,8 @@ export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
     }
 
 
-    override buildPanel() {
+
+    override buildControls() {
 
         const debugInfoDialogControl = this.#buildDebugInfoDialogControl();
 
@@ -62,9 +65,7 @@ export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
             }
         );
 
-        const r = this.buildDetailsControl(
-            "debugInfoGroupControl",
-            "Debug:",
+        const r = this.joinControls(
             [
                 debugInfoDialogControl,
                 debugInfoOpenButtonControl,
@@ -106,6 +107,7 @@ export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
     }
 
 
+
     #buildDebugInfos() {
 
         let hashInfo = "";
@@ -121,11 +123,11 @@ export class ApgRprSim_DebugGuiBuilder extends ApgGui_Builder {
                 RAPIER engine<br/>
                 Version: ${RAPIER.version()}<br/>
                 Current step: ${this.debugInfo.stepId}<br/>
-                Delta time: ${this.debugInfo.integrationParams!.dt.toFixed(5) }<br/>
+                Delta time: ${this.debugInfo.integrationParams!.dt.toFixed(5)}<br/>
                 Max velocity iter.: ${this.debugInfo.integrationParams!.maxVelocityIterations}<br/>
                 Max friction iter.: ${this.debugInfo.integrationParams!.maxVelocityFrictionIterations}<br/>
                 Max stabil. iter.: ${this.debugInfo.integrationParams!.maxStabilizationIterations}<br/>
-                Linear error: ${this.debugInfo.integrationParams!.allowedLinearError.toFixed(5) }<br/>
+                Linear error: ${this.debugInfo.integrationParams!.allowedLinearError.toFixed(5)}<br/>
                 Err. reduc. param.: ${this.debugInfo.integrationParams!.erp.toFixed(5)}<br/>
                 Predict.distance: ${this.debugInfo.integrationParams!.predictionDistance.toFixed(5)}<br/>
                 ${hashInfo}

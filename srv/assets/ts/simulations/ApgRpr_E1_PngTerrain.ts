@@ -118,11 +118,6 @@ export class ApgRpr_E1_PngTerrain_Simulation extends ApgRpr_Simulation {
             // @NOTE From here is the usual syncronous flow 
             this.simulator.addWorld(this.world);
 
-
-            if (!this.params.settings!.doRestart) {
-                this.simulator.resetCamera(asettings.cameraPosition);
-            }
-
             this.simulator.setPreStepAction(() => { this.updateFromGui(); });
 
         };
@@ -262,14 +257,14 @@ class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
 
 
-    override buildPanel() {
+    override buildControls() {
 
         const simulationChangeControl = this.buildSimulationChangeControl();
         const restartSimulationButtonControl = this.buildRestartButtonControl();
 
         const latticeGroupControl = this.#buildSampligGroupControl();
 
-        const simControls = super.buildPanel();
+        const simControls = super.buildControls();
 
         const r = this.buildPanelControl(
             `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,

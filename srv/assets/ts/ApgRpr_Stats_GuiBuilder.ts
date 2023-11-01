@@ -23,7 +23,7 @@ import {
 
 
 
-export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
+export class ApgRpr_Stats_GuiBuilder extends ApgGui_Builder {
 
     stats: ApgGui_Stats;
 
@@ -39,7 +39,7 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
     }
 
 
-    override buildPanel(): string {
+    override buildControls(): string {
 
         const statsGroupControl = this.#buildStatsGroupControl();
 
@@ -56,8 +56,9 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
 
     #buildStatsGroupControl(): string {
 
-        const panelsNames = Array.from(this.stats.panels.keys());
+        const panelsNames = this.stats.panelsNames;
         const keyValues = new Map<string, string>();
+        keyValues.set(this.stats.SHOW_ALL_PANELS.toString(), "All");
         for (let i = 0; i < panelsNames.length; i++) {
             keyValues.set(`${i}`, panelsNames[i]);
         }
@@ -65,8 +66,8 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
         const STAT_PANEL_SELECT_CNT = 'statPanelSelectControl';
         const statPanelSelectControl = this.buildSelectControl(
             STAT_PANEL_SELECT_CNT,
-            'Stat',
-            this.stats.currentPanelIndex.toString(),
+            'Show',
+            this.stats.currentPanelKey,
             keyValues,
             () => {
                 const select = this.gui.controls.get(STAT_PANEL_SELECT_CNT)!.element as IApgDomSelect;
@@ -92,11 +93,10 @@ export class ApgRprSim_StatsGuiBuilder extends ApgGui_Builder {
                 statPanelSelectControl,
                 statDivControl
             ],
-            this.stats.isStatsPanelOpened,
+            false,
             () => {
                 if (!this.gui.isRefreshing) {
                     this.stats.isStatsPanelOpened = !this.stats.isStatsPanelOpened
-                    this.gui.logNoTime('Stats group toggled');
                 }
             }
 

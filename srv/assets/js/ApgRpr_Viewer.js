@@ -70,7 +70,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     const geometry = new THREE.BufferGeometry();
     this.lines = new THREE.LineSegments(geometry, material);
     this.scene.add(this.lines);
-    this.logger.logDev("Constructor has built", ApgRpr_Viewer.RPR_VIEWER_NAME);
+    this.logger.devLog("Constructor has built", ApgRpr_Viewer.RPR_VIEWER_NAME);
   }
   #initInstanceMeshesGroups() {
     this.#buildInstancedMeshesGroup(0 /* BOXES */, this.COLLIDERS_MESH_INSTANCES_MAX);
@@ -78,7 +78,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     this.#buildInstancedMeshesGroup(2 /* CYLINDERS */, this.COLLIDERS_MESH_INSTANCES_MAX);
     this.#buildInstancedMeshesGroup(3 /* CONES */, this.COLLIDERS_MESH_INSTANCES_MAX);
     this.#buildInstancedMeshesGroup(4 /* CAPSULES */, this.COLLIDERS_MESH_INSTANCES_MAX);
-    this.logger.logDev("Instanced meshes was build ", ApgRpr_Viewer.RPR_VIEWER_NAME);
+    this.logger.devLog("Instanced meshes was build ", ApgRpr_Viewer.RPR_VIEWER_NAME);
   }
   #initCollidersPalette() {
     this.collidersPalette.set(0 /* FIXED */, { colors: [16766080], offset: 0 });
@@ -87,7 +87,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     this.collidersPalette.set(3 /* CCD_ENABLED */, { colors: [16776960], offset: 6 });
     this.collidersPalette.set(4 /* SENSOR */, { colors: [65280], offset: 7 });
     this.collidersPalette.set(5 /* HIGHLIGHTED */, { colors: [16711680], offset: 8 });
-    this.logger.logDev("Colliders palette initialized", ApgRpr_Viewer.RPR_VIEWER_NAME);
+    this.logger.devLog("Colliders palette initialized", ApgRpr_Viewer.RPR_VIEWER_NAME);
   }
   #buildInstancedMeshesGroup(agroup, amaxInstances) {
     let geometry;

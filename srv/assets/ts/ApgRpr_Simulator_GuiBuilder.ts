@@ -14,10 +14,6 @@ import {
 } from "./ApgDom.ts";
 
 import {
-    ApgGui
-} from "./ApgGui.ts";
-
-import {
     ApgGui_Builder
 } from "./ApgGui_Builder.ts";
 
@@ -26,16 +22,16 @@ import {
 } from "./ApgRpr_Simulation.ts";
 
 import {
-    ApgRprSim_DebugGuiBuilder
-} from "./ApgRprSim_DebugGuiBuilder.ts";
+    ApgRpr_Debug_GuiBuilder
+} from "./ApgRpr_Debug_GuiBuilder.ts";
 
 import {
-    ApgRprSim_LoggerGuiBuilder
-} from "./ApgRprSim_LoggerGuiBuilder.ts";
+    ApgGui_Logger_GuiBuilder
+} from "./ApgGui_Logger_GuiBuilder.ts";
 
 import {
-    ApgRprSim_StatsGuiBuilder
-} from "./ApgRprSim_StatsGuiBuilder.ts";
+    ApgRpr_Stats_GuiBuilder
+} from "./ApgRpr_Stats_GuiBuilder.ts";
 
 import {
     ApgRpr_eSimulationName
@@ -48,6 +44,7 @@ import {
 import {
     ApgRpr_Simulator
 } from "./ApgRpr_Simulator.ts";
+import { ApgGui_TReactiveState } from "./ApgGui.ts";
 
 
 
@@ -63,8 +60,6 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
     private settings: ApgRpr_ISimulationSettings;
 
     readonly CREDITS_DIALOG_CNT = 'creditsDialogControl';
-
-
 
     constructor(
         asimulator: ApgRpr_Simulator,
@@ -82,18 +77,18 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
      * 
      * @returns 
      */
-    override buildPanel() {
+    override buildControls() {
 
         const simulationGroupControl = this.#buildSimulationGroupControl();
 
-        const statsGroupControl = new ApgRprSim_StatsGuiBuilder(this.gui, this.simulator.stats!)
-            .buildPanel();
+        const statsControls = new ApgRpr_Stats_GuiBuilder(this.gui, this.simulator.stats!)
+            .buildControls();
 
-        const debugGroupControl = new ApgRprSim_DebugGuiBuilder(this.gui, this.simulator.debugInfo)
-            .buildPanel();
+        const debugControls = new ApgRpr_Debug_GuiBuilder(this.gui, this.simulator.debugInfo)
+            .buildControls();
 
-        const loggerGroupControl = new ApgRprSim_LoggerGuiBuilder(this.gui, this.simulator.logger)
-            .buildPanel();
+        const loggerControls = new ApgGui_Logger_GuiBuilder(this.gui, this.simulator.logger)
+            .buildControls();
 
         const FULLSCREEN_BTN_CNT = 'fullscreenButtonControl';
         const fullscreenButtonControl = this.buildButtonControl(
@@ -148,13 +143,13 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
         );
 
         const viewerSettingsControls = new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer!)
-            .buildPanel();
+            .buildControls();
 
         const controls = [
             simulationGroupControl,
-            statsGroupControl,
-            debugGroupControl,
-            loggerGroupControl,
+            statsControls,
+            debugControls,
+            loggerControls,
             fullscreenButtonControl,
             getUrlButtonControl,
             creditsDialogControl,
@@ -169,7 +164,7 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
 
 
 
-    override buildHud() {
+    override buildControlsToContainer() {
         return "";
     }
 
@@ -215,6 +210,7 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
 
 
     #buildSimulationGroupControl() {
+        const state = this.settings as unknown as ApgGui_TReactiveState;
 
         const SIM_VEL_ITER_CNT = 'simulationVelocityIterationsControl';
         const simulationVelocityIterationsControl = this.buildRangeControl(
@@ -230,6 +226,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_VEL_ITER_CNT, state, 'velocityIterations');
+        this.gui.setReactiveControl(SIM_VEL_ITER_CNT + "Value", state, 'velocityIterations');
 
         const SIM_FRIC_ITER_CNT = 'simulationFrictionIterationsControl';
         const simulationFrictionIterationsControl = this.buildRangeControl(
@@ -245,6 +243,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_FRIC_ITER_CNT, state, 'frictionIterations');
+        this.gui.setReactiveControl(SIM_FRIC_ITER_CNT + "Value", state, 'frictionIterations');
 
         const SIM_STAB_ITER_CNT = 'simulationStabilizationIterationsControl';
         const simulationStabilizationIterationsControl = this.buildRangeControl(
@@ -260,6 +260,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_STAB_ITER_CNT, state, 'stabilizationIterations');
+        this.gui.setReactiveControl(SIM_STAB_ITER_CNT + "Value", state, 'stabilizationIterations');
 
         const SIM_LIN_ERR_CNT = 'simulationLinearErrorControl';
         const simulationLinearErrorControl = this.buildRangeControl(
@@ -275,6 +277,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_LIN_ERR_CNT, state, 'linearError');
+        this.gui.setReactiveControl(SIM_LIN_ERR_CNT + "Value", state, 'linearError');
 
         const SIM_ERR_REDUC_RATIO_CNT = 'simulationErrorReductionRatioControl';
         const simulationErrorReductionRatioControl = this.buildRangeControl(
@@ -290,6 +294,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_ERR_REDUC_RATIO_CNT, state, 'errorReductionRatio');
+        this.gui.setReactiveControl(SIM_ERR_REDUC_RATIO_CNT + "Value", state, 'errorReductionRatio');
 
         const SIM_PREDICTION_DISTANCE_CNT = 'simulationPredictionDistanceControl';
         const simulationPredictionDistanceControl = this.buildRangeControl(
@@ -305,6 +311,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_PREDICTION_DISTANCE_CNT, state, 'predictionDistance');
+        this.gui.setReactiveControl(SIM_PREDICTION_DISTANCE_CNT + "Value", state, 'predictionDistance');
 
         const SIM_SPEED_CNT = 'simulationSpeedControl';
         const simulationSpeedControl = this.buildRangeControl(
@@ -320,6 +328,8 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 //alert(range.value);
             }
         );
+        this.gui.setReactiveControl(SIM_SPEED_CNT, state, 'slowDownFactor');
+        this.gui.setReactiveControl(SIM_SPEED_CNT + "Value", state, 'slowDownFactor');
 
         const RESET_BTN_CNT = 'resetButtonControl';
         const resetButtonControl = this.buildButtonControl(
@@ -327,13 +337,37 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
             'Reset',
             () => {
                 this.settings.doResetToDefaults = true;
-                this.gui.logNoTime('Reset button pressed');
+                this.gui.devLogNoTime('Reset button pressed');
+            }
+        );
+
+        const RESET_CAMERA_BTN_CNT = 'resetCameraButtonControl';
+        const resetCameraButtonControl = this.buildButtonControl(
+            RESET_CAMERA_BTN_CNT,
+            'Reset camera',
+            () => {
+                this.settings.doResetCamera = true;
+                this.gui.devLogNoTime('Reset camera button pressed');
+            }
+        );
+
+        const initialTitle = `Debug mode ${(this.settings.isDebugMode) ? "Off" : "On"}`;
+        const DEBUG_MODE_BTN_CNT = 'debugModeButtonControl';
+        const debugModeButtonControl = this.buildButtonControl(
+            DEBUG_MODE_BTN_CNT,
+            initialTitle,
+            () => {
+                this.settings.isDebugMode = !this.settings.isDebugMode;
+                const button = this.gui.controls.get(DEBUG_MODE_BTN_CNT)!.element as IApgDomButton;
+                const title = `Debug mode ${(this.settings.isDebugMode) ? "Off" : "On"}`;
+                button.innerText = title;
+                this.gui.devLogNoTime('Debug mode button pressed');
             }
         );
 
         const r = this.buildDetailsControl(
-            "simulationGroupControl",
-            "Simulation:",
+            "simulatorDetailsControl",
+            "Simulator params:",
             [
                 simulationVelocityIterationsControl,
                 simulationFrictionIterationsControl,
@@ -342,13 +376,15 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
                 simulationErrorReductionRatioControl,
                 simulationPredictionDistanceControl,
                 simulationSpeedControl,
+                debugModeButtonControl,
+                resetCameraButtonControl,
                 resetButtonControl,
             ],
-            this.settings.isSimulationGroupOpened,
+            this.settings.isSimulatorDetailsOpened,
             () => {
                 if (!this.gui.isRefreshing) {
-                    this.settings.isSimulationGroupOpened = !this.settings.isSimulationGroupOpened
-                    this.gui.logNoTime('Simulation group toggled');
+                    this.settings.isSimulatorDetailsOpened = !this.settings.isSimulatorDetailsOpened
+                    this.gui.devLogNoTime('Simultor details toggled');
                 }
             }
         );

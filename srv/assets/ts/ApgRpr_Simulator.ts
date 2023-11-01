@@ -16,10 +16,11 @@ import {
 } from "./ApgGui.ts";
 
 import {
-    ApgGui_Stats,
-    ApgRpr_Colliders_StatsPanel,
-    ApgRpr_Step_StatsPanel
-} from "./ApgGui_StatsPanel.ts";
+    ApgGui_Stats} from "./ApgGui_StatsPanel.ts";
+import {
+  ApgRpr_Colliders_StatsPanel,
+  ApgRpr_Step_StatsPanel
+} from "./ApgRpr_StatsPanels.ts";
 
 import {
     RAPIER, md5
@@ -204,7 +205,7 @@ export class ApgRpr_Simulator {
             this.mouse.y = 1 - (event.clientY / this._window.innerHeight) * 2;
         });
 
-        this._logger.logDev('Rpr simulator created', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
+        this._logger.devLog('Rpr simulator created', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
 
     }
 
@@ -334,7 +335,7 @@ export class ApgRpr_Simulator {
             this.viewer.addCollider(coll);
         });
 
-        this._logger.logDev('Rapier world added', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
+        this._logger.devLog('Rapier world added', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
     }
 
 
@@ -422,7 +423,7 @@ export class ApgRpr_Simulator {
         const localStorageSettings = JSON.stringify(aparams.settings!, undefined, "  ");
         this._window.localStorage.setItem(settingsKey, localStorageSettings);
 
-        this._logger.logDev(simulation + ' simulation changed', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
+        this._logger.devLog(simulation + ' simulation changed', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
 
     }
 
@@ -508,7 +509,7 @@ export class ApgRpr_Simulator {
             const frameDifference = Math.abs(framesPerSec - framesPerSecExpected);
 
             if (frameDifference > (framesPerSecExpected / 10)) {
-                this._logger.logDev(
+                this._logger.devLog(
                     `Simulation rate is lower than expected ${framesPerSec} vs ${framesPerSecExpected}`,
                     ApgRpr_Simulator.RPR_SIMULATOR_NAME
                 );
@@ -527,14 +528,14 @@ export class ApgRpr_Simulator {
 
                 this._world!.integrationParameters.dt = 0;
                 if (this._documentHasFocus != false) {
-                    this._logger.logDev('Document lost focus: simulation paused', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
+                    this._logger.devLog('Document lost focus: simulation paused', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
                     this._documentHasFocus = false;
                 }
             }
             else {
                 this._world!.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
                 if (this._documentHasFocus != true) {
-                    this._logger.logDev('Document has focus: simulation active', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
+                    this._logger.devLog('Document has focus: simulation active', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
                     this._documentHasFocus = true;
                 }
             }
