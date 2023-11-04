@@ -72,31 +72,12 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
 
         this.createGround();
 
-        // Create table.
-        const tableThickness = 0.05;
-        const tableWidth = 2;
-        const tableDepth = 1;
-        const tableHeight = 1;
-
-        const tableBodyDesc = RAPIER.RigidBodyDesc
-            .fixed();
-        const tableBody = this.world.createRigidBody(tableBodyDesc);
-        const tableColliderDesc = RAPIER.ColliderDesc
-            .cuboid(tableWidth / 2, tableThickness / 2, tableDepth / 2)
-            .setTranslation(0, tableHeight - tableThickness / 2, 0)
-        this.world.createCollider(tableColliderDesc, tableBody);
-
-
-        const tableSupportSize = 0.2;
-        const tableSupportHeight = (tableHeight - tableThickness);
-
-        const tableSupportBodyDesc = RAPIER.RigidBodyDesc
-            .fixed();
-        const tableSupportBody = this.world.createRigidBody(tableSupportBodyDesc);
-        const tableSupportColliderDesc = RAPIER.ColliderDesc
-            .cuboid(tableSupportSize / 2, tableSupportHeight / 2, tableSupportSize / 2)
-            .setTranslation(0, tableSupportHeight / 2, 0)
-        this.world.createCollider(tableSupportColliderDesc, tableSupportBody);
+        this.createSimulationTable(
+            asettings.table.width,
+            asettings.table.depth,
+            asettings.table.height,
+            asettings.table.thickness
+        );
 
         // Dynamic cubes layered in a pyramid shape.
         const baseSize = asettings.size;
@@ -111,7 +92,7 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
         for (let iy = 0; iy < baseSize; iy++) {
 
             const levelXZOrigin = initialXYDisplacement + (iy * distance / 2);
-            const levelHeight = tableHeight + fallLevel + cubeRadious;
+            const levelHeight = asettings.table.height + fallLevel + cubeRadious;
 
             for (let ix = 0; ix < (baseSize - iy); ix++) {
                 for (let iz = 0; iz < (baseSize - iy); iz++) {
@@ -129,7 +110,8 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
 
                     const boxColliderDesc = RAPIER.ColliderDesc
                         .cuboid(cubeRadious, cubeRadious, cubeRadious)
-                        .setRestitution(asettings.cubesRestitution);
+                        .setRestitution(asettings.cubesRestitution)
+                        .setFriction(1)
                     this.world.createCollider(boxColliderDesc, boxBody);
                 }
             }
@@ -173,11 +155,6 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
             },
 
         }
-
-        r.cameraPosition.eye.x = -5;
-        r.cameraPosition.eye.y = 1.65;
-        r.cameraPosition.eye.z = -5;
-        r.cameraPosition.target.y = 1;
 
         return r;
     }

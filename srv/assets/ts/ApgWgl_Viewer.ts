@@ -183,6 +183,7 @@ export class ApgWgl_Viewer {
     metrics: ApgWgl_IMetrics;
     private static readonly APG_WGL_DEFAULT_SCENE_SIZE = 10;
     private static readonly APG_WGL_DEFAULT_EYE_HEIGHT = 1.65;
+    get defaultEyeHeight() { return ApgWgl_Viewer.APG_WGL_DEFAULT_EYE_HEIGHT; }
     private static readonly APG_WGL_DEFAULT_WORLD_FACTOR = 10;
 
     /** Dom Elements*/
@@ -422,6 +423,7 @@ export class ApgWgl_Viewer {
         this.camera.aspect = aspectRatio;
         this.camera.near = this.settings.perspCameraNear;
         this.camera.far = this.settings.perspCameraFar;
+
         this.camera.updateProjectionMatrix();
 
         this.logger.devLog('Camera updated', ApgWgl_Viewer.WGL_VIEWER_NAME);
@@ -430,7 +432,7 @@ export class ApgWgl_Viewer {
 
 
 
-    #initScene(){
+    #initScene() {
 
         this.scene = new THREE.Scene();
 

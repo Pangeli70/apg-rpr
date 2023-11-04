@@ -30,7 +30,7 @@ export class ApgRpr_Simulation {
       this.params.settings = this.defaultSettings();
     }
     this.rng = new PRANDO(this.params.simulation);
-    this.saveParams();
+    this.savePrevParams();
     this.world = new RAPIER.World(this.params.settings.gravity);
     this.#applySettingsToWorld();
     if (this.params.settings.doRestart) {
@@ -46,79 +46,104 @@ export class ApgRpr_Simulation {
    * Set up the default Gui settings for the simulator. This method can be overridden 
    * and extended by derived classes to add more settings specific of the single simulation. 
    */
-  defaultSettings() {
-    return this.#defaultSettings(this.params.simulation, this.simulator);
-  }
-  #defaultSettings(asimulation, asimulator) {
+  defaultSettings(acolliderSize = this.simulator.DEFAULT_COLLIDER_SIZE, asceneSize = this.simulator.DEFAULT_SCENE_SIZE) {
+    const linearError = acolliderSize * this.simulator.DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR;
+    const preditionDistance = acolliderSize * this.simulator.DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR;
     const r = {
-      simulation: asimulation,
-      isSimulatorDetailsOpened: false,
-      gravity: new RAPIER.Vector3(0, -9.81, 0),
+      simulation: this.params.simulation,
+      colliderSize: acolliderSize,
+      sceneSize: asceneSize,
+      table: {
+        width: 2,
+        depth: 1,
+        height: 1,
+        thickness: 0.05
+      },
+      gravity: new RAPIER.Vector3(
+        this.simulator.DEFAULT_GRAVITY_X,
+        this.simulator.DEFAULT_GRAVITY_Y,
+        this.simulator.DEFAULT_GRAVITY_Z
+      ),
       gravityXMMS: {
-        min: -5,
-        max: 5,
+        min: -20,
+        max: 20,
         step: 0.1
       },
       gravityYMMS: {
-        min: -5,
-        max: 5,
+        min: -20,
+        max: 20,
         step: 0.1
       },
       gravityZMMS: {
-        min: -5,
-        max: 5,
+        min: -20,
+        max: 20,
         step: 0.1
       },
-      velocityIterations: asimulator.DEFAULT_VELOCITY_ITERATIONS,
+      velocityIterations: this.simulator.DEFAULT_APG_RPR_VELOCITY_ITERATIONS,
       velocityIterationsMMS: {
         min: 1,
         max: 16,
-        step: 3
+        step: 1
       },
-      frictionIterations: asimulator.DEFAULT_FRICTION_ITERATIONS,
+      frictionIterations: this.simulator.DEFAULT_APG_RPR_FRICTION_ITERATIONS,
       frictionIterationsMMS: {
         min: 1,
         max: 16,
-        step: 3
+        step: 1
       },
-      stabilizationIterations: asimulator.DEFAULT_STABILIZATION_ITERATIONS,
+      stabilizationIterations: this.simulator.DEFAULT_APG_RPR_STABILIZATION_ITERATIONS,
       stabilizationIterationsMMS: {
         min: 1,
         max: 16,
-        step: 3
+        step: 1
       },
-      linearError: asimulator.DEFAULT_LINEAR_ERROR,
+      ccdSteps: this.simulator.DEFAULT_RAPIER_CCD_STEPS,
+      ccdStepsMMS: {
+        min: 1,
+        max: 16,
+        step: 1
+      },
+      linearError,
       linearErrorMMS: {
-        min: 1e-4,
-        max: 0.01,
-        step: 1e-4
+        min: linearError / 5,
+        max: linearError * 5,
+        step: linearError / 5
       },
-      errorReductionRatio: asimulator.DEFAULT_ERR_REDUCTION_RATIO,
+      errorReductionRatio: this.simulator.DEFAULT_APG_RPR_ERR_REDUCTION_RATIO,
       errorReductionRatioMMS: {
         min: 0.05,
         max: 1,
         step: 0.05
       },
-      predictionDistance: asimulator.DEFAULT_PREDICTION_DISTANCE,
+      predictionDistance: preditionDistance,
       predictionDistanceMMS: {
-        min: 2e-3,
-        max: 0.1,
-        step: 2e-3
+        min: preditionDistance / 5,
+        max: preditionDistance * 5,
+        step: preditionDistance / 5
       },
       slowDownFactor: 1,
       slowdownMMS: {
         min: 1,
-        max: asimulator.MAX_SLOWDOWN,
+        max: this.simulator.MAX_SLOWDOWN,
         step: 1
       },
-      isDebugMode: false,
       cameraPosition: {
-        eye: { x: -80, y: 10, z: 80 },
-        target: { x: 0, y: 0, z: 0 }
+        eye: {
+          x: asceneSize,
+          y: this.simulator.viewer.defaultEyeHeight,
+          z: -asceneSize
+        },
+        target: {
+          x: 0,
+          y: 1,
+          z: 0
+        }
       },
+      isDebugMode: false,
       doResetCamera: false,
       doResetToDefaults: false,
       doRestart: false,
+      isSimulatorDetailsOpened: false,
       isStatsGroupOpened: false
     };
     return r;
@@ -169,7 +194,7 @@ export class ApgRpr_Simulation {
   updateFromGui() {
     if (this.needsUpdate()) {
       this.updateSimulatorFromGui();
-      this.saveParams();
+      this.savePrevParams();
       this.simulator.gui.updateReactiveControls();
     }
   }
@@ -261,16 +286,20 @@ export class ApgRpr_Simulation {
    * Save the params for later comparison in order to detect changes due
    * to the user's interaction
    */
-  saveParams() {
-    if (!this.prevParams) {
-      this.prevParams = {
-        simulation: this.params.simulation,
-        settings: null
-      };
-    } else {
-      this.prevParams.simulation = this.params.simulation;
-    }
-    this.prevParams.settings = JSON.parse(JSON.stringify(this.params.settings));
+  savePrevParams() {
+    this.prevParams = JSON.parse(JSON.stringify(this.params));
+  }
+  createSimulationTable(atableWidth = 2, atableDepth = 1, atableHeight = 1, atableThickness = 0.05) {
+    const tableBodyDesc = RAPIER.RigidBodyDesc.fixed();
+    const tableBody = this.world.createRigidBody(tableBodyDesc);
+    const tableColliderDesc = RAPIER.ColliderDesc.cuboid(atableWidth / 2, atableThickness / 2, atableDepth / 2).setTranslation(0, atableHeight - atableThickness / 2, 0).setFriction(2);
+    this.world.createCollider(tableColliderDesc, tableBody);
+    const tableSupportSize = 0.2;
+    const tableSupportHeight = atableHeight - atableThickness;
+    const tableSupportBodyDesc = RAPIER.RigidBodyDesc.fixed();
+    const tableSupportBody = this.world.createRigidBody(tableSupportBodyDesc);
+    const tableSupportColliderDesc = RAPIER.ColliderDesc.cuboid(tableSupportSize / 2, tableSupportHeight / 2, tableSupportSize / 2).setTranslation(0, tableSupportHeight / 2, 0);
+    this.world.createCollider(tableSupportColliderDesc, tableSupportBody);
   }
   /**
    * WARNING: The number of columns and rows generates a list of vertices

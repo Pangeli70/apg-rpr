@@ -131,7 +131,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     ) {
 
         super(awindow, adocument, aviewerElement, alogger, asceneSize);
-        
+
         this.logger.addLogger(ApgRpr_Viewer.RPR_VIEWER_NAME)
 
         this.rng = new PRANDO('ApgRprThreeViewer');
@@ -484,7 +484,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
                 instanceDesc.groupId = ApgRpr_eInstancedMeshesGroups.BALLS;
 
                 const radious = acollider.radius();
-                instanceDesc.scale = new THREE.Vector3(radious, radious, radious);
+                instanceDesc.scale = new THREE.Vector3(radious * 2, radious * 2, radious * 2);
                 break;
             }
             case RAPIER.ShapeType.Cylinder:
@@ -495,7 +495,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight() * 2.0;
-                instanceDesc.scale = new THREE.Vector3(radious, height, radious);
+                instanceDesc.scale = new THREE.Vector3(radious * 2, height, radious * 2);
                 break;
             }
             case RAPIER.ShapeType.Cone: {
@@ -505,7 +505,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight() * 2.0;
-                instanceDesc.scale = new THREE.Vector3(radious, height, radious);
+                instanceDesc.scale = new THREE.Vector3(radious * 2, height, radious * 2);
                 break;
             }
             case RAPIER.ShapeType.Capsule: {
@@ -515,7 +515,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
 
                 const radious = acollider.radius();
                 const height = acollider.halfHeight();
-                instanceDesc.scale = new THREE.Vector3(radious, height, radious);
+                instanceDesc.scale = new THREE.Vector3(radious * 4, height * 4, radious * 4);
                 break;
             }
             /** The following are non instanced meshes */

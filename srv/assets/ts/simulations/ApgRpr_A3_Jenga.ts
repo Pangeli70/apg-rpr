@@ -41,8 +41,11 @@ interface ApgRpr_A3_Jenga_ISimulationSettings extends ApgRpr_ISimulationSettings
     cubesRestitution: number;
     cubesRestitutionMMS: ApgGui_IMinMaxStep;
 
-    blockHeight: number;
-    blockHeightMMS: ApgGui_IMinMaxStep;
+    blockWidth: number;
+    blockWidthMMS: ApgGui_IMinMaxStep;
+
+    blockLevels: number;
+    blockLevelsMMS: ApgGui_IMinMaxStep;
 
 }
 
@@ -71,25 +74,60 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
         });
     }
 
+    override defaultSettings() {
+
+        const r: ApgRpr_A3_Jenga_ISimulationSettings = {
+
+            ...super.defaultSettings(),
+
+            isCubesGroupOpened: false,
+
+            cubesRestitution: 0,
+            cubesRestitutionMMS: {
+                min: 0.0,
+                max: 1.0,
+                step: 0.05
+            },
+
+            blockWidth: 0.1,
+            blockWidthMMS: {
+                min: 0.02,
+                max: 0.10,
+                step: 0.01
+            },
+
+            blockLevels: 8,
+            blockLevelsMMS: {
+                min: 2,
+                max: 12,
+                step: 1
+            },
+
+        }
+
+        return r;
+    }
 
     protected override createWorld(asettings: ApgRpr_A3_Jenga_ISimulationSettings) {
 
-        // Create Ground.
-        const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
-        const groundBody = this.world.createRigidBody(groundBodyDesc);
-        const groundColliderDesc = RAPIER.ColliderDesc.cuboid(30.0, 0.1, 30.0);
-        this.world.createCollider(groundColliderDesc, groundBody);
+        this.createGround();
 
+        this.createSimulationTable(
+            asettings.table.width,
+            asettings.table.depth,
+            asettings.table.height,
+            asettings.table.thickness
+        );
 
         const piecesPerRow = 4;
-        const levels = 16;
-        const shift = 1;
+        const levels = asettings.blockLevels;
+        const shift = asettings.table.height;
 
         // In THREE world units
-        const pieceWidth = 1;
+        const pieceWidth = asettings.blockWidth;
         const pieceHeight = pieceWidth / 2;
-        const pieceDepth = piecesPerRow;
-        const pieceGap = pieceWidth / 20;
+        const pieceDepth = pieceWidth * piecesPerRow;
+        const pieceGap = pieceWidth / 10;
         const pieceTolerance = pieceHeight / 40;
 
         const totalRowWidth = (pieceWidth * piecesPerRow) + (pieceGap * (piecesPerRow - 1));
@@ -102,31 +140,34 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
             for (let i = 0; i < piecesPerRow; i++) {
 
                 const delta = - halfRowCenter + ((pieceWidth + pieceGap) * i);
-                let x, z, w;
+                let x, z, w, d;
                 if (j % 2 == 0) {
                     x = delta;
                     z = 0;
-                    w = 0;
+                    w = pieceWidth;
+                    d = pieceDepth;
                 }
                 else {
                     x = 0;
                     z = delta;
-                    w = 1;
+                    w = pieceDepth;
+                    d = pieceWidth;
                 }
 
 
                 // Create dynamic cube.
                 const boxBodyDesc = RAPIER.RigidBodyDesc
                     .dynamic()
-                    .setRotation({ x: 0, y: 1, z: 0, w })
                     .setTranslation(x, y, z)
                 const boxBody = this.world.createRigidBody(boxBodyDesc);
 
-                const pW = pieceWidth + this.rng.next() * pieceTolerance;
+                const pW = w + this.rng.next() * pieceTolerance;
                 const pH = pieceHeight + this.rng.next() * pieceTolerance;
-                const pD = pieceDepth + this.rng.next() * pieceTolerance;
+                const pD = d + this.rng.next() * pieceTolerance;
 
-                const boxColliderDesc = RAPIER.ColliderDesc.cuboid(pW / 2, pH / 2, pD / 2);
+                const boxColliderDesc = RAPIER.ColliderDesc
+                    .cuboid(pW / 2, pH / 2, pD / 2)
+                    .setFriction(2)
                 this.world.createCollider(boxColliderDesc, boxBody)
                     .setRestitution(asettings.cubesRestitution);
 
@@ -158,36 +199,7 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
     }
 
 
-    override defaultSettings() {
 
-        const r: ApgRpr_A3_Jenga_ISimulationSettings = {
-
-            ...super.defaultSettings(),
-
-            isCubesGroupOpened: false,
-
-            cubesRestitution: 0,
-            cubesRestitutionMMS: {
-                min: 0.0,
-                max: 0.25,
-                step: 0.05
-            },
-
-            blockHeight: 0.1,
-            blockHeightMMS: {
-                min: 0.05,
-                max: 2,
-                step: 0.05
-            },
-
-        }
-
-        r.cameraPosition.eye.x = -30;
-        r.cameraPosition.eye.y = 20;
-        r.cameraPosition.eye.z = -30;
-
-        return r;
-    }
 
 }
 
@@ -251,16 +263,31 @@ class ApgRpr_A3_Jenga_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
             }
         );
 
-        const COL_BLK_HGT_CNT = 'columnCubeHeightControl';
-        const columnBlockHeightControl = this.buildRangeControl(
-            COL_BLK_HGT_CNT,
-            'Block height',
-            this._guiSettings.blockHeight,
-            this._guiSettings.blockHeightMMS,
+        const JEN_BLK_WID_CNT = 'jengaBlockWidthControl';
+        const jengaBlockWidthControl = this.buildRangeControl(
+            JEN_BLK_WID_CNT,
+            'Block width',
+            this._guiSettings.blockWidth,
+            this._guiSettings.blockWidthMMS,
             () => {
-                const range = this.gui.controls.get(COL_BLK_HGT_CNT)!.element as IApgDomRange;
-                this._guiSettings.blockHeight = parseFloat(range.value);
-                const output = this.gui.controls.get(`${COL_BLK_HGT_CNT}Value`)!.element as IApgDomElement;
+                const range = this.gui.controls.get(JEN_BLK_WID_CNT)!.element as IApgDomRange;
+                this._guiSettings.blockWidth = parseFloat(range.value);
+                const output = this.gui.controls.get(`${JEN_BLK_WID_CNT}Value`)!.element as IApgDomElement;
+                output.innerHTML = range.value;
+                //alert(range.value);
+            }
+        );
+
+        const JEN_BLK_LEVELS_CNT = 'jengaBlockLevelsControl';
+        const jengaBlockLevelsControl = this.buildRangeControl(
+            JEN_BLK_LEVELS_CNT,
+            'Levels',
+            this._guiSettings.blockLevels,
+            this._guiSettings.blockLevelsMMS,
+            () => {
+                const range = this.gui.controls.get(JEN_BLK_LEVELS_CNT)!.element as IApgDomRange;
+                this._guiSettings.blockLevels = parseFloat(range.value);
+                const output = this.gui.controls.get(`${JEN_BLK_LEVELS_CNT}Value`)!.element as IApgDomElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -269,16 +296,17 @@ class ApgRpr_A3_Jenga_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
         const r = this.buildDetailsControl(
             "cubesGroupControl",
-            "Cubes:",
+            "Blocks:",
             [
                 cubesRestitutionControl,
-                columnBlockHeightControl,
+                jengaBlockWidthControl,
+                jengaBlockLevelsControl,
             ],
             this._guiSettings.isCubesGroupOpened,
             () => {
                 if (!this.gui.isRefreshing) {
                     this._guiSettings.isCubesGroupOpened = !this._guiSettings.isCubesGroupOpened;
-                    this.gui.logNoTime('Cubes group toggled')
+                    this.gui.logNoTime('Blocks group toggled')
                 }
             }
 

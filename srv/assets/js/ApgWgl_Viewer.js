@@ -34,6 +34,9 @@ export class ApgWgl_Viewer {
   metrics;
   static APG_WGL_DEFAULT_SCENE_SIZE = 10;
   static APG_WGL_DEFAULT_EYE_HEIGHT = 1.65;
+  get defaultEyeHeight() {
+    return ApgWgl_Viewer.APG_WGL_DEFAULT_EYE_HEIGHT;
+  }
   static APG_WGL_DEFAULT_WORLD_FACTOR = 10;
   /** Dom Elements*/
   viewerElement;

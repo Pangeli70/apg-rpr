@@ -33,6 +33,7 @@ import {
     ApgRpr_Simulator
 } from "../ApgRpr_Simulator.ts";
 import { ApgUts } from "../ApgUts.ts";
+import { THREE } from "../ApgWgl_Deps.ts";
 
 
 interface ApgRpr_A1_Column_ISimulationSettings extends ApgRpr_ISimulationSettings {
@@ -125,27 +126,32 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
         const x = 0;
         const y = initial + (settings.blockHeight * this._currentBlock);
         const z = 0;
-        const w = this.rng.next() - 0.5;
+        const w = this.rng.next() * (Math.PI / 2);
         // const w = ApgRprUtils.Round(this._currentRotation, -3);
-        ApgUts.Assert(
-            Math.abs(w) <= 1,
-            'Rotation of quaternion greater than 1! In Rapier this is not allowed!'
-        );
+        // ApgUts.Assert(
+        //     Math.abs(w) <= 1,
+        //     'Rotation of quaternion greater than 1! In Rapier this is not allowed!'
+        // );
 
         this.logger.log(`Added block n°:${this._currentBlock}`, ApgRpr_Simulation.RPR_SIMULATION_NAME);
-        
+
+
+        const q = new THREE.Quaternion();
+        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), w);
         // Create dynamic cube.
         const boxBodyDesc = RAPIER.RigidBodyDesc
             .dynamic()
-            .setRotation({ x: 0, y: 1, z: 0, w })
+            .setRotation(q)
+        const boxBody = this.world
+            .createRigidBody(boxBodyDesc);
 
-        const boxBody = this.world.createRigidBody(boxBodyDesc);
         const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, settings.blockHeight / 2, cubeRadious)
             .setTranslation(x, y, z)
             .setFriction(settings.blocksFriction)
+            .setRestitution(settings.blocksRestitution);
+        const collider = this.world
+            .createCollider(boxColliderDesc, boxBody);
 
-        const collider = this.world.createCollider(boxColliderDesc, boxBody)
-        collider.setRestitution(settings.blocksRestitution);
         this.simulator.viewer.addCollider(collider);
 
         this._currentBlock++;
@@ -161,7 +167,7 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
 
         if (this.needsUpdate()) {
 
-            if (settings.addBlockPressed) { 
+            if (settings.addBlockPressed) {
                 this.#spawnNextBlock();
                 settings.addBlockPressed = false;
             }
@@ -270,7 +276,7 @@ class ApgRpr_A1_Column_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
         const addBlockControl = this.buildButtonControl(
             ADD_BLOCK_BTN,
             'Add block',
-            () => { 
+            () => {
                 this._guiSettings.addBlockPressed = true;
             }
         )

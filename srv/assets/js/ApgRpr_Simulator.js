@@ -94,14 +94,30 @@ export class ApgRpr_Simulator {
   DEFAULT_GRAVITY_Z = 0;
   /** This sets the viewer and the world*/
   DEFAULT_SCENE_SIZE = 10;
-  // default RAPIER settings
-  DEFAULT_VELOCITY_ITERATIONS = 4;
-  DEFAULT_FRICTION_ITERATIONS = 7;
-  DEFAULT_STABILIZATION_ITERATIONS = 1;
-  DEFAULT_LINEAR_ERROR = 1e-3;
-  DEFAULT_ERR_REDUCTION_RATIO = 0.8;
-  DEFAULT_PREDICTION_DISTANCE = 2e-3;
-  DEFAULT_SIMULATION_RATE = 1 / 60;
+  DEFAULT_COLLIDER_SIZE = 0.1;
+  // maxVelocityIterations
+  DEFAULT_RAPIER_VELOCITY_ITERATIONS = 4;
+  // maxVelocityFrictionIterations
+  DEFAULT_RAPIER_FRICTION_ITERATIONS = 1;
+  // maxStabilizationIterations
+  DEFAULT_RAPIER_STABILIZATION_ITERATIONS = 1;
+  // maxCcdSubsteps
+  DEFAULT_RAPIER_CCD_STEPS = 1;
+  // allowedLinearError
+  _DEFAULT_RAPIER_LINEAR_ERROR = 1e-3;
+  // erp
+  _DEFAULT_RAPIER_ERR_REDUCTION_RATIO = 0.2;
+  // predictionDistance
+  _DEFAULT_RAPIER_PREDICTION_DISTANCE = 2e-3;
+  // dt
+  DEFAULT_RAPIER_SIMULATION_RATE = 1 / 80;
+  DEFAULT_APG_RPR_VELOCITY_ITERATIONS = 4;
+  DEFAULT_APG_RPR_FRICTION_ITERATIONS = 2;
+  DEFAULT_APG_RPR_STABILIZATION_ITERATIONS = 2;
+  DEFAULT_APG_RPR_ERR_REDUCTION_RATIO = 0.9;
+  // collider size related factors
+  DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR = 0.01;
+  DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR = 0.01;
   MAX_SLOWDOWN = 20;
   LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";
   LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS = "ApgRprLocalStorage_SimulationSettingsFor_";
@@ -273,28 +289,32 @@ export class ApgRpr_Simulator {
     this._logger.devLog(simulation + " simulation changed", ApgRpr_Simulator.RPR_SIMULATOR_NAME);
   }
   run() {
-    if (this._world && this.#canRun()) {
-      if (this._preStepAction) {
-        this._preStepAction();
-      }
-      this._stepStatsPanel.begin();
-      this._world.step(this._events);
-      this._stepStatsPanel.end();
-      this._collidersStatsPanel.update(this._world.colliders.len());
+    const procStartTime = performance.now();
+    if (this._world) {
       this._stats.begin();
+      if (this.#canRun()) {
+        if (this._preStepAction) {
+          this._preStepAction();
+        }
+        this._stepStatsPanel.begin();
+        this._world.step(this._events);
+        this._stepStatsPanel.end();
+        this._collidersStatsPanel.update(this._world.colliders.len());
+        this.debugInfo.stepId++;
+        this.#collectDebugInfo();
+        if (this._postStepAction) {
+          this._postStepAction();
+        }
+      }
       this.viewer.updateAndRender(this._world, this._isInDebugMode);
       this._stats.end();
-      this.debugInfo.stepId++;
-      this.#collectDebugInfo();
-      if (this._postStepAction) {
-        this._postStepAction();
-      }
     }
+    const procEndTime = performance.now();
+    const timeOut = this.#timeoutMetering(procEndTime, procStartTime);
     this._window.setTimeout(() => {
       this.#focusDetection();
-      this.#timeoutMetering();
       this.run();
-    }, this.DEFAULT_SIMULATION_RATE);
+    }, timeOut);
   }
   #canRun() {
     this._runCall++;
@@ -308,20 +328,23 @@ export class ApgRpr_Simulator {
     }
     return r;
   }
-  #timeoutMetering() {
-    const frameTime = performance.now();
+  #timeoutMetering(aendTime, astartTime) {
+    let r = this.DEFAULT_RAPIER_SIMULATION_RATE * 1e3;
+    const deltaTime = aendTime - astartTime;
     if (this._lastFrameTime !== -1) {
-      const framesPerSecExpected = 1 / this.DEFAULT_SIMULATION_RATE;
-      const framesPerSec = 1 / ((frameTime - this._lastFrameTime) / 1e3);
-      const frameDifference = Math.abs(framesPerSec - framesPerSecExpected);
-      if (frameDifference > framesPerSecExpected / 10) {
+      r -= deltaTime;
+      if (r < 0) {
+        r = 0;
+        const framesPerSecExpected = 1 / this.DEFAULT_RAPIER_SIMULATION_RATE;
+        const framesPerSec = 1 / (deltaTime / 1e3);
         this._logger.devLog(
-          `Simulation rate is lower than expected ${framesPerSec} vs ${framesPerSecExpected}`,
+          `Simulation rate is lower than expected ${framesPerSec.toFixed(1)} vs ${framesPerSecExpected}`,
           ApgRpr_Simulator.RPR_SIMULATOR_NAME
         );
       }
     }
-    this._lastFrameTime = frameTime;
+    this._lastFrameTime = deltaTime;
+    return r;
   }
   #focusDetection() {
     if (this._world) {
@@ -332,7 +355,7 @@ export class ApgRpr_Simulator {
           this._documentHasFocus = false;
         }
       } else {
-        this._world.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
+        this._world.integrationParameters.dt = this.DEFAULT_RAPIER_SIMULATION_RATE;
         if (this._documentHasFocus != true) {
           this._logger.devLog("Document has focus: simulation active", ApgRpr_Simulator.RPR_SIMULATOR_NAME);
           this._documentHasFocus = true;

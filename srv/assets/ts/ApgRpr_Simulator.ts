@@ -16,10 +16,11 @@ import {
 } from "./ApgGui.ts";
 
 import {
-    ApgGui_Stats} from "./ApgGui_StatsPanel.ts";
+    ApgGui_Stats
+} from "./ApgGui_StatsPanel.ts";
 import {
-  ApgRpr_Colliders_StatsPanel,
-  ApgRpr_Step_StatsPanel
+    ApgRpr_Colliders_StatsPanel,
+    ApgRpr_Step_StatsPanel
 } from "./ApgRpr_StatsPanels.ts";
 
 import {
@@ -146,15 +147,33 @@ export class ApgRpr_Simulator {
     /** This sets the viewer and the world*/
     readonly DEFAULT_SCENE_SIZE = 10;
 
-    // default RAPIER settings
-    readonly DEFAULT_VELOCITY_ITERATIONS = 4;
-    readonly DEFAULT_FRICTION_ITERATIONS = 7;
-    readonly DEFAULT_STABILIZATION_ITERATIONS = 1;
-    readonly DEFAULT_LINEAR_ERROR = 0.001;
-    readonly DEFAULT_ERR_REDUCTION_RATIO = 0.8;
-    readonly DEFAULT_PREDICTION_DISTANCE = 0.002;
+    readonly DEFAULT_COLLIDER_SIZE = 0.1;
 
-    readonly DEFAULT_SIMULATION_RATE = 1 / 60;
+    // maxVelocityIterations
+    readonly DEFAULT_RAPIER_VELOCITY_ITERATIONS = 4;
+    // maxVelocityFrictionIterations
+    readonly DEFAULT_RAPIER_FRICTION_ITERATIONS = 1;
+    // maxStabilizationIterations
+    readonly DEFAULT_RAPIER_STABILIZATION_ITERATIONS = 1;
+    // maxCcdSubsteps
+    readonly DEFAULT_RAPIER_CCD_STEPS = 1;
+    // allowedLinearError
+    readonly _DEFAULT_RAPIER_LINEAR_ERROR = 0.001;
+    // erp
+    readonly _DEFAULT_RAPIER_ERR_REDUCTION_RATIO = 0.2;
+    // predictionDistance
+    readonly _DEFAULT_RAPIER_PREDICTION_DISTANCE = 0.002;
+    // dt
+    readonly DEFAULT_RAPIER_SIMULATION_RATE = 1 / 80;
+
+
+    readonly DEFAULT_APG_RPR_VELOCITY_ITERATIONS = 4;
+    readonly DEFAULT_APG_RPR_FRICTION_ITERATIONS = 2;
+    readonly DEFAULT_APG_RPR_STABILIZATION_ITERATIONS = 2;
+    readonly DEFAULT_APG_RPR_ERR_REDUCTION_RATIO = 0.9;
+    // collider size related factors
+    readonly DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR = 0.01;
+    readonly DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR = 0.01;
 
     readonly MAX_SLOWDOWN = 20;
 
@@ -407,7 +426,7 @@ export class ApgRpr_Simulator {
         // @TODO this should freeze ther THREE viewer updates and remove all the meshes from the scene -- APG 20230922
         this.viewer.reset();
 
-        if (aparams.settings) { 
+        if (aparams.settings) {
             aparams.settings.doRestart = false;
         }
 
@@ -431,34 +450,43 @@ export class ApgRpr_Simulator {
 
     run() {
 
-        if (this._world && this.#canRun()) {
+        const procStartTime = performance.now();
 
-            if (this._preStepAction) {
-                // @MAYBE  And if we want to pass some arguments?? -- APG 20230812
-                // @WARNING be a aware that in a game all the simulation logic has to run here -- APG 20230814 
-                this._preStepAction();
+        if (this._world) {
+
+            this._stats!.begin();
+
+            if (this.#canRun()) {
+
+                if (this._preStepAction) {
+                    // @MAYBE  And if we want to pass some arguments?? -- APG 20230812
+                    // @WARNING be a aware that in a game all the simulation logic has to run here -- APG 20230814 
+                    this._preStepAction();
+                }
+
+                // @NOTE Here we update the RAPIER world!!!!
+                this._stepStatsPanel!.begin();
+                this._world.step(this._events); // WTF ???
+                this._stepStatsPanel!.end();
+
+                this._collidersStatsPanel!.update(this._world.colliders.len());
+
+                this.debugInfo.stepId++;
+
+                this.#collectDebugInfo();
+
+                if (this._postStepAction) {
+                    this._postStepAction();
+                }
             }
 
-            // @NOTE Here we update the RAPIER world!!!!
-            this._stepStatsPanel!.begin();
-            this._world.step(this._events); // WTF ???
-            this._stepStatsPanel!.end();
-
-            this._collidersStatsPanel!.update(this._world.colliders.len());
-
             // @NOTE Here we update THREE.js after the world update!!! 
-            this._stats!.begin();
             this.viewer.updateAndRender(this._world, this._isInDebugMode);
             this._stats!.end();
 
-            this.debugInfo.stepId++;
-
-            this.#collectDebugInfo();
-
-            if (this._postStepAction) {
-                this._postStepAction();
-            }
         }
+        const procEndTime = performance.now();
+        const timeOut = this.#timeoutMetering(procEndTime, procStartTime);
 
 
         // @NOTE Here is the main loop of the simulation !!!
@@ -466,12 +494,9 @@ export class ApgRpr_Simulator {
         this._window.setTimeout(() => {
 
             this.#focusDetection();
-
-            this.#timeoutMetering();
-
             this.run();
 
-        }, this.DEFAULT_SIMULATION_RATE);
+        }, timeOut);
 
     }
 
@@ -498,25 +523,31 @@ export class ApgRpr_Simulator {
 
 
 
-    #timeoutMetering() {
+    #timeoutMetering(aendTime: number, astartTime: number) {
 
-        const frameTime = performance.now();
+        let r = this.DEFAULT_RAPIER_SIMULATION_RATE * 1000;
 
-        // Detect and log the slowdown if it is larger than 10%
+        const deltaTime = aendTime - astartTime;
+
         if (this._lastFrameTime !== -1) {
-            const framesPerSecExpected = 1 / this.DEFAULT_SIMULATION_RATE;
-            const framesPerSec = 1 / ((frameTime - this._lastFrameTime) / 1000);
-            const frameDifference = Math.abs(framesPerSec - framesPerSecExpected);
 
-            if (frameDifference > (framesPerSecExpected / 10)) {
+            r -= deltaTime;
+            // If we are late so set timeout to zero to run continuously at best possible speed
+            if (r < 0) {
+                r = 0;
+
+                const framesPerSecExpected = 1 / this.DEFAULT_RAPIER_SIMULATION_RATE;
+                const framesPerSec = 1 / (deltaTime / 1000);
+
                 this._logger.devLog(
-                    `Simulation rate is lower than expected ${framesPerSec} vs ${framesPerSecExpected}`,
+                    `Simulation rate is lower than expected ${framesPerSec.toFixed(1)} vs ${framesPerSecExpected}`,
                     ApgRpr_Simulator.RPR_SIMULATOR_NAME
                 );
-            }
 
+            }
         }
-        this._lastFrameTime = frameTime;
+        this._lastFrameTime = deltaTime;
+        return r;
     }
 
 
@@ -533,7 +564,7 @@ export class ApgRpr_Simulator {
                 }
             }
             else {
-                this._world!.integrationParameters.dt = this.DEFAULT_SIMULATION_RATE;
+                this._world!.integrationParameters.dt = this.DEFAULT_RAPIER_SIMULATION_RATE;
                 if (this._documentHasFocus != true) {
                     this._logger.devLog('Document has focus: simulation active', ApgRpr_Simulator.RPR_SIMULATOR_NAME);
                     this._documentHasFocus = true;

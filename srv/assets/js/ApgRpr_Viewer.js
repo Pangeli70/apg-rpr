@@ -288,7 +288,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         instance = instancesGroups[instanceDesc.indexInGroup];
         instanceDesc.groupId = 1 /* BALLS */;
         const radious = acollider.radius();
-        instanceDesc.scale = new THREE.Vector3(radious, radious, radious);
+        instanceDesc.scale = new THREE.Vector3(radious * 2, radious * 2, radious * 2);
         break;
       }
       case RAPIER.ShapeType.Cylinder:
@@ -298,7 +298,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         instanceDesc.groupId = 2 /* CYLINDERS */;
         const radious = acollider.radius();
         const height = acollider.halfHeight() * 2;
-        instanceDesc.scale = new THREE.Vector3(radious, height, radious);
+        instanceDesc.scale = new THREE.Vector3(radious * 2, height, radious * 2);
         break;
       }
       case RAPIER.ShapeType.Cone: {
@@ -307,7 +307,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         instanceDesc.groupId = 3 /* CONES */;
         const radious = acollider.radius();
         const height = acollider.halfHeight() * 2;
-        instanceDesc.scale = new THREE.Vector3(radious, height, radious);
+        instanceDesc.scale = new THREE.Vector3(radious * 2, height, radious * 2);
         break;
       }
       case RAPIER.ShapeType.Capsule: {
@@ -316,7 +316,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         instanceDesc.groupId = 4 /* CAPSULES */;
         const radious = acollider.radius();
         const height = acollider.halfHeight();
-        instanceDesc.scale = new THREE.Vector3(radious, height, radious);
+        instanceDesc.scale = new THREE.Vector3(radious * 4, height * 4, radious * 4);
         break;
       }
       case RAPIER.ShapeType.TriMesh:

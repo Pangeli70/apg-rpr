@@ -7,7 +7,7 @@ import {
 import {
   ApgRpr_Simulation
 } from "../ApgRpr_Simulation.ts";
-import { ApgUts } from "../ApgUts.ts";
+import { THREE } from "../ApgWgl_Deps.ts";
 export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
   _currentRotation = -1;
   _rotationDelta = 0;
@@ -48,17 +48,14 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
     const x = 0;
     const y = initial + settings.blockHeight * this._currentBlock;
     const z = 0;
-    const w = this.rng.next() - 0.5;
-    ApgUts.Assert(
-      Math.abs(w) <= 1,
-      "Rotation of quaternion greater than 1! In Rapier this is not allowed!"
-    );
+    const w = this.rng.next() * (Math.PI / 2);
     this.logger.log(`Added block n\xB0:${this._currentBlock}`, ApgRpr_Simulation.RPR_SIMULATION_NAME);
-    const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setRotation({ x: 0, y: 1, z: 0, w });
+    const q = new THREE.Quaternion();
+    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), w);
+    const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setRotation(q);
     const boxBody = this.world.createRigidBody(boxBodyDesc);
-    const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, settings.blockHeight / 2, cubeRadious).setTranslation(x, y, z).setFriction(settings.blocksFriction);
+    const boxColliderDesc = RAPIER.ColliderDesc.cuboid(cubeRadious, settings.blockHeight / 2, cubeRadious).setTranslation(x, y, z).setFriction(settings.blocksFriction).setRestitution(settings.blocksRestitution);
     const collider = this.world.createCollider(boxColliderDesc, boxBody);
-    collider.setRestitution(settings.blocksRestitution);
     this.simulator.viewer.addCollider(collider);
     this._currentBlock++;
     this._currentRotation += this._rotationDelta;
