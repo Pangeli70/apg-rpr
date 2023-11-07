@@ -53,6 +53,15 @@ export class ApgUts_Logger {
 
 
 
+    /** Returns true if the requested logger is already in the map */
+    hasLogger(aname: string) {
+
+        return this._loggerMap.has(aname);
+
+    }
+
+
+
     /** Returns the page of the logged events for the specified logger */
     logs(alogger: string, apage = 0) {
 

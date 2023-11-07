@@ -10,8 +10,8 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulator_GuiBuilder.ts";
+    ApgRpr_Simulation_GuiBuilder
+} from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -109,8 +109,6 @@ export class ApgRpr_C1_Damping_Simulation extends ApgRpr_Simulation {
         r.cameraPosition.eye.y = 2;
         r.cameraPosition.eye.z = 80;
 
-        // Custom +Z gravity on this simulation
-        r.gravity = new RAPIER.Vector3(0, 0, +9.81)
 
         return r;
     }
@@ -119,7 +117,7 @@ export class ApgRpr_C1_Damping_Simulation extends ApgRpr_Simulation {
 
 
 
-export class ApgRpr_C1_Damping_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+export class ApgRpr_C1_Damping_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
     private _guiSettings: ApgRpr_C1_Damping_ISimulationSettings;
 

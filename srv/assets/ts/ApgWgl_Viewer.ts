@@ -43,9 +43,13 @@ export enum ApgWgl_eLayers {
     unassigned = 0,
     helpers = 1,
     lights = 2,
-    characters = 3,
-    colliders = 4,
-    instancedColliders = 5,
+
+    staticColliders = 20,
+    staticSensors = 21,
+    kinematicColliders = 22,
+    dynamicColliders = 23,
+    dynamicInstancedColliders = 24,
+    characters = 25,
 }
 
 
@@ -72,6 +76,9 @@ export interface ApgWgl_IViewerSettings {
     /** Height position of the camera for the character head */
     eyeHeight: number;
 
+    /** Renderer scaling factor */
+    pixelRatio: number;
+
     /** Color of the fog */
     fogColor: THREE.Color;
     /** Exponential fog density */
@@ -93,6 +100,7 @@ export interface ApgWgl_IViewerSettings {
     shadowMapRadious: number;
     /** Multiples of 1024 */
     shadowMapSize: number;
+
     /** Anysotropy for textures */
     anisotropy: number;
 
@@ -185,6 +193,7 @@ export class ApgWgl_Viewer {
     private static readonly APG_WGL_DEFAULT_EYE_HEIGHT = 1.65;
     get defaultEyeHeight() { return ApgWgl_Viewer.APG_WGL_DEFAULT_EYE_HEIGHT; }
     private static readonly APG_WGL_DEFAULT_WORLD_FACTOR = 10;
+    readonly APG_WGL_MAX_PIXEL_RATIO;
 
     /** Dom Elements*/
     protected viewerElement!: IApgDomElement;
@@ -236,8 +245,10 @@ export class ApgWgl_Viewer {
         this.logger = alogger;
         this.logger.addLogger(ApgWgl_Viewer.WGL_VIEWER_NAME)
 
+        this.APG_WGL_MAX_PIXEL_RATIO = this.window.devicePixelRatio;
+
         this.metrics = this.#initMetrics(asceneSize, aworldFactor, aeyeHeight);
-        this.settings = ApgWgl_Viewer.GetDefaultSettings(this.metrics)
+        this.settings = this.defaultSettings(this.window, this.metrics)
         this.prevSettingsStamp = JSON.stringify(this.settings);
 
         this.#initCanvas();
@@ -261,11 +272,16 @@ export class ApgWgl_Viewer {
 
 
 
-    static GetDefaultSettings(ametrics: ApgWgl_IMetrics) {
+    defaultSettings(
+        awindow: IApgDomBrowserWindow,
+        ametrics: ApgWgl_IMetrics
+    ) {
         const r: ApgWgl_IViewerSettings = {
 
             worldSize: ametrics.worldSize,
             eyeHeight: ametrics.eyeHeight,
+
+            pixelRatio: awindow.devicePixelRatio,
 
             fogColor: new THREE.Color(0x888888),
             fogDensity: 0.00025,
@@ -372,9 +388,10 @@ export class ApgWgl_Viewer {
 
     #initRenderer() {
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.viewerCanvasElement });
+        this.renderer = new THREE.WebGLRenderer(
+            { antialias: true, canvas: this.viewerCanvasElement }
+        );
         this.renderer.setSize(this.viewerElement.clientWidth, this.viewerElement.clientHeight);
-        this.renderer.setPixelRatio(this.window.devicePixelRatio);
         this.#updateRenderer();
 
         this.logger.devLog('Renderer initialized', ApgWgl_Viewer.WGL_VIEWER_NAME);
@@ -384,6 +401,7 @@ export class ApgWgl_Viewer {
 
     #updateRenderer() {
 
+        this.renderer.setPixelRatio(this.settings.pixelRatio);
         this.renderer.setClearColor(this.settings.clearColor, 1);
         this.renderer.toneMapping = this.settings.toneMapping;
         this.renderer.toneMappingExposure = this.settings.toneMappingExposure;

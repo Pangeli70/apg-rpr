@@ -28,8 +28,8 @@ import {
 } from "../ApgRpr_Simulation.ts";
 
 import {
-    ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulator_GuiBuilder.ts";
+    ApgRpr_Simulation_GuiBuilder
+} from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_Simulator
@@ -241,7 +241,7 @@ export class ApgRpr_E1_PngTerrain_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
     private _guiSettings: ApgRpr_E1_PngTerrain_ISimulationSettings;
 

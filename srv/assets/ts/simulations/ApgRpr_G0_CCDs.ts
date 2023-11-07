@@ -24,8 +24,8 @@ import {
 } from "../ApgRpr_Interfaces.ts";
 
 import {
-    ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulator_GuiBuilder.ts";
+    ApgRpr_Simulation_GuiBuilder
+} from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -218,7 +218,7 @@ export class ApgRpr_G0_CCDs_Simulation extends ApgRpr_Simulation {
 }
 
 
-export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
     private _guiSettings: ApgRpr_G0_CCDs_ISimulationSettings;
 

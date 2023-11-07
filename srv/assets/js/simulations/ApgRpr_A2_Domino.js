@@ -2,8 +2,8 @@ import {
   RAPIER
 } from "../ApgRpr_Deps.ts";
 import {
-  ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulator_GuiBuilder.ts";
+  ApgRpr_Simulation_GuiBuilder
+} from "../ApgRpr_Simulation_GuiBuilder.ts";
 import {
   ApgRpr_Simulation
 } from "../ApgRpr_Simulation.ts";
@@ -176,7 +176,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     return r;
   }
 }
-class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
   _guiSettings;
   constructor(asimulator, asettings) {
     super(asimulator, asettings);

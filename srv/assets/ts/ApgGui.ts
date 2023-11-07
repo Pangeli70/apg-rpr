@@ -28,7 +28,7 @@ export interface ApgGui_IMinMaxStep {
 export type ApgGui_TSelectValuesMap = Map<string, string>;
 
 
-export type ApgGui_TReactiveState = Record<string, string | number | boolean>
+export type ApgGui_TReactiveState = Record<string, string | number | boolean | Record<string, string | number | boolean>>;
 
 
 export interface ApgGui_IReactive {
@@ -157,20 +157,20 @@ export class ApgGui {
         acontrolId: string,
         astate: ApgGui_TReactiveState,
         aprop: string
-    ) { 
+    ) {
         const control = this.controls.get(acontrolId);
         ApgUts.Assert(
             control != undefined,
             `$$164 Trying to set reactivity to control ${acontrolId} but it does not exist in the map.`
         )
-        
+
         ApgUts.Assert(
             control!.reactive == undefined,
             `$$169 The control ${acontrolId} is already reactive`
         )
 
         control!.reactive = {
-            state : astate,
+            state: astate,
             prop: aprop
         }
     }
@@ -180,11 +180,30 @@ export class ApgGui {
      */
     updateReactiveControls() {
 
-        for (const [_key, control] of this.controls) {
+        for (const [key, control] of this.controls) {
 
             if (control.reactive != undefined) {
 
-                const reactiveValue = control.reactive.state[control.reactive.prop];
+                const nestedProps = control.reactive.prop.split(".");
+                let i = 0;
+                let reactiveValue = control.reactive.state;
+                do {
+                    reactiveValue = reactiveValue[nestedProps[i]] as unknown as ApgGui_TReactiveState;
+                    const typeOfValue = typeof reactiveValue;
+                    if (i == (nestedProps.length - 1)) {
+                        ApgUts.Assert(
+                            typeOfValue != 'object',
+                            `Last property ${control.reactive.prop} in state of reactive control ${key} can't have an object value.`
+                        )
+                    }
+                    else {
+                        ApgUts.Assert(
+                            typeOfValue == 'object',
+                            `Itermediate property ${nestedProps[i]} of ${control.reactive.prop} in state of reactive control ${key} must be an object value.`
+                        )
+                    }
+                    i++;
+                } while (i < nestedProps.length)
 
                 switch (control.type) {
 
@@ -201,7 +220,7 @@ export class ApgGui {
                         }
                         break;
                     }
-                    case eApgDomFormElementType.OUTPUT: { 
+                    case eApgDomFormElementType.OUTPUT: {
                         const output = control.element as IApgDomElement;
                         output.innerHTML = reactiveValue.toString();
                         break;
@@ -209,8 +228,8 @@ export class ApgGui {
 
                 }
             }
+
         }
+
     }
-
-
 }

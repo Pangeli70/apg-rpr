@@ -19,8 +19,8 @@ import {
 } from "./ApgRpr_Interfaces.ts";
 
 import {
-    ApgRpr_Simulator_GuiBuilder
-} from "./ApgRpr_Simulator_GuiBuilder.ts";
+    ApgRpr_Simulation_GuiBuilder
+} from "./ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_eSimulationName
@@ -141,7 +141,9 @@ export class ApgRpr_Simulation {
 
         this.simulator = asimulator;
         this.logger = asimulator.logger;
-        this.logger.addLogger(ApgRpr_Simulation.RPR_SIMULATION_NAME);
+        if (!this.logger.hasLogger(ApgRpr_Simulation.RPR_SIMULATION_NAME)) { 
+            this.logger.addLogger(ApgRpr_Simulation.RPR_SIMULATION_NAME);
+        }
 
         this.params = aparams;
 
@@ -207,44 +209,44 @@ export class ApgRpr_Simulation {
             gravityXMMS: {
                 min: -20,
                 max: 20,
-                step: 0.1
+                step: 0.2
             },
             gravityYMMS: {
                 min: -20,
                 max: 20,
-                step: 0.1
+                step: 0.2
             },
             gravityZMMS: {
                 min: -20,
                 max: 20,
-                step: 0.1
+                step: 0.2
             },
 
             velocityIterations: this.simulator.DEFAULT_APG_RPR_VELOCITY_ITERATIONS,
             velocityIterationsMMS: {
                 min: 1,
-                max: 16,
+                max: 20,
                 step: 1
             },
 
             frictionIterations: this.simulator.DEFAULT_APG_RPR_FRICTION_ITERATIONS,
             frictionIterationsMMS: {
                 min: 1,
-                max: 16,
+                max: 20,
                 step: 1
             },
 
             stabilizationIterations: this.simulator.DEFAULT_APG_RPR_STABILIZATION_ITERATIONS,
             stabilizationIterationsMMS: {
                 min: 1,
-                max: 16,
+                max: 20,
                 step: 1
             },
 
             ccdSteps: this.simulator.DEFAULT_RAPIER_CCD_STEPS,
             ccdStepsMMS: {
                 min: 1,
-                max: 16,
+                max: 20,
                 step: 1
             },
 
@@ -308,6 +310,7 @@ export class ApgRpr_Simulation {
 
     #applySettingsToWorld() {
 
+        this.world.gravity = this.params.settings!.gravity;
         this.world.maxVelocityIterations = this.params.settings!.velocityIterations;
         this.world.maxVelocityFrictionIterations = this.params.settings!.frictionIterations;
         this.world.maxStabilizationIterations = this.params.settings!.stabilizationIterations;
@@ -356,7 +359,7 @@ export class ApgRpr_Simulation {
      * @param aguiBuilderType The class derived from the standard GuiBuilder
      */
     protected buildGui(
-        aguiBuilderType: typeof ApgRpr_Simulator_GuiBuilder,
+        aguiBuilderType: typeof ApgRpr_Simulation_GuiBuilder,
     ) {
         const guiBuilder = new aguiBuilderType(
             this.simulator,
@@ -370,7 +373,7 @@ export class ApgRpr_Simulation {
 
         guiBuilder.bindControls();
 
-        this.logger.log('Simulation Gui built', ApgRpr_Simulation.RPR_SIMULATION_NAME);
+        this.logger.log(`Gui built for simulation ${this.params.simulation}`, ApgRpr_Simulation.RPR_SIMULATION_NAME);
     }
 
 
@@ -451,47 +454,55 @@ export class ApgRpr_Simulation {
     protected needsUpdate() {
 
         const r = false;
+        const currSettings = this.params.settings!;
+        const prevSettings = this.prevParams.settings!;
 
         if (this.params.simulation != this.prevParams.simulation) {
             return true;
         }
-        if (this.params.settings!.isDebugMode != this.prevParams.settings!.isDebugMode) {
+        if (currSettings.isDebugMode != prevSettings.isDebugMode) {
             return true;
         }
-        if (this.params.settings!.doRestart) {
+        if (currSettings.doRestart) {
             return true;
         }
-        if (this.params.settings!.doResetToDefaults) {
+        if (currSettings.doResetToDefaults) {
             return true;
         }
-        if (this.params.settings!.doResetCamera) {
+        if (currSettings.doResetCamera) {
             return true;
         }
-        if (this.params.settings!.velocityIterations != this.prevParams.settings!.velocityIterations) {
+        if (currSettings.velocityIterations != prevSettings.velocityIterations) {
             return true;
         }
-        if (this.params.settings!.frictionIterations != this.prevParams.settings!.frictionIterations) {
+        if (currSettings.frictionIterations != prevSettings.frictionIterations) {
             return true;
         }
-        if (this.params.settings!.stabilizationIterations != this.prevParams.settings!.stabilizationIterations) {
+        if (currSettings.stabilizationIterations != prevSettings.stabilizationIterations) {
             return true;
         }
-        if (this.params.settings!.linearError != this.prevParams.settings!.linearError) {
+        if (currSettings.linearError != prevSettings.linearError) {
             return true;
         }
-        if (this.params.settings!.errorReductionRatio != this.prevParams.settings!.errorReductionRatio) {
+        if (currSettings.errorReductionRatio != prevSettings.errorReductionRatio) {
             return true;
         }
-        if (this.params.settings!.predictionDistance != this.prevParams.settings!.predictionDistance) {
+        if (currSettings.predictionDistance != prevSettings.predictionDistance) {
             return true;
         }
-        if (this.params.settings!.slowDownFactor != this.prevParams.settings!.slowDownFactor) {
+        if (currSettings.slowDownFactor != prevSettings.slowDownFactor) {
+            return true;
+        }
+        if (currSettings.slowDownFactor != prevSettings.slowDownFactor) {
+            return true;
+        }
+        if (currSettings.gravity.toString() != prevSettings.gravity.toString()) {
             return true;
         }
 
-        const currsettings = JSON.stringify(this.params.settings);
-        const prevSettings = JSON.stringify(this.prevParams.settings);
-        if (currsettings != prevSettings) {
+        const currFullSettings = JSON.stringify(this.params.settings);
+        const prevFullSettings = JSON.stringify(this.prevParams.settings);
+        if (currFullSettings != prevFullSettings) {
             return true;
         }
 
@@ -524,7 +535,7 @@ export class ApgRpr_Simulation {
         const tableColliderDesc = RAPIER.ColliderDesc
             .cuboid(atableWidth / 2, atableThickness / 2, atableDepth / 2)
             .setTranslation(0, atableHeight - atableThickness / 2, 0)
-            .setFriction(2);
+            .setFriction(1);
         this.world.createCollider(tableColliderDesc, tableBody);
 
 

@@ -25,10 +25,13 @@ var ApgRpr_eCollidersColorPalette = /* @__PURE__ */ ((ApgRpr_eCollidersColorPale
   return ApgRpr_eCollidersColorPalette2;
 })(ApgRpr_eCollidersColorPalette || {});
 export var ApgRpr_eInstancedMeshesGroups = /* @__PURE__ */ ((ApgRpr_eInstancedMeshesGroups2) => {
-  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["BOXES"] = 0] = "BOXES";
-  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["BALLS"] = 1] = "BALLS";
-  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["CYLINDERS"] = 2] = "CYLINDERS";
-  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["CONES"] = 3] = "CONES";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["CUBOIDS"] = 0] = "CUBOIDS";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["ROUNDED_CUBOIDS"] = 1] = "ROUNDED_CUBOIDS";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["BALLS"] = 2] = "BALLS";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["CYLINDERS"] = 3] = "CYLINDERS";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["ROUNDED_CYLINDERS"] = 4] = "ROUNDED_CYLINDERS";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["CONES"] = 5] = "CONES";
+  ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["ROUNDEND_CONE"] = 6] = "ROUNDEND_CONE";
   ApgRpr_eInstancedMeshesGroups2[ApgRpr_eInstancedMeshesGroups2["CAPSULES"] = 4] = "CAPSULES";
   return ApgRpr_eInstancedMeshesGroups2;
 })(ApgRpr_eInstancedMeshesGroups || {});
@@ -73,10 +76,10 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     this.logger.devLog("Constructor has built", ApgRpr_Viewer.RPR_VIEWER_NAME);
   }
   #initInstanceMeshesGroups() {
-    this.#buildInstancedMeshesGroup(0 /* BOXES */, this.COLLIDERS_MESH_INSTANCES_MAX);
-    this.#buildInstancedMeshesGroup(1 /* BALLS */, this.COLLIDERS_MESH_INSTANCES_MAX);
-    this.#buildInstancedMeshesGroup(2 /* CYLINDERS */, this.COLLIDERS_MESH_INSTANCES_MAX);
-    this.#buildInstancedMeshesGroup(3 /* CONES */, this.COLLIDERS_MESH_INSTANCES_MAX);
+    this.#buildInstancedMeshesGroup(0 /* CUBOIDS */, this.COLLIDERS_MESH_INSTANCES_MAX);
+    this.#buildInstancedMeshesGroup(2 /* BALLS */, this.COLLIDERS_MESH_INSTANCES_MAX);
+    this.#buildInstancedMeshesGroup(3 /* CYLINDERS */, this.COLLIDERS_MESH_INSTANCES_MAX);
+    this.#buildInstancedMeshesGroup(5 /* CONES */, this.COLLIDERS_MESH_INSTANCES_MAX);
     this.#buildInstancedMeshesGroup(4 /* CAPSULES */, this.COLLIDERS_MESH_INSTANCES_MAX);
     this.logger.devLog("Instanced meshes was build ", ApgRpr_Viewer.RPR_VIEWER_NAME);
   }
@@ -92,16 +95,16 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
   #buildInstancedMeshesGroup(agroup, amaxInstances) {
     let geometry;
     switch (agroup) {
-      case 0 /* BOXES */:
+      case 0 /* CUBOIDS */:
         geometry = new THREE.BoxGeometry(1, 1, 1);
         break;
-      case 1 /* BALLS */:
+      case 2 /* BALLS */:
         geometry = new THREE.SphereGeometry(0.5);
         break;
-      case 2 /* CYLINDERS */:
+      case 3 /* CYLINDERS */:
         geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 16, 1);
         break;
-      case 3 /* CONES */:
+      case 5 /* CONES */:
         geometry = new THREE.ConeGeometry(0.5, 1, 16, 1);
         break;
       case 4 /* CAPSULES */:
@@ -121,7 +124,6 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
         userData.mapOfCollidersAssocToThisInstancedMesh = /* @__PURE__ */ new Map();
         instancedMesh.count = 0;
         instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        instancedMesh.layers.set(ApgWgl_eLayers.instancedColliders);
         instancedMesh.castShadow = true;
         instancedMesh.receiveShadow = true;
         group.push(instancedMesh);
@@ -275,36 +277,37 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
     };
     let instance;
     switch (acollider.shapeType()) {
-      case RAPIER.ShapeType.Cuboid: {
-        const instancesGroups = this.instancedMeshesGroups.get(0 /* BOXES */);
+      case RAPIER.ShapeType.Cuboid:
+      case RAPIER.ShapeType.RoundCuboid: {
+        const instancesGroups = this.instancedMeshesGroups.get(0 /* CUBOIDS */);
         instance = instancesGroups[instanceDesc.indexInGroup];
-        instanceDesc.groupId = 0 /* BOXES */;
+        instanceDesc.groupId = 0 /* CUBOIDS */;
         const size = acollider.halfExtents();
         instanceDesc.scale = new THREE.Vector3(size.x * 2, size.y * 2, size.z * 2);
         break;
       }
       case RAPIER.ShapeType.Ball: {
-        const instancesGroups = this.instancedMeshesGroups.get(1 /* BALLS */);
+        const instancesGroups = this.instancedMeshesGroups.get(2 /* BALLS */);
         instance = instancesGroups[instanceDesc.indexInGroup];
-        instanceDesc.groupId = 1 /* BALLS */;
+        instanceDesc.groupId = 2 /* BALLS */;
         const radious = acollider.radius();
         instanceDesc.scale = new THREE.Vector3(radious * 2, radious * 2, radious * 2);
         break;
       }
       case RAPIER.ShapeType.Cylinder:
       case RAPIER.ShapeType.RoundCylinder: {
-        const instancesGroups = this.instancedMeshesGroups.get(2 /* CYLINDERS */);
+        const instancesGroups = this.instancedMeshesGroups.get(3 /* CYLINDERS */);
         instance = instancesGroups[instanceDesc.indexInGroup];
-        instanceDesc.groupId = 2 /* CYLINDERS */;
+        instanceDesc.groupId = 3 /* CYLINDERS */;
         const radious = acollider.radius();
         const height = acollider.halfHeight() * 2;
         instanceDesc.scale = new THREE.Vector3(radious * 2, height, radious * 2);
         break;
       }
       case RAPIER.ShapeType.Cone: {
-        const instancesGroups = this.instancedMeshesGroups.get(3 /* CONES */);
+        const instancesGroups = this.instancedMeshesGroups.get(5 /* CONES */);
         instance = instancesGroups[instanceDesc.indexInGroup];
-        instanceDesc.groupId = 3 /* CONES */;
+        instanceDesc.groupId = 5 /* CONES */;
         const radious = acollider.radius();
         const height = acollider.halfHeight() * 2;
         instanceDesc.scale = new THREE.Vector3(radious * 2, height, radious * 2);
@@ -344,7 +347,6 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
           flatShading: true
         });
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.layers.set(ApgWgl_eLayers.colliders);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         this.scene.add(mesh);
@@ -369,6 +371,7 @@ export class ApgRpr_Viewer extends ApgWgl_Viewer {
       instanceDesc.count = instance.count;
       instance.setMatrixAt(instanceDesc.count, tempObj.matrix);
       instance.instanceMatrix.needsUpdate = true;
+      instance.layers.set(ApgWgl_eLayers.dynamicInstancedColliders);
       this.mapOfInstancedMeshDescriptorsByColliderHandle.set(acollider.handle, instanceDesc);
       instance.count += 1;
     }

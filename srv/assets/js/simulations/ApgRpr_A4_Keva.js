@@ -7,16 +7,15 @@ import {
 import {
   ApgRpr_Simulation
 } from "../ApgRpr_Simulation.ts";
-export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
+export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
   currentCube = 0;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
-    this.buildGui(ApgRpr_A3_Jenga_GuiBuilder);
+    this.buildGui(ApgRpr_A4_Keva_GuiBuilder);
     const settings = this.params.settings;
     this.createWorld(settings);
     this.simulator.addWorld(this.world);
     this.simulator.setPreStepAction(() => {
-      this.#spawnBall();
       this.updateFromGui();
     });
   }
@@ -46,50 +45,88 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
     return r;
   }
   createWorld(asettings) {
-    this.createGround();
-    this.createSimulationTable(
-      asettings.table.width,
-      asettings.table.depth,
-      asettings.table.height,
-      asettings.table.thickness
-    );
-    const piecesPerRow = 4;
-    const levels = asettings.blockLevels;
-    const shift = asettings.table.height;
-    const pieceWidth = asettings.blockWidth;
-    const pieceHeight = pieceWidth / 2;
-    const pieceDepth = pieceWidth * piecesPerRow;
-    const pieceGap = pieceWidth / 10;
-    const pieceTolerance = pieceHeight / 5;
-    const totalRowWidth = pieceWidth * piecesPerRow + pieceGap * (piecesPerRow - 1);
-    const halfRowCenter = (totalRowWidth - pieceWidth) / 2;
-    for (let j = 0; j < levels; j++) {
-      const y = shift + j * (pieceHeight + pieceGap * 2);
-      for (let i = 0; i < piecesPerRow; i++) {
-        const delta = -halfRowCenter + (pieceWidth + pieceGap) * i;
-        let x, z, w, d;
-        if (j % 2 == 0) {
-          x = delta;
-          z = 0;
-          w = pieceWidth;
-          d = pieceDepth;
-        } else {
-          x = 0;
-          z = delta;
-          w = pieceDepth;
-          d = pieceWidth;
+    this.#initWorld();
+  }
+  #buildBlock(halfExtents, shift, numx, numy, numz) {
+    const half_extents_zyx = {
+      x: halfExtents.z,
+      y: halfExtents.y,
+      z: halfExtents.x
+    };
+    const dimensions = [halfExtents, half_extents_zyx];
+    const blockWidth = 2 * halfExtents.z * numx;
+    const blockHeight = 2 * halfExtents.y * numy;
+    const spacing = (halfExtents.z * numx - halfExtents.x) / (numz - 1);
+    for (let i = 0; i < numy; ++i) {
+      [numx, numz] = [numz, numx];
+      const dim2 = dimensions[i % 2];
+      const y = dim2.y * i * 2;
+      for (let j = 0; j < numx; ++j) {
+        const x = i % 2 == 0 ? spacing * j * 2 : dim2.x * j * 2;
+        for (let k = 0; k < numz; ++k) {
+          const z = i % 2 == 0 ? dim2.z * k * 2 : spacing * k * 2;
+          const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(
+            x + dim2.x + shift.x,
+            y + dim2.y + shift.y,
+            z + dim2.z + shift.z
+          );
+          const body = this.world.createRigidBody(bodyDesc);
+          const colliderDesc = RAPIER.ColliderDesc.cuboid(
+            dim2.x,
+            dim2.y,
+            dim2.z
+          );
+          this.world.createCollider(colliderDesc, body);
         }
-        const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
-        const boxBody = this.world.createRigidBody(boxBodyDesc);
-        const pW = w;
-        const pH = pieceHeight + this.rng.next() * pieceTolerance;
-        const pD = d;
-        const boxColliderDesc = RAPIER.ColliderDesc.cuboid(pW / 2, pH / 2, pD / 2).setFriction(0.9);
-        this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cubesRestitution);
+      }
+    }
+    const dim = { x: halfExtents.z, y: halfExtents.x, z: halfExtents.y };
+    for (let i = 0; i < blockWidth / (dim.x * 2); ++i) {
+      const x = i * dim.x * 2 + dim.x + shift.x;
+      for (let j = 0; j < blockWidth / (dim.z * 2); ++j) {
+        const y = dim.y + shift.y + blockHeight;
+        const z = j * dim.z * 2 + dim.z + shift.z;
+        const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
+        const body = this.world.createRigidBody(bodyDesc);
+        const colliderDesc = RAPIER.ColliderDesc.cuboid(dim.x, dim.y, dim.z);
+        this.world.createCollider(colliderDesc, body);
       }
     }
   }
-  #spawnBall() {
+  #initWorld() {
+    const groundSize = 50;
+    const groundHeight = 0.1;
+    const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, -groundHeight, 0);
+    const body = this.world.createRigidBody(bodyDesc);
+    const colliderDesc = RAPIER.ColliderDesc.cuboid(
+      groundSize,
+      groundHeight,
+      groundSize
+    );
+    this.world.createCollider(colliderDesc, body);
+    const halfExtents = new RAPIER.Vector3(0.1, 0.5, 2);
+    let blockHeight = 0;
+    const numyArr = [0, 3, 5, 5, 7, 9];
+    let numBlocksBuilt = 0;
+    for (let i = 5; i >= 1; --i) {
+      const numx = i;
+      const numy = numyArr[i];
+      const numz = numx * 3 + 1;
+      const blockWidth = numx * halfExtents.z * 2;
+      this.#buildBlock(
+        halfExtents,
+        new RAPIER.Vector3(
+          -blockWidth / 2,
+          blockHeight,
+          -blockWidth / 2
+        ),
+        numx,
+        numy,
+        numz
+      );
+      blockHeight += numy * halfExtents.y * 2 + halfExtents.x * 2;
+      numBlocksBuilt += numx * numy * numz;
+    }
   }
   updateFromGui() {
     if (this.needsUpdate()) {
@@ -97,7 +134,7 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
     }
   }
 }
-class ApgRpr_A3_Jenga_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_A4_Keva_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
   _guiSettings;
   constructor(asimulator, asettings) {
     super(asimulator, asettings);

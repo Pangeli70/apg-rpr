@@ -73,9 +73,27 @@ export class ApgGui {
    * Refreshes the DOM elements that have reactive GUI controls
    */
   updateReactiveControls() {
-    for (const [_key, control] of this.controls) {
+    for (const [key, control] of this.controls) {
       if (control.reactive != void 0) {
-        const reactiveValue = control.reactive.state[control.reactive.prop];
+        const nestedProps = control.reactive.prop.split(".");
+        let i = 0;
+        let reactiveValue = control.reactive.state;
+        do {
+          reactiveValue = reactiveValue[nestedProps[i]];
+          const typeOfValue = typeof reactiveValue;
+          if (i == nestedProps.length - 1) {
+            ApgUts.Assert(
+              typeOfValue != "object",
+              `Last property ${control.reactive.prop} in state of reactive control ${key} can't have an object value.`
+            );
+          } else {
+            ApgUts.Assert(
+              typeOfValue == "object",
+              `Itermediate property ${nestedProps[i]} of ${control.reactive.prop} in state of reactive control ${key} must be an object value.`
+            );
+          }
+          i++;
+        } while (i < nestedProps.length);
         switch (control.type) {
           case eApgDomFormElementType.INPUT: {
             switch (control.inputType) {

@@ -22,6 +22,10 @@ export class ApgUts_Logger {
   loggers() {
     return this._loggerMap.keys();
   }
+  /** Returns true if the requested logger is already in the map */
+  hasLogger(aname) {
+    return this._loggerMap.has(aname);
+  }
   /** Returns the page of the logged events for the specified logger */
   logs(alogger, apage = 0) {
     const logs = this._loggerMap.get(alogger);

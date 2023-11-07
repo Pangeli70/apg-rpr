@@ -88,7 +88,7 @@ export class ApgRpr_Simulator {
   snapshot;
   /** The simulation step of the snapshot */
   _snapshotStepId = 0;
-  DEFAULT_GRAVITY = 9.81;
+  DEFAULT_GRAVITY = 9.8;
   DEFAULT_GRAVITY_X = 0;
   DEFAULT_GRAVITY_Y = -this.DEFAULT_GRAVITY;
   DEFAULT_GRAVITY_Z = 0;
@@ -116,7 +116,7 @@ export class ApgRpr_Simulator {
   DEFAULT_APG_RPR_STABILIZATION_ITERATIONS = 2;
   DEFAULT_APG_RPR_ERR_REDUCTION_RATIO = 0.9;
   // collider size related factors
-  DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR = 0.01;
+  DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR = 1e-3;
   DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR = 0.01;
   MAX_SLOWDOWN = 20;
   LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";

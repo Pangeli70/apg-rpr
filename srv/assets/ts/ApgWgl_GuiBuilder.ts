@@ -33,6 +33,11 @@ export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
     // - worldSize: number;
     worldSizeMMS: ApgGui_IMinMaxStep;
 
+    // eyeHeight: number
+
+    // - pixelRatio: number;
+    pixelRatioMMS: ApgGui_IMinMaxStep;
+
     // - fogColor: THREE.Color;
     // - fogDensity: number;
     fogDensityMMS: ApgGui_IMinMaxStep;
@@ -41,7 +46,7 @@ export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
     toneMappingValues: ApgGui_TSelectValuesMap;
     // - toneMappingExposure: number;
     toneMappingExposureMMS: ApgGui_IMinMaxStep;
-    
+
     // - outputColorSpace: THREE.ColorSpace;
     outputColorSpaceValues: ApgGui_TSelectValuesMap;
 
@@ -50,7 +55,7 @@ export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
     shadowMapTypeValues: ApgGui_TSelectValuesMap;
     //shadowMapRadious: number;
     //shadowMapSize: number;
-    
+
     //anisotropy: number;
     //anisotropyMMS: ApgGui_IMinMaxStep;
 
@@ -153,6 +158,12 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
 
         this.settings.worldSizeMMS = { min: 500, max: 2000, step: 500 };
 
+        this.settings.pixelRatioMMS = {
+            min: 0.2,
+            max: this.viewer.APG_WGL_MAX_PIXEL_RATIO,
+            step: 0.1
+        }
+
         this.settings.fogDensityMMS = { min: 0.00010, max: 0.00200, step: 0.00005 };
 
         this.settings.toneMappingValues = new Map([
@@ -197,6 +208,12 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         this.settings.envMapBackgroundBlurrynessMMS = { min: 0, max: 0.5, step: 0.025 }
         this.settings.envMapBackgroundIntensityMMS = { min: 0, max: 2, step: 0.1 }
 
+        this.getLayersMap();
+
+    }
+
+
+    private getLayersMap() {
         this.settings.layers.set(ApgWgl_eLayers.unassigned, {
             index: ApgWgl_eLayers.unassigned,
             visible: true,
@@ -212,19 +229,37 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             visible: false,
             name: "Helpers"
         });
-        this.settings.layers.set(ApgWgl_eLayers.colliders, {
-            index: ApgWgl_eLayers.colliders,
+        this.settings.layers.set(ApgWgl_eLayers.staticColliders, {
+            index: ApgWgl_eLayers.staticColliders,
             visible: true,
-            name: "Colliders"
-        })
-        this.settings.layers.set(ApgWgl_eLayers.instancedColliders, {
-            index: ApgWgl_eLayers.instancedColliders,
+            name: "Static colliders"
+        });
+        this.settings.layers.set(ApgWgl_eLayers.staticSensors, {
+            index: ApgWgl_eLayers.staticSensors,
             visible: true,
-            name: "Instanced colliders"
-        })
-
+            name: "Static sensors"
+        });
+        this.settings.layers.set(ApgWgl_eLayers.kinematicColliders, {
+            index: ApgWgl_eLayers.kinematicColliders,
+            visible: true,
+            name: "Kinematic colliders"
+        });
+        this.settings.layers.set(ApgWgl_eLayers.dynamicColliders, {
+            index: ApgWgl_eLayers.dynamicColliders,
+            visible: true,
+            name: "Dynamic colliders"
+        });
+        this.settings.layers.set(ApgWgl_eLayers.dynamicInstancedColliders, {
+            index: ApgWgl_eLayers.dynamicInstancedColliders,
+            visible: true,
+            name: "Dynamic instanced colliders"
+        });
+        this.settings.layers.set(ApgWgl_eLayers.characters, {
+            index: ApgWgl_eLayers.characters,
+            visible: true,
+            name: "Characters"
+        });
     }
-
 
     /**
      * 
@@ -258,7 +293,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
     #buildViewerSettingsDialogControl() {
 
         const cameraControl = this.#buildCameraDetails();
-        
+
         const rendererControl = this.#buildRendererDetails();
 
         const shadowsControl = this.#buildShadowsDetails();
@@ -305,6 +340,18 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
 
 
     #buildRendererDetails() {
+
+        const RENDERER_PIXEL_RATIO_RANGE_CNT = 'RendererPixelRatioRange_Control';
+        const RendererPixelRatioRange_Control = this.buildRangeControl(
+            RENDERER_PIXEL_RATIO_RANGE_CNT,
+            'Pixel ratio',
+            this.settings.pixelRatio,
+            this.settings.pixelRatioMMS,
+            () => {
+                const value = this.readRangeControl(RENDERER_PIXEL_RATIO_RANGE_CNT);
+                this.settings.pixelRatio = value;
+            }
+        )
 
         const RENDERER_CLEAR_COLOR_CNT = 'RendererClearColorPicker_Control';
         const RendererClearColorPicker_Control = this.buildColorPickerControl(
@@ -358,6 +405,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             RENDERER_DETAILS_CNT,
             'Renderer',
             [
+                RendererPixelRatioRange_Control,
                 RendererClearColorPicker_Control,
                 RendererToneMappingSelect_Control,
                 RendererToneMappingExposureRange_Control,

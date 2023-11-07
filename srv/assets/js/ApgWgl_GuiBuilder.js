@@ -14,6 +14,11 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
     this.viewer = aviewer;
     this.settings = aviewer.settings;
     this.settings.worldSizeMMS = { min: 500, max: 2e3, step: 500 };
+    this.settings.pixelRatioMMS = {
+      min: 0.2,
+      max: this.viewer.APG_WGL_MAX_PIXEL_RATIO,
+      step: 0.1
+    };
     this.settings.fogDensityMMS = { min: 1e-4, max: 2e-3, step: 5e-5 };
     this.settings.toneMappingValues = /* @__PURE__ */ new Map([
       ["0", "None"],
@@ -51,6 +56,9 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
     this.settings.envMapLightingIntensityMMS = { min: 0, max: 10, step: 0.1 };
     this.settings.envMapBackgroundBlurrynessMMS = { min: 0, max: 0.5, step: 0.025 };
     this.settings.envMapBackgroundIntensityMMS = { min: 0, max: 2, step: 0.1 };
+    this.getLayersMap();
+  }
+  getLayersMap() {
     this.settings.layers.set(ApgWgl_eLayers.unassigned, {
       index: ApgWgl_eLayers.unassigned,
       visible: true,
@@ -66,15 +74,35 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
       visible: false,
       name: "Helpers"
     });
-    this.settings.layers.set(ApgWgl_eLayers.colliders, {
-      index: ApgWgl_eLayers.colliders,
+    this.settings.layers.set(ApgWgl_eLayers.staticColliders, {
+      index: ApgWgl_eLayers.staticColliders,
       visible: true,
-      name: "Colliders"
+      name: "Static colliders"
     });
-    this.settings.layers.set(ApgWgl_eLayers.instancedColliders, {
-      index: ApgWgl_eLayers.instancedColliders,
+    this.settings.layers.set(ApgWgl_eLayers.staticSensors, {
+      index: ApgWgl_eLayers.staticSensors,
       visible: true,
-      name: "Instanced colliders"
+      name: "Static sensors"
+    });
+    this.settings.layers.set(ApgWgl_eLayers.kinematicColliders, {
+      index: ApgWgl_eLayers.kinematicColliders,
+      visible: true,
+      name: "Kinematic colliders"
+    });
+    this.settings.layers.set(ApgWgl_eLayers.dynamicColliders, {
+      index: ApgWgl_eLayers.dynamicColliders,
+      visible: true,
+      name: "Dynamic colliders"
+    });
+    this.settings.layers.set(ApgWgl_eLayers.dynamicInstancedColliders, {
+      index: ApgWgl_eLayers.dynamicInstancedColliders,
+      visible: true,
+      name: "Dynamic instanced colliders"
+    });
+    this.settings.layers.set(ApgWgl_eLayers.characters, {
+      index: ApgWgl_eLayers.characters,
+      visible: true,
+      name: "Characters"
     });
   }
   /**
@@ -135,6 +163,17 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
     return r;
   }
   #buildRendererDetails() {
+    const RENDERER_PIXEL_RATIO_RANGE_CNT = "RendererPixelRatioRange_Control";
+    const RendererPixelRatioRange_Control = this.buildRangeControl(
+      RENDERER_PIXEL_RATIO_RANGE_CNT,
+      "Pixel ratio",
+      this.settings.pixelRatio,
+      this.settings.pixelRatioMMS,
+      () => {
+        const value = this.readRangeControl(RENDERER_PIXEL_RATIO_RANGE_CNT);
+        this.settings.pixelRatio = value;
+      }
+    );
     const RENDERER_CLEAR_COLOR_CNT = "RendererClearColorPicker_Control";
     const RendererClearColorPicker_Control = this.buildColorPickerControl(
       RENDERER_CLEAR_COLOR_CNT,
@@ -183,6 +222,7 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
       RENDERER_DETAILS_CNT,
       "Renderer",
       [
+        RendererPixelRatioRange_Control,
         RendererClearColorPicker_Control,
         RendererToneMappingSelect_Control,
         RendererToneMappingExposureRange_Control,

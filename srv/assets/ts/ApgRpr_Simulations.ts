@@ -12,6 +12,7 @@ import { ApgRpr_A0_Pyramid_Simulation } from "./simulations/ApgRpr_A0_Pyramid.ts
 import { ApgRpr_A1_Column_Simulation } from "./simulations/ApgRpr_A1_Column.ts";
 import { ApgRpr_A2_Domino_Simulation } from "./simulations/ApgRpr_A2_Domino.ts";
 import { ApgRpr_A3_Jenga_Simulation } from "./simulations/ApgRpr_A3_Jenga.ts";
+import { ApgRpr_A4_Keva_Simulation } from "./simulations/ApgRpr_A4_Keva.ts";
 import { ApgRpr_B0_Fountain_Simulation } from "./simulations/ApgRpr_B0_Fountain.ts";
 import { ApgRpr_C0_LockedRotations_Simulation } from "./simulations/ApgRpr_C0_LockedRotations.ts";
 import { ApgRpr_C1_Damping_Simulation } from "./simulations/ApgRpr_C1_Damping.ts";
@@ -31,6 +32,7 @@ export enum ApgRpr_eSimulationName {
     A1_COLUMN = 'Column',
     A2_DOMINO = 'Domino',
     A3_JENGA = 'Jenga',
+    A4_Keva = 'Keva',
     B_FOUNTAIN = 'Fountain',
     C_LOCKED_ROTATIONS = 'Locked rotations',
     D_DAMPING = 'Damping',
@@ -54,6 +56,7 @@ export function ApgRpr_PrepareSimulations() {
     simulations.set(ApgRpr_eSimulationName.A1_COLUMN, ApgRpr_A1_Column_Simulation);
     simulations.set(ApgRpr_eSimulationName.A2_DOMINO, ApgRpr_A2_Domino_Simulation);
     simulations.set(ApgRpr_eSimulationName.A3_JENGA, ApgRpr_A3_Jenga_Simulation);
+    simulations.set(ApgRpr_eSimulationName.A4_Keva, ApgRpr_A4_Keva_Simulation);
     simulations.set(ApgRpr_eSimulationName.B_FOUNTAIN, ApgRpr_B0_Fountain_Simulation);
     simulations.set(ApgRpr_eSimulationName.C_LOCKED_ROTATIONS, ApgRpr_C0_LockedRotations_Simulation);
     simulations.set(ApgRpr_eSimulationName.D_DAMPING, ApgRpr_C1_Damping_Simulation);

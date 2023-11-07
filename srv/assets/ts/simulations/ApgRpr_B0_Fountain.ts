@@ -20,8 +20,8 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulator_GuiBuilder.ts";
+    ApgRpr_Simulation_GuiBuilder
+} from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 
 import {
@@ -250,7 +250,7 @@ export class ApgRpr_B0_Fountain_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
     private _guiSettings: ApgRpr_B0_Fountain_ISimulationSettings;
 

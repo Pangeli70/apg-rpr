@@ -20,8 +20,8 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulator_GuiBuilder.ts";
+    ApgRpr_Simulation_GuiBuilder
+} from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -231,7 +231,7 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_A1_Column_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+class ApgRpr_A1_Column_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
     private _guiSettings: ApgRpr_A1_Column_ISimulationSettings;
 
@@ -282,7 +282,7 @@ class ApgRpr_A1_Column_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
         )
 
 
-        const BLOCKS_REST_CNT = 'blocksRestitutionControl';
+        const BLOCKS_REST_CNT = 'cubesRestitutionControl';
         const blocksRestitutionControl = this.buildRangeControl(
             BLOCKS_REST_CNT,
             'Restitution',

@@ -15,9 +15,12 @@ export var ApgWgl_eLayers = /* @__PURE__ */ ((ApgWgl_eLayers2) => {
   ApgWgl_eLayers2[ApgWgl_eLayers2["unassigned"] = 0] = "unassigned";
   ApgWgl_eLayers2[ApgWgl_eLayers2["helpers"] = 1] = "helpers";
   ApgWgl_eLayers2[ApgWgl_eLayers2["lights"] = 2] = "lights";
-  ApgWgl_eLayers2[ApgWgl_eLayers2["characters"] = 3] = "characters";
-  ApgWgl_eLayers2[ApgWgl_eLayers2["colliders"] = 4] = "colliders";
-  ApgWgl_eLayers2[ApgWgl_eLayers2["instancedColliders"] = 5] = "instancedColliders";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["staticColliders"] = 20] = "staticColliders";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["staticSensors"] = 21] = "staticSensors";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["kinematicColliders"] = 22] = "kinematicColliders";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["dynamicColliders"] = 23] = "dynamicColliders";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["dynamicInstancedColliders"] = 24] = "dynamicInstancedColliders";
+  ApgWgl_eLayers2[ApgWgl_eLayers2["characters"] = 25] = "characters";
   return ApgWgl_eLayers2;
 })(ApgWgl_eLayers || {});
 export class ApgWgl_Viewer {
@@ -38,6 +41,7 @@ export class ApgWgl_Viewer {
     return ApgWgl_Viewer.APG_WGL_DEFAULT_EYE_HEIGHT;
   }
   static APG_WGL_DEFAULT_WORLD_FACTOR = 10;
+  APG_WGL_MAX_PIXEL_RATIO;
   /** Dom Elements*/
   viewerElement;
   viewerCanvasElement;
@@ -70,8 +74,9 @@ export class ApgWgl_Viewer {
     this.viewerElement = aviewerElement;
     this.logger = alogger;
     this.logger.addLogger(ApgWgl_Viewer.WGL_VIEWER_NAME);
+    this.APG_WGL_MAX_PIXEL_RATIO = this.window.devicePixelRatio;
     this.metrics = this.#initMetrics(asceneSize, aworldFactor, aeyeHeight);
-    this.settings = ApgWgl_Viewer.GetDefaultSettings(this.metrics);
+    this.settings = this.defaultSettings(this.window, this.metrics);
     this.prevSettingsStamp = JSON.stringify(this.settings);
     this.#initCanvas();
     this.#initRenderer();
@@ -89,10 +94,11 @@ export class ApgWgl_Viewer {
     }, false);
     this.logger.devLog("Constructor has built", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
-  static GetDefaultSettings(ametrics) {
+  defaultSettings(awindow, ametrics) {
     const r = {
       worldSize: ametrics.worldSize,
       eyeHeight: ametrics.eyeHeight,
+      pixelRatio: awindow.devicePixelRatio,
       fogColor: new THREE.Color(8947848),
       fogDensity: 25e-5,
       toneMapping: THREE.LinearToneMapping,
@@ -166,13 +172,15 @@ export class ApgWgl_Viewer {
     this.logger.devLog("Canvas initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #initRenderer() {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.viewerCanvasElement });
+    this.renderer = new THREE.WebGLRenderer(
+      { antialias: true, canvas: this.viewerCanvasElement }
+    );
     this.renderer.setSize(this.viewerElement.clientWidth, this.viewerElement.clientHeight);
-    this.renderer.setPixelRatio(this.window.devicePixelRatio);
     this.#updateRenderer();
     this.logger.devLog("Renderer initialized", ApgWgl_Viewer.WGL_VIEWER_NAME);
   }
   #updateRenderer() {
+    this.renderer.setPixelRatio(this.settings.pixelRatio);
     this.renderer.setClearColor(this.settings.clearColor, 1);
     this.renderer.toneMapping = this.settings.toneMapping;
     this.renderer.toneMappingExposure = this.settings.toneMappingExposure;
