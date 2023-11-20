@@ -1,7 +1,7 @@
 {
   "version": "3",
   "redirects": {
-    "https://unpkg.com/@dimforge/rapier3d-compat@0.11.2": "https://unpkg.com/@dimforge/rapier3d-compat@0.11.2/rapier.cjs.js"
+    "https://esm.sh/v133/@types/md5@~2.3/index.d.ts": "https://esm.sh/v133/@types/md5@2.3.5/index.d.ts"
   },
   "remote": {
     "https://cdn.jsdelivr.net/gh/drashland/drash@v2.8.0/deps.ts": "138068d0c35380fadafbe2e86a8049b5b521d0cb7275303c63aca7de5bfbe43a",
@@ -19,7 +19,6 @@
     "https://cdn.jsdelivr.net/gh/drashland/drash@v2.8.0/src/services/cors/cors.ts": "c5bcaafb82bbb87c9574105df10cae05a313cac2922eeb4fbab4455767560ace",
     "https://cdn.jsdelivr.net/gh/drashland/drash@v2.8.0/src/services/cors/deps.ts": "69083fa30f2e7503aa51791c0608780d543eb0c538641d02daa0bad239c36f9c",
     "https://cdn.jsdelivr.net/gh/drashland/drash@v2.8.0/src/types.ts": "f46cf6c6dda93cf59b2b8730fcb8534f969bf4e3e6cde233be449d4b0b9816a8",
-    "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.2": "56b5d188491513bdd67e71504845db4d0dd18153a82518da867eade99c45232f",
     "https://cdn.skypack.dev/-/@dimforge/rapier3d-compat@v0.11.2-2ynsEzwjLv57bqvhulDB/dist=es2019,mode=imports/optimized/@dimforge/rapier3d-compat.js": "7e27b60b92be8a63cee92af018d5690f2cb2c2e36a253e943fe023368f6a59b8",
     "https://cdn.skypack.dev/@dimforge/rapier3d-compat": "5c86b263e29e4ac3b3b5cc4a947b5da92021d87b7083995b70a8459411eeb5d8",
     "https://deno.land/std@0.154.0/_util/assert.ts": "e94f2eb37cebd7f199952e242c77654e43333c1ac4c5c700e929ea3aa5489f74",
@@ -135,13 +134,13 @@
     "https://deno.land/x/mongo@v0.31.2/src/utils/srv.ts": "ed5f78ffe6480faac68291a87e51e3674eff5f28aec937ee97248e99e1317b16",
     "https://deno.land/x/mongo@v0.31.2/src/utils/uri.ts": "dcfab8e1dcfcc875c75ada1d9f366664480c03b65594990d6342ed88925452e5",
     "https://deno.land/x/web_bson@v0.3.0/mod.js": "8e14aecd31ee63abd30e2dbaa284b4b67abb7ba51fcef5b96af74727cb7c7940",
-    "https://esm.sh/md5@2.3.0": "3e9f99fb35133936acfe13fe8ffc206fbbd1a7641882509f7385967835985075",
-    "https://esm.sh/prando@6.0.1": "1dcb9c76bb5882a90e34076f582286e3daff7ac52ae9498bb1421893ad6a4674",
-    "https://esm.sh/v130/charenc@0.0.2/denonext/charenc.mjs": "8e64207425484f084885f0e40db58cab999926546d8e6ce852b428f4f4fb8fdb",
-    "https://esm.sh/v130/crypt@0.0.2/denonext/crypt.mjs": "99d9bd52b40ba0bfdaf81bcf7b7c278164ddc3945323c0ef3467762839083a12",
-    "https://esm.sh/v130/is-buffer@1.1.6/denonext/is-buffer.mjs": "486415c82ae4904c95e53ade28d7b5992ff49174db33763a2a7db8e7e3a01006",
-    "https://esm.sh/v130/md5@2.3.0/denonext/md5.mjs": "486b1e3172f94b633b921f15c4a4f7e06f13da3ed4709ad4bb999f032bca8271",
-    "https://esm.sh/v130/prando@6.0.1/denonext/prando.mjs": "6ac16af6be3e9184c92a5dc517f00b109e0c0db0d32888443df8d28c06cde2bf",
+    "https://esm.sh/md5@2.3.0": "b641ad40b01d715b7e8ebe63879bc868af51d035b3087b4fc2f747881c6295ac",
+    "https://esm.sh/prando@6.0.1": "8969225bb9e1bd55bc1ddff8ee349e79e7de478125b019689c8223ba5791bc62",
+    "https://esm.sh/v133/charenc@0.0.2/denonext/charenc.mjs": "8e64207425484f084885f0e40db58cab999926546d8e6ce852b428f4f4fb8fdb",
+    "https://esm.sh/v133/crypt@0.0.2/denonext/crypt.mjs": "99d9bd52b40ba0bfdaf81bcf7b7c278164ddc3945323c0ef3467762839083a12",
+    "https://esm.sh/v133/is-buffer@1.1.6/denonext/is-buffer.mjs": "486415c82ae4904c95e53ade28d7b5992ff49174db33763a2a7db8e7e3a01006",
+    "https://esm.sh/v133/md5@2.3.0/denonext/md5.mjs": "075c18694e6a9d013c9a31893308e1ca424e8e1dd37cde196f99c2393b56f099",
+    "https://esm.sh/v133/prando@6.0.1/denonext/prando.mjs": "6ac16af6be3e9184c92a5dc517f00b109e0c0db0d32888443df8d28c06cde2bf",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/classes/ApgDirMarkdownMaker.ts": "09cd438191fa18d1648240bbec90ac2c7cd340ff3150236ea9cd6914bf0e3b71",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/data/ApgDirEntries.ts": "66ecc2655a35529b22e35ff77ddc9e6fdff67b5d4b6241246ea789fdcd8b7744",
     "https://raw.githubusercontent.com/Pangeli70/apg-dir/master/lib/deps.ts": "7531418a83cf4a384957fa19992241aeed7a6401e3d5a8babe3f5804a77ecdad",

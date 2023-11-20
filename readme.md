@@ -1,91 +1,65 @@
 # **Apg-Rpr** 
 
-<br>
- 
+
 ### Rapier Physics engine tests 
 
-<br>
+Fully deterministic simulations on every browser.
 
-Avery simple testbed to experiment with the WASM version of the Rapier.rs physics engine. 
+A simple testbed to experiment with the WASM version of the Rapier.rs physics engine. 
 
-<br>
+© 2017-2023 APG: free man angeli paolo giusto.
 
-Current version: **0.9.8** 
-
-<br>
-
-Last release: **20230815** 
-
-<br>
-
-Since: **20230915** 
-
-<br>
-
-<br>
-
-## Library 
 ---
 
-This is not a library for Deno, instead is a collection of entities to manage Rapier.rs in the browser. 
+Made with ❤ using:
 
-<br>
+> [Deno](https://deno.com/) for the development
 
-https://github.com/Pangeli70/apg-rpr 
+> [Drash v2.x](https://drash.land/drash-v2.x/getting-started/introduction) for the web server
 
-<br>
+> [esbuild](https://esbuild.github.io/) for the transpilation of typescript for the browser
 
-Import it in your deps.ts file using: 
+> [Deno deploy](https://deno.com/deploy) for the microservice runtime on the cloud edge
 
-<br>
+> [Three.js](https://threejs.org/) for the Web GL rendering in the browser
 
-> export * as Rpr from "" 
+> [Rapier.rs](https://www.rapier.rs/) for the physics simulation in the browser
 
-<br>
+> [Prando.js](https://github.com/zeh/prando/) for the pseudorandom number generation
 
-The library has the following Apg dependencies: 
+> [Apg-Tng](https://apg-tng.deno.dev/) template engine for Server Side Rendered HTML
 
-<br>
+> [Apg-Gui](https://apg-gui.deno.dev/) for Client Side Rendered HTML in the browser
 
-> [Apg-Uts](https://github.com/Pangeli70/apg-uts)
+> [Pico](https://picocss.com/) for the Cascade Style Sheet
 
-<br>
+---
 
+First released: **2023/08/09**
 
+Last release: **2023/11/15**
 
-<br>
-<br>
+Current version: **0.0.8** 
+
+---
 
 ## Help 
----
 
 [Index](hlp/index.md)  
 
-<br>
+## Demo
 
-<br>
+[Web app on deno deploy](https://apg-rpr.deno.dev)
 
-## Microservice 
----
+## Suggestions?
 
-Produces a minimal website to serve the pages and assets of the tests 
+This repo is a learning tool for everybody especially for me.
 
-<br>
+Please give feedback and constructive suggestions about:
 
-https://apg-rpr.deno.dev/ 
-
-<br>
-
-The microservice has the following Apg additional dependencies for libraries and services: 
-
-<br>
-
-> [Apg-Edr](https://github.com/Pangeli70/apg-edr)
-
-<br>
-
-> [Apg-Tng](https://github.com/Pangeli70/apg-tng)
-
-<br>
-
-<br>
+- Coding style and naming conventions
+- Typescript best practices
+- Deno usage
+- Drash usage
+- Three usage
+- Rapier usage

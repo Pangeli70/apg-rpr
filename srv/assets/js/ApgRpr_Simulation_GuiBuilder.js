@@ -1,19 +1,19 @@
 import {
   ApgGui_Builder
-} from "./ApgGui_Builder.ts";
+} from "./apg-gui/lib/classes/ApgGui_Builder.ts";
 import {
   ApgRpr_Debug_GuiBuilder
 } from "./ApgRpr_Debug_GuiBuilder.ts";
 import {
   ApgGui_Logger_GuiBuilder
-} from "./ApgGui_Logger_GuiBuilder.ts";
+} from "./apg-gui/lib/builders/ApgGui_Logger_GuiBuilder.ts";
 import {
-  ApgRpr_Stats_GuiBuilder
-} from "./ApgRpr_Stats_GuiBuilder.ts";
+  ApgGui_Stats_GuiBuilder
+} from "./apg-gui/lib/builders/ApgGui_Stats_GuiBuilder.ts";
 import {
   ApgWgl_GuiBuilder
-} from "./ApgWgl_GuiBuilder.ts";
-export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
+} from "./apg-wgl/lib/classes/ApgWgl_GuiBuilder.ts";
+export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
   simulator;
   settings;
   CREDITS_DIALOG_CNT = "creditsDialogControl";
@@ -24,72 +24,22 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
   }
   /**
    * 
-   * @returns 
    */
   buildControls() {
-    const simulationGroupControl = this.#buildSimulationGroupControl();
-    const statsControls = new ApgRpr_Stats_GuiBuilder(this.gui, this.simulator.stats).buildControls();
-    const debugControls = new ApgRpr_Debug_GuiBuilder(this.gui, this.simulator.debugInfo).buildControls();
-    const loggerControls = new ApgGui_Logger_GuiBuilder(this.gui, this.simulator.logger).buildControls();
-    const FULLSCREEN_BTN_CNT = "fullscreenButtonControl";
-    const fullscreenButtonControl = this.buildButtonControl(
-      FULLSCREEN_BTN_CNT,
-      "Go full screen",
-      () => {
-        const button = this.gui.controls.get(FULLSCREEN_BTN_CNT).element;
-        const docElement = this.gui.document.documentElement;
-        if (docElement.requestFullscreen) {
-          if (!this.gui.document.fullscreenElement) {
-            docElement.requestFullscreen();
-            button.innerText = "Exit full screen";
-          } else {
-            this.gui.document.exitFullscreen();
-            button.innerText = "Go full screen";
-          }
-        } else {
-          alert("Full screen not supported");
-        }
-      }
-    );
-    const GET_URL_BTN_CNT = "getUrlButtonControl";
-    const getUrlButtonControl = this.buildButtonControl(
-      GET_URL_BTN_CNT,
-      "Get url",
-      () => {
-        const stringifiedSettings = JSON.stringify(this.settings);
-        const b64EncodedSettings = btoa(stringifiedSettings);
-        alert(stringifiedSettings);
-        alert(b64EncodedSettings);
-        alert("length: " + b64EncodedSettings.length);
-        prompt("Copy url", "p=" + b64EncodedSettings);
-      }
-    );
-    const creditsDialogControl = this.#buildCreditsDialogControl();
-    const CREDITS_BTN_CNT = "creditsButtonControl";
-    const creditsButtonControl = this.buildButtonControl(
-      CREDITS_BTN_CNT,
-      "Credits",
-      () => {
-        const dialog = this.gui.controls.get(this.CREDITS_DIALOG_CNT).element;
-        dialog.showModal();
-      }
-    );
-    const viewerSettingsControls = new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer).buildControls();
-    const controls = [
-      simulationGroupControl,
-      statsControls,
-      debugControls,
-      loggerControls,
-      fullscreenButtonControl,
-      getUrlButtonControl,
-      creditsDialogControl,
-      creditsButtonControl,
-      viewerSettingsControls
-    ];
+    const controls = [];
+    controls.push(this.#buildSimulatorDetailsControl());
+    controls.push(new ApgGui_Stats_GuiBuilder(this.gui, this.simulator.stats).buildControls());
+    controls.push(new ApgRpr_Debug_GuiBuilder(this.gui, this.simulator.debugInfo).buildControls());
+    controls.push(new ApgGui_Logger_GuiBuilder(this.gui, this.simulator.logger).buildControls());
+    controls.push(this.#buildFullscreenButtonControl());
+    controls.push(this.#buildGetUrlButtonControl());
+    controls.push(new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer).buildControls());
+    controls.push(this.#buildCreditsDialogControl(this.CREDITS_DIALOG_CNT));
+    controls.push(this.#buildCreditsDialogOpenButtonControl(this.CREDITS_DIALOG_CNT));
     const r = controls.join("\n");
     return r;
   }
-  buildControlsToContainer() {
+  buildHudControls() {
     return "";
   }
   buildSimulationChangeControl() {
@@ -111,34 +61,34 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     );
     return r;
   }
-  #buildSimulationGroupControl() {
+  #buildSimulatorDetailsControl() {
     const controls = [];
     const state = this.settings;
-    controls.push(this.#buildSimulationVelocityIterationsControl(
+    controls.push(this.#buildVelocityIterationsControl(
       "simulationVelocityIterationsControl",
       state
     ));
-    controls.push(this.#buildSimulationFrictionIterationsControl(
+    controls.push(this.#buildSimulationIterationsControl(
       "simulationFrictionIterationsControl",
       state
     ));
-    controls.push(this.#buildSimulationStabilizationIterationsControl(
+    controls.push(this.#buildStabilizationIterationsControl(
       "simulationStabilizationIterationsControl",
       state
     ));
-    controls.push(this.#buildSimulationCcdStepsControl(
+    controls.push(this.#buildCcdStepsControl(
       "simulationCcdStepsIterationsControl",
       state
     ));
-    controls.push(this.#buildSimulationLinearErrorControl(
+    controls.push(this.#buildLinearErrorControl(
       "simulationLinearErrorControl",
       state
     ));
-    controls.push(this.#buildSimulationErrorReductionRatioControl(
+    controls.push(this.#buildErrorReductionRatioControl(
       "simulationErrorReductionRatioControl",
       state
     ));
-    controls.push(this.#buildSimulationPredictionDistanceControl(
+    controls.push(this.#buildPredictionDistanceControl(
       "simulationPredictionDistanceControl",
       state
     ));
@@ -146,7 +96,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
       "simulationSpeedControl",
       state
     ));
-    controls.push(this.#buildSimulationGravityDetailsControl(
+    controls.push(this.#buildGravityDetailsControl(
       "simulationGravityDetailsControl",
       state
     ));
@@ -159,16 +109,16 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     controls.push(this.#buildDebugModeButtonControl(
       "debugModeButtonControl"
     ));
-    const caption = "Simulation settings";
+    const id = "simulatorDetailsControl";
     const r = this.buildDetailsControl(
-      "simulatorDetailsControl",
-      caption,
+      id,
+      "Simulator settings",
       controls,
       this.settings.isSimulatorDetailsOpened,
       () => {
         if (!this.gui.isRefreshing) {
           this.settings.isSimulatorDetailsOpened = !this.settings.isSimulatorDetailsOpened;
-          this.gui.devLogNoTime(`${caption} details toggled`);
+          this.gui.devLogNoTime(`${id} details toggled`);
         }
       }
     );
@@ -200,8 +150,48 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     );
     return r;
   }
-  // #region Simulation Settings Controls -------------------------------------
-  #buildSimulationVelocityIterationsControl(aId, state) {
+  #buildFullscreenButtonControl() {
+    const id = "fullscreenButtonControl";
+    const r = this.buildButtonControl(
+      id,
+      "Go full screen",
+      () => {
+        const button = this.gui.controls.get(id).element;
+        const docElement = this.gui.document.documentElement;
+        if (docElement.requestFullscreen) {
+          if (!this.gui.document.fullscreenElement) {
+            docElement.requestFullscreen();
+            button.innerText = "Exit full screen";
+          } else {
+            this.gui.document.exitFullscreen();
+            button.innerText = "Go full screen";
+          }
+        } else {
+          alert("Full screen not supported");
+        }
+      }
+    );
+    return r;
+  }
+  #buildGetUrlButtonControl() {
+    const id = "getUrlButtonControl";
+    const r = this.buildButtonControl(
+      id,
+      "Get url",
+      () => {
+        const stringifiedSettings = JSON.stringify(this.settings);
+        const b64EncodedSettings = btoa(stringifiedSettings);
+        alert(stringifiedSettings);
+        alert(b64EncodedSettings);
+        alert("length: " + b64EncodedSettings.length);
+        prompt("Copy url", "p=" + b64EncodedSettings);
+      }
+    );
+    return r;
+  }
+  // -------------------------------------------------------------------------
+  // #region Rapier world Settings 
+  #buildVelocityIterationsControl(aId, state) {
     const caption = "Velocity precision";
     const r = this.buildRangeControl(
       aId,
@@ -220,7 +210,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", state, "velocityIterations");
     return r;
   }
-  #buildSimulationFrictionIterationsControl(aId, state) {
+  #buildSimulationIterationsControl(aId, state) {
     const caption = "Friction precision";
     const r = this.buildRangeControl(
       aId,
@@ -239,7 +229,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", state, "frictionIterations");
     return r;
   }
-  #buildSimulationStabilizationIterationsControl(aId, state) {
+  #buildStabilizationIterationsControl(aId, state) {
     const caption = "Stabilization precision";
     const r = this.buildRangeControl(
       aId,
@@ -258,7 +248,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", state, "stabilizationIterations");
     return r;
   }
-  #buildSimulationCcdStepsControl(aId, astate) {
+  #buildCcdStepsControl(aId, astate) {
     const caption = "CCD steps";
     const r = this.buildRangeControl(
       aId,
@@ -277,7 +267,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", astate, "ccdSteps");
     return r;
   }
-  #buildSimulationLinearErrorControl(aId, astate) {
+  #buildLinearErrorControl(aId, astate) {
     const caption = "Linear error";
     const r = this.buildRangeControl(
       aId,
@@ -296,7 +286,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", astate, "linearError");
     return r;
   }
-  #buildSimulationErrorReductionRatioControl(aId, astate) {
+  #buildErrorReductionRatioControl(aId, astate) {
     const caption = "Error reduction";
     const r = this.buildRangeControl(
       aId,
@@ -315,7 +305,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", astate, "errorReductionRatio");
     return r;
   }
-  #buildSimulationPredictionDistanceControl(aId, astate) {
+  #buildPredictionDistanceControl(aId, astate) {
     const caption = "Prediction distance";
     const r = this.buildRangeControl(
       aId,
@@ -334,6 +324,10 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", astate, "predictionDistance");
     return r;
   }
+  // #endregion
+  //--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
+  // #region Speed and reset
   #buildSimulationSpeedControl(aId, astate) {
     const caption = "Slowdown";
     const r = this.buildRangeControl(
@@ -376,7 +370,10 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     return r;
   }
   // #endregion
-  #buildSimulationGravityDetailsControl(aId, astate) {
+  //--------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // #region Gravity
+  #buildGravityDetailsControl(aId, astate) {
     const controls = [];
     controls.push(this.#buildGravityXControl(
       "simulationGravityXControl",
@@ -449,26 +446,40 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     this.gui.setReactiveControl(aId + "Value", astate, "gravity.z");
     return r;
   }
-  #buildCreditsDialogControl() {
+  // #endregion
+  //--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
+  // #region Credits dialog
+  #buildCreditsDialogControl(aid) {
+    const controls = [];
     const footer = this.gui.document.getElementById("footer");
-    footer.innerHTML;
-    const CREDITS_CLOSE_BTN_CNT = "creditsCloseButtonControl";
-    const creditsCloseButtonControl = this.buildButtonControl(
-      CREDITS_CLOSE_BTN_CNT,
+    controls.push(footer.innerHTML);
+    controls.push(this.buildButtonControl(
+      "creditsCloseButtonControl",
       "Close",
       () => {
-        const dialog = this.gui.controls.get(this.CREDITS_DIALOG_CNT).element;
+        const dialog = this.gui.controls.get(aid).element;
         dialog.close();
       }
-    );
+    ));
     const r = this.buildDialogControl(
-      this.CREDITS_DIALOG_CNT,
+      "creditsDialogControl",
       "Credits:",
-      [
-        footer.innerHTML,
-        creditsCloseButtonControl
-      ]
+      controls
     );
     return r;
   }
+  #buildCreditsDialogOpenButtonControl(aid) {
+    const r = this.buildButtonControl(
+      "creditsButtonControl",
+      "Credits",
+      () => {
+        const dialog = this.gui.controls.get(aid).element;
+        dialog.showModal();
+      }
+    );
+    return r;
+  }
+  // #endregion
+  //--------------------------------------------------------------------------
 }

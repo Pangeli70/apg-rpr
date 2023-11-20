@@ -1,0 +1,9 @@
+{
+    "target": "ES2021", // add this line to use ES2021
+    "allowImportingTsExtensions": true,
+    "lib": [
+        "dom",
+        "dom.iterable",
+        "esnext"
+    ],
+}

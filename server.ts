@@ -1,26 +1,32 @@
 /** -----------------------------------------------------------------------
  * @module [apg-rpr] Rapier Phisics Engine Tests
  * @author [APG] ANGELI Paolo Giusto
- * 
+ * @version 0.0.1 [APG 2023/08/11]
  * -----------------------------------------------------------------------
  */
-import { Edr, Dir, Lgr, Tng } from "./srv/deps.ts";
-import { ApgRprResources, ApgRprServices } from "./srv/mod.ts";
+import {
+  Edr, Tng
+} from "./srv/deps.ts";
+
+import {
+  ApgRprResources,
+  ApgRprServerInfo,
+  ApgRprServices
+} from "./srv/mod.ts";
+
+
 
 Edr.ApgEdrService.Init({
   assetsFolder: "./srv",
   clientTxtMaxAgeSeconds: 0
 });
 
-Lgr.ApgLgr.AddConsoleTransport();
 
 Tng.ApgTngService.Init('./srv/templates', "");
 
-const serverInfo = Dir.ApgDirServer.GetInfo(Dir.eApgDirEntriesIds.rpr);
-
 const server = new Edr.Drash.Server({
   hostname: '0.0.0.0',
-  port: serverInfo.localPort,
+  port: ApgRprServerInfo.info.localPort,
   resources: ApgRprResources,
   services: ApgRprServices,
   protocol: "http"
@@ -28,6 +34,6 @@ const server = new Edr.Drash.Server({
 
 server.run();
 
-Dir.ApgDirServer.StartupResume(serverInfo);
+ApgRprServerInfo.StartupResume();
 
 

@@ -2,21 +2,28 @@ import {
   RAPIER
 } from "../ApgRpr_Deps.ts";
 import {
-  ApgRpr_Simulation_GuiBuilder
+  ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 import {
   ApgRpr_Simulation
 } from "../ApgRpr_Simulation.ts";
+import {
+  THREE
+} from "../apg-wgl/lib/ApgWgl_Deps.ts";
 var ApgRpr_A2_Domino_eCardsPatterns = /* @__PURE__ */ ((ApgRpr_A2_Domino_eCardsPatterns2) => {
   ApgRpr_A2_Domino_eCardsPatterns2["RANDOM"] = "Random";
   ApgRpr_A2_Domino_eCardsPatterns2["LINEAR"] = "Linear";
+  ApgRpr_A2_Domino_eCardsPatterns2["CIRCLE"] = "Circle";
+  ApgRpr_A2_Domino_eCardsPatterns2["SPIRAL"] = "Spiral";
   ApgRpr_A2_Domino_eCardsPatterns2["STAR"] = "Star";
+  ApgRpr_A2_Domino_eCardsPatterns2["SINUSOID"] = "Sinusoid";
   return ApgRpr_A2_Domino_eCardsPatterns2;
 })(ApgRpr_A2_Domino_eCardsPatterns || {});
 export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
-  _cardWidth = 1;
-  _cardDepth = 0.5;
-  _cardHeight = 2;
+  _cardWidth = 0.02;
+  _cardDepth = 5e-3;
+  _cardHeight = 0.05;
+  _K_TO_RDNS = 2 * Math.PI / 360;
   constructor(asimulator, aparams) {
     super(asimulator, aparams);
     this.buildGui(ApgRpr_A2_Domino_GuiBuilder);
@@ -27,118 +34,120 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
       this.updateFromGui();
     });
   }
-  createWorld(asettings) {
-    const WORLD_SIZE = 60;
-    const CARDS_AREA_DIAMETER = WORLD_SIZE * 0.9;
-    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
-    const groundBody = this.world.createRigidBody(groundBodyDesc);
-    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(WORLD_SIZE / 2, 0.1, WORLD_SIZE / 2);
-    this.world.createCollider(groundColliderDesc, groundBody);
-    const northBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1 / 2, 20).setRotation({ x: 0, y: 1, z: 0, w: 0.5 });
-    const northBody = this.world.createRigidBody(northBodyDesc);
-    const northColliderDesc = RAPIER.ColliderDesc.cuboid(1 / 2, 1 / 2, 1 / 2);
-    this.world.createCollider(northColliderDesc, northBody);
-    this.#createCards(asettings, CARDS_AREA_DIAMETER);
-    this.simulator.document.onkeyup = (event) => {
-      if (event.key == " ") {
-        this.#throwBall();
-      }
+  defaultSettings() {
+    const r = {
+      ...super.defaultSettings(),
+      isCardsGroupOpened: false,
+      cardsNumber: 30,
+      cardsNumberMMS: { min: 4, max: 250, step: 2 },
+      cardsPattern: "Random" /* RANDOM */,
+      patternTypes: Object.values(ApgRpr_A2_Domino_eCardsPatterns),
+      throwBallPressed: false
     };
+    return r;
   }
-  #createRandomCards(asettings, acardsAreaDiameter) {
-    const ashift = 2 * this._cardHeight;
+  createWorld(asettings) {
+    this.createGround();
+    this.createSimulationTable(
+      asettings.table.width,
+      asettings.table.depth,
+      asettings.table.height,
+      asettings.table.thickness
+    );
+    const playGroundDiameter = asettings.table.depth * 0.9;
+    const northBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, asettings.table.height, asettings.table.depth / 2 * 0.9).setRotation({ x: 0, y: 1, z: 0, w: 0.5 });
+    const northBody = this.world.createRigidBody(northBodyDesc);
+    const northColliderDesc = RAPIER.ColliderDesc.cuboid(0.01, 0.01, 0.01);
+    this.world.createCollider(northColliderDesc, northBody);
+    this.#createCards(asettings, playGroundDiameter);
+  }
+  #createRandomCards(asettings, aplaygroundDiameter) {
+    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
     const r = new Array();
     for (let i = 0; i < asettings.cardsNumber; i++) {
-      const x = (this.rng.next() - 0.5) * acardsAreaDiameter;
-      const y = ashift;
-      const z = (this.rng.next() - 0.5) * acardsAreaDiameter;
-      const w = this.rng.next() - 1;
+      const x = (this.rng.next() - 0.5) * aplaygroundDiameter;
+      const y = fallHeight;
+      const z = (this.rng.next() - 0.5) * aplaygroundDiameter;
+      const w = this.rng.next() * 360 * this._K_TO_RDNS;
       const quaternion = new RAPIER.Quaternion(x, y, z, w);
       r.push(quaternion);
     }
     return r;
   }
-  #createLineCards(asettings, acardsAreaDiameter) {
-    const deltaZ = this._cardHeight * 0.75;
-    const ashift = 2 * this._cardHeight;
+  #createLineCards(asettings, aplaygroundDiameter) {
+    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const deltaX = this._cardHeight * 0.75;
     const r = new Array();
     for (let i = 0; i < asettings.cardsNumber; i++) {
-      const x = 0;
-      const y = ashift;
-      const z = -acardsAreaDiameter / 2 + deltaZ * i;
+      const x = -aplaygroundDiameter / 2 + deltaX * i;
+      ;
+      const y = fallHeight;
+      const z = 0;
       const w = 0;
       const quaternion = new RAPIER.Quaternion(x, y, z, w);
       r.push(quaternion);
     }
     return r;
   }
-  #createStarCards(asettings, acardsAreaDiameter) {
-    const y = 2 * this._cardHeight;
-    const r = new Array();
-    const K_TO_RDNS = 2 * Math.PI / 360;
-    const radious = 10;
+  #createCircleCards(asettings, aplaygroundDiameter) {
+    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const radious = aplaygroundDiameter / 2;
     const deltaAngle = 360 / asettings.cardsNumber;
-    const startAngle = 0;
+    const r = new Array();
     for (let i = 0; i < asettings.cardsNumber; i++) {
-      const angle = (deltaAngle * i + startAngle) % 360;
-      const angleRdns = angle * K_TO_RDNS;
-      const x = Math.cos(angleRdns) * radious;
+      const angle = deltaAngle * i % 360;
+      const angleRdns = angle * this._K_TO_RDNS;
+      const x = -Math.cos(angleRdns) * radious;
+      const y = fallHeight;
       const z = Math.sin(angleRdns) * radious;
-      const w = angle / 360;
+      const w = angleRdns;
       const message = `${angle.toFixed(2)},${angleRdns.toFixed(2)}, x:${x.toFixed(2)} z:${z.toFixed(2)} w:${w.toFixed(2)}`;
-      this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_NAME);
+      this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
       const quaternion = new RAPIER.Quaternion(x, y, z, w);
       r.push(quaternion);
     }
     return r;
   }
-  #createCards(asettings, acardsAreaDiameter) {
-    const blocks = asettings.cardsNumber;
-    let p;
+  #createCards(asettings, aplaygroundDiameter) {
+    let qs;
     switch (asettings.cardsPattern) {
-      case "Random" /* RANDOM */: {
-        p = this.#createRandomCards(asettings, acardsAreaDiameter);
-        break;
-      }
       case "Linear" /* LINEAR */: {
-        p = this.#createLineCards(asettings, acardsAreaDiameter);
+        qs = this.#createLineCards(asettings, aplaygroundDiameter);
         break;
       }
-      case "Star" /* STAR */: {
-        p = this.#createStarCards(asettings, acardsAreaDiameter);
+      case "Circle" /* CIRCLE */: {
+        qs = this.#createCircleCards(asettings, aplaygroundDiameter);
+        break;
+      }
+      case "Random" /* RANDOM */:
+      default: {
+        qs = this.#createRandomCards(asettings, aplaygroundDiameter);
         break;
       }
     }
-    for (let i = 0; i < blocks; ++i) {
-      const { x, y, z, w } = p[i];
-      const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z).setRotation({ x: 0, y: 1, z: 0, w });
+    for (let i = 0; i < qs.length; ++i) {
+      const { x, y, z, w } = qs[i];
+      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), w);
+      const boxBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z).setRotation(q);
       const boxBody = this.world.createRigidBody(boxBodyDesc);
       const boxColliderDesc = RAPIER.ColliderDesc.cuboid(this._cardWidth / 2, this._cardHeight / 2, this._cardDepth / 2);
-      this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cardsRestitution);
+      this.world.createCollider(boxColliderDesc, boxBody).setRestitution(0.05);
     }
   }
   #throwBall() {
     const target = this.simulator.viewer.orbitControls.target.clone();
-    target.x = Math.round(target.x * 100) / 100;
-    target.y = Math.round(target.y * 100) / 100;
-    target.z = Math.round(target.z * 100) / 100;
     const source = target.clone();
     this.simulator.viewer.orbitControls.object.getWorldPosition(source);
-    source.x = Math.round(source.x * 100) / 100;
-    source.y = Math.round(source.y * 100) / 100;
-    source.z = Math.round(source.z * 100) / 100;
-    const dist = source.clone();
-    dist.sub(target).normalize().negate().multiplyScalar(100);
-    dist.x = Math.round(dist.x * 100) / 100;
-    dist.y = Math.round(dist.y * 100) / 100;
-    dist.z = Math.round(dist.z * 100) / 100;
-    const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(source.x, source.y, source.z).setLinvel(dist.x, dist.y, dist.z).setLinearDamping(0.5);
+    const speedFactor = 10;
+    const speedVector = source.clone();
+    speedVector.sub(target).normalize().negate().multiplyScalar(speedFactor);
+    const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(source.x, source.y, source.z).setLinvel(speedVector.x, speedVector.y, speedVector.z).setLinearDamping(0.5).setCcdEnabled(true);
     const body = this.world.createRigidBody(bodyDesc);
-    const colliderDesc = RAPIER.ColliderDesc.ball(0.5).setDensity(1);
+    const colliderDesc = RAPIER.ColliderDesc.ball(this._cardWidth * 2).setDensity(1);
     const collider = this.world.createCollider(colliderDesc, body);
     this.simulator.viewer.addCollider(collider);
-    const message = `Ball spawn s:${source.x},${source.y},${source.z} / t: ${target.x},${target.y},${target.z} / d:${dist.x},${dist.y},${dist.z}`;
-    this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_NAME);
+    const message = `Ball spawn s:${source.x.toFixed(2)},${source.y.toFixed(2)},${source.z.toFixed(2)} / t: ${target.x.toFixed(2)},${target.y.toFixed(2)},${target.z.toFixed(2)} / d:${speedVector.x.toFixed(2)},${speedVector.y.toFixed(2)},${speedVector.z.toFixed(2)}`;
+    this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
   }
   updateFromGui() {
     const settings = this.params.settings;
@@ -150,33 +159,8 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
       super.updateFromGui();
     }
   }
-  defaultSettings() {
-    const r = {
-      ...super.defaultSettings(),
-      isCardsGroupOpened: false,
-      cardsPattern: "Random" /* RANDOM */,
-      patternTypes: Object.values(ApgRpr_A2_Domino_eCardsPatterns),
-      cardsRestitution: 0.05,
-      cardsRestitutionMMS: {
-        min: 0.1,
-        max: 0.5,
-        step: 0.05
-      },
-      cardsNumber: 30,
-      cardsNumberMMS: {
-        min: 4,
-        max: 250,
-        step: 2
-      },
-      throwBallPressed: false
-    };
-    r.cameraPosition.eye.x = -30;
-    r.cameraPosition.eye.y = 20;
-    r.cameraPosition.eye.z = -30;
-    return r;
-  }
 }
-class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
   _guiSettings;
   constructor(asimulator, asettings) {
     super(asimulator, asettings);
@@ -198,7 +182,7 @@ class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
     );
     return r;
   }
-  buildControlsToContainer() {
+  buildHudControls() {
     const THROW_BALL_HUD_BTN = "throwBallHudControl";
     const throwBallControl = this.buildButtonControl(
       THROW_BALL_HUD_BTN,
@@ -216,19 +200,6 @@ class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
       "Throw ball",
       () => {
         this._guiSettings.throwBallPressed = true;
-      }
-    );
-    const CARDS_REST_CNT = "cardsRestitutionControl";
-    const cardsRestitutionControl = this.buildRangeControl(
-      CARDS_REST_CNT,
-      "Restitution",
-      this._guiSettings.cardsRestitution,
-      this._guiSettings.cardsRestitutionMMS,
-      () => {
-        const range = this.gui.controls.get(CARDS_REST_CNT).element;
-        this._guiSettings.cardsRestitution = parseFloat(range.value);
-        const output = this.gui.controls.get(`${CARDS_REST_CNT}Value`).element;
-        output.innerHTML = range.value;
       }
     );
     const CARD_HGT_CNT = "cardHeightControl";
@@ -265,7 +236,6 @@ class ApgRpr_A2_Domino_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
       "Domino Cards:",
       [
         throwBallControl,
-        cardsRestitutionControl,
         cardHeightControl,
         patternSelectControl
       ],

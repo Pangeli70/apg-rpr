@@ -1,22 +1,23 @@
 import {
+  RAPIER,
+  md5
+} from "./ApgRpr_Deps.ts";
+import {
   ApgGui
-} from "./ApgGui.ts";
+} from "./apg-gui/lib/classes/ApgGui.ts";
 import {
   ApgGui_Stats
-} from "./ApgGui_StatsPanel.ts";
+} from "./apg-gui/lib/classes/ApgGui_Stats.ts";
 import {
   ApgRpr_Colliders_StatsPanel,
   ApgRpr_Step_StatsPanel
 } from "./ApgRpr_StatsPanels.ts";
 import {
-  RAPIER,
-  md5
-} from "./ApgRpr_Deps.ts";
-import {
   ApgRpr_Viewer
 } from "./ApgRpr_Viewer.ts";
-import { ApgUts_Logger } from "./ApgUts_Logger.ts";
-import { ApgUts } from "./ApgUts.ts";
+import {
+  ApgGui_Logger
+} from "./apg-gui/lib/classes/ApgGui_Logger.ts";
 export class ApgRpr_Simulator {
   /** Used to interact with the browser we don't like global variables */
   _window;
@@ -127,7 +128,7 @@ export class ApgRpr_Simulator {
     this._document = adocument;
     this._simulations = asimulations;
     this._defaultSimulationName = adefaultSim;
-    this._logger = new ApgUts_Logger();
+    this._logger = new ApgGui_Logger();
     this._logger.addLogger(ApgRpr_Simulator.RPR_SIMULATOR_NAME);
     this._gui = new ApgGui(
       this._document,
@@ -155,7 +156,10 @@ export class ApgRpr_Simulator {
     this._logger.devLog("Rpr simulator created", ApgRpr_Simulator.RPR_SIMULATOR_NAME);
   }
   /**
-   * Tries to get simulation parameters in the following order 1) querystring, 2) localstorage 3) revert to defaults
+   * Tries to get simulation parameters in the following order:
+   * 1) querystring, 
+   * 2) localstorage 
+   * 3) defaults
    * @returns The current simulation parameters
    */
   getSimulationParams() {
@@ -238,10 +242,10 @@ export class ApgRpr_Simulator {
     this._logger.devLog("Rapier world added", ApgRpr_Simulator.RPR_SIMULATOR_NAME);
   }
   /** 
-   * Called to allow the DOM to refresh when is changed diamically.
+   * Called to allow the Settings DOM to refresh when is changed diamically.
    * It delays the event loop calling setTimeout
    */
-  updateViewerPanel(ahtml) {
+  updateViewerSettings(ahtml) {
     this._gui.isRefreshing = true;
     this._gui.panelElement.innerHTML = ahtml;
     setTimeout(() => {
@@ -249,7 +253,7 @@ export class ApgRpr_Simulator {
     }, 0);
   }
   /** 
-   * Called to allow the DOM to refresh when is changed dinamically.
+   * Called to allow the HUD DOM to refresh when is changed dinamically.
    * It delays the event loop calling setTimeout
    */
   updateViewerHud(ahtml) {
@@ -272,7 +276,7 @@ export class ApgRpr_Simulator {
   setSimulation(aparams) {
     const simulation = aparams.simulation;
     const simulationType = this._simulations.get(simulation);
-    ApgUts.Assert(
+    ApgGui.Assert(
       simulationType != void 0,
       `Simulation for (${simulation}) is not yet available`
     );

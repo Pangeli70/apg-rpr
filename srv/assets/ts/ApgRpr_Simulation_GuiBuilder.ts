@@ -6,16 +6,16 @@
 */
 
 import {
-    IApgDomButton,
-    IApgDomDialog,
-    IApgDomElement,
-    IApgDomRange,
-    IApgDomSelect
-} from "./ApgDom.ts";
+    ApgGui_IButton,
+    ApgGui_IDialog,
+    ApgGui_IElement,
+    ApgGui_IRange,
+    ApgGui_ISelect
+} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_Builder
-} from "./ApgGui_Builder.ts";
+} from "./apg-gui/lib/classes/ApgGui_Builder.ts";
 
 import {
     ApgRpr_ISimulationSettings,
@@ -27,11 +27,11 @@ import {
 
 import {
     ApgGui_Logger_GuiBuilder
-} from "./ApgGui_Logger_GuiBuilder.ts";
+} from "./apg-gui/lib/builders/ApgGui_Logger_GuiBuilder.ts";
 
 import {
-    ApgRpr_Stats_GuiBuilder
-} from "./ApgRpr_Stats_GuiBuilder.ts";
+    ApgGui_Stats_GuiBuilder
+} from "./apg-gui/lib/builders/ApgGui_Stats_GuiBuilder.ts";
 
 import {
     ApgRpr_eSimulationName
@@ -39,7 +39,7 @@ import {
 
 import {
     ApgWgl_GuiBuilder
-} from "./ApgWgl_GuiBuilder.ts";
+} from "./apg-wgl/lib/classes/ApgWgl_GuiBuilder.ts";
 
 import {
     ApgRpr_Simulator
@@ -47,7 +47,7 @@ import {
 
 import {
     ApgGui_TReactiveState
-} from "./ApgGui.ts";
+} from "./apg-gui/lib/classes/ApgGui.ts";
 
 
 
@@ -57,12 +57,14 @@ import {
  * to tweak the simulation settings, to create the stats panels and the the credits 
  * dialog
  */
-export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
+export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
 
     private simulator: ApgRpr_Simulator;
     private settings: ApgRpr_ISimulationSettings;
 
     readonly CREDITS_DIALOG_CNT = 'creditsDialogControl';
+
+
 
     constructor(
         asimulator: ApgRpr_Simulator,
@@ -78,87 +80,32 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
     /**
      * 
-     * @returns 
      */
     override buildControls() {
 
-        const simulationGroupControl = this.#buildSimulationGroupControl();
+        const controls: string[] = [];
 
-        const statsControls = new ApgRpr_Stats_GuiBuilder(this.gui, this.simulator.stats!)
-            .buildControls();
+        controls.push(this.#buildSimulatorDetailsControl());
 
-        const debugControls = new ApgRpr_Debug_GuiBuilder(this.gui, this.simulator.debugInfo)
-            .buildControls();
+        controls.push(new ApgGui_Stats_GuiBuilder(this.gui, this.simulator.stats!)
+            .buildControls());
 
-        const loggerControls = new ApgGui_Logger_GuiBuilder(this.gui, this.simulator.logger)
-            .buildControls();
+        controls.push(new ApgRpr_Debug_GuiBuilder(this.gui, this.simulator.debugInfo)
+            .buildControls());
 
-        const FULLSCREEN_BTN_CNT = 'fullscreenButtonControl';
-        const fullscreenButtonControl = this.buildButtonControl(
-            FULLSCREEN_BTN_CNT,
-            'Go full screen',
-            () => {
-                const button = this.gui.controls.get(FULLSCREEN_BTN_CNT)!.element as IApgDomButton;
-                const docElement = this.gui.document.documentElement;
-                if (docElement.requestFullscreen) {
-                    if (!this.gui.document.fullscreenElement) {
-                        docElement.requestFullscreen();
-                        button.innerText = 'Exit full screen';
-                    }
-                    else {
-                        this.gui.document.exitFullscreen();
-                        button.innerText = 'Go full screen';
-                    }
-                }
-                else {
-                    alert('Full screen not supported');
-                }
-            }
-        );
+        controls.push(new ApgGui_Logger_GuiBuilder(this.gui, this.simulator.logger)
+            .buildControls());
 
+        controls.push(this.#buildFullscreenButtonControl());
 
-        const GET_URL_BTN_CNT = 'getUrlButtonControl';
-        const getUrlButtonControl = this.buildButtonControl(
-            GET_URL_BTN_CNT,
-            'Get url',
-            () => {
+        controls.push(this.#buildGetUrlButtonControl());
 
-                const stringifiedSettings = JSON.stringify(this.settings);
-                const b64EncodedSettings = btoa(stringifiedSettings);
-                alert(stringifiedSettings);
-                alert(b64EncodedSettings);
-                alert('length: ' + b64EncodedSettings.length);
-                prompt('Copy url', "p=" + b64EncodedSettings)
-            }
-        );
+        controls.push(new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer!)
+            .buildControls());
 
-        const creditsDialogControl = this.#buildCreditsDialogControl();
+        controls.push(this.#buildCreditsDialogControl(this.CREDITS_DIALOG_CNT));
+        controls.push(this.#buildCreditsDialogOpenButtonControl(this.CREDITS_DIALOG_CNT));
 
-        const CREDITS_BTN_CNT = 'creditsButtonControl';
-        const creditsButtonControl = this.buildButtonControl(
-            CREDITS_BTN_CNT,
-            'Credits',
-            () => {
-                const dialog = this.gui.controls.get(this.CREDITS_DIALOG_CNT)!.element as IApgDomDialog;
-                dialog.showModal();
-
-            }
-        );
-
-        const viewerSettingsControls = new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer!)
-            .buildControls();
-
-        const controls = [
-            simulationGroupControl,
-            statsControls,
-            debugControls,
-            loggerControls,
-            fullscreenButtonControl,
-            getUrlButtonControl,
-            creditsDialogControl,
-            creditsButtonControl,
-            viewerSettingsControls
-        ];
         const r = controls.join("\n");
 
         return r;
@@ -166,14 +113,13 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     }
 
 
-
-    override buildControlsToContainer() {
+    override buildHudControls() {
         return "";
     }
 
 
 
-    buildSimulationChangeControl() {
+    protected buildSimulationChangeControl() {
         const simulationsKVs = new Map<string, string>();
         for (const simulation of this.simulator.simulationsNames) {
             simulationsKVs.set(simulation, simulation);
@@ -185,7 +131,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.simulation,
             simulationsKVs,
             () => {
-                const select = this.gui.controls.get(id)!.element as IApgDomSelect;
+                const select = this.gui.controls.get(id)!.element as ApgGui_ISelect;
                 this.settings.simulation = select.value as ApgRpr_eSimulationName;
                 this.gui.logNoTime(`Simulation control change event: ${select.value}`);
             }
@@ -195,43 +141,43 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationGroupControl() {
+    #buildSimulatorDetailsControl() {
 
         const controls: string[] = [];
 
         const state = this.settings as unknown as ApgGui_TReactiveState;
 
-        controls.push(this.#buildSimulationVelocityIterationsControl(
+        controls.push(this.#buildVelocityIterationsControl(
             'simulationVelocityIterationsControl',
             state
         ));
 
-        controls.push(this.#buildSimulationFrictionIterationsControl(
+        controls.push(this.#buildSimulationIterationsControl(
             'simulationFrictionIterationsControl',
             state
         ));
 
-        controls.push(this.#buildSimulationStabilizationIterationsControl(
+        controls.push(this.#buildStabilizationIterationsControl(
             'simulationStabilizationIterationsControl',
             state
         ));
 
-        controls.push(this.#buildSimulationCcdStepsControl(
+        controls.push(this.#buildCcdStepsControl(
             'simulationCcdStepsIterationsControl',
             state
         ));
 
-        controls.push(this.#buildSimulationLinearErrorControl(
+        controls.push(this.#buildLinearErrorControl(
             'simulationLinearErrorControl',
             state
         ));
 
-        controls.push(this.#buildSimulationErrorReductionRatioControl(
+        controls.push(this.#buildErrorReductionRatioControl(
             'simulationErrorReductionRatioControl',
             state
         ));
 
-        controls.push(this.#buildSimulationPredictionDistanceControl(
+        controls.push(this.#buildPredictionDistanceControl(
             'simulationPredictionDistanceControl',
             state
         ));
@@ -241,7 +187,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             state
         ));
 
-        controls.push(this.#buildSimulationGravityDetailsControl(
+        controls.push(this.#buildGravityDetailsControl(
             'simulationGravityDetailsControl',
             state
         ))
@@ -258,16 +204,16 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             'debugModeButtonControl'
         ));
 
-        const caption = "Simulation settings";
+        const id = "simulatorDetailsControl"
         const r = this.buildDetailsControl(
-            "simulatorDetailsControl",
-            caption,
+            id,
+            "Simulator settings",
             controls,
             this.settings.isSimulatorDetailsOpened,
             () => {
                 if (!this.gui.isRefreshing) {
                     this.settings.isSimulatorDetailsOpened = !this.settings.isSimulatorDetailsOpened
-                    this.gui.devLogNoTime(`${caption} details toggled`);
+                    this.gui.devLogNoTime(`${id} details toggled`);
                 }
             }
         );
@@ -301,7 +247,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             initialTitle,
             () => {
                 this.settings.isDebugMode = !this.settings.isDebugMode;
-                const button = this.gui.controls.get(aId)!.element as IApgDomButton;
+                const button = this.gui.controls.get(aId)!.element as ApgGui_IButton;
                 const title = `Debug mode ${(this.settings.isDebugMode) ? "Off" : "On"}`;
                 button.innerText = title;
                 this.gui.devLogNoTime('Debug mode button pressed');
@@ -311,11 +257,62 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     }
 
 
-    // #region Simulation Settings Controls -------------------------------------
+
+
+    #buildFullscreenButtonControl() {
+        const id = 'fullscreenButtonControl';
+        const r = this.buildButtonControl(
+            id,
+            'Go full screen',
+            () => {
+                const button = this.gui.controls.get(id)!.element as ApgGui_IButton;
+                const docElement = this.gui.document.documentElement;
+                if (docElement.requestFullscreen) {
+                    if (!this.gui.document.fullscreenElement) {
+                        docElement.requestFullscreen();
+                        button.innerText = 'Exit full screen';
+                    }
+                    else {
+                        this.gui.document.exitFullscreen();
+                        button.innerText = 'Go full screen';
+                    }
+                }
+                else {
+                    alert('Full screen not supported');
+                }
+            }
+        );
+        return r;
+    }
 
 
 
-    #buildSimulationVelocityIterationsControl(
+    #buildGetUrlButtonControl() {
+        const id = 'getUrlButtonControl';
+        const r = this.buildButtonControl(
+            id,
+            'Get url',
+            () => {
+
+                const stringifiedSettings = JSON.stringify(this.settings);
+                const b64EncodedSettings = btoa(stringifiedSettings);
+                alert(stringifiedSettings);
+                alert(b64EncodedSettings);
+                alert('length: ' + b64EncodedSettings.length);
+                prompt('Copy url', "p=" + b64EncodedSettings);
+            }
+        );
+        return r;
+    }
+
+
+
+
+    // -------------------------------------------------------------------------
+    // #region Rapier world Settings 
+
+
+    #buildVelocityIterationsControl(
         aId: string,
         state: ApgGui_TReactiveState
     ) {
@@ -326,9 +323,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.velocityIterations,
             this.settings.velocityIterationsMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.velocityIterations = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -340,7 +337,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationFrictionIterationsControl(
+    #buildSimulationIterationsControl(
         aId: string,
         state: ApgGui_TReactiveState
     ) {
@@ -351,9 +348,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.frictionIterations,
             this.settings.frictionIterationsMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.frictionIterations = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -365,7 +362,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationStabilizationIterationsControl(
+    #buildStabilizationIterationsControl(
         aId: string,
         state: ApgGui_TReactiveState
     ) {
@@ -376,9 +373,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.stabilizationIterations,
             this.settings.stabilizationIterationsMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.stabilizationIterations = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -390,7 +387,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationCcdStepsControl(
+    #buildCcdStepsControl(
         aId: string,
         astate: ApgGui_TReactiveState
     ) {
@@ -401,9 +398,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.ccdSteps,
             this.settings.ccdStepsMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.ccdSteps = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -415,7 +412,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationLinearErrorControl(
+    #buildLinearErrorControl(
         aId: string,
         astate: ApgGui_TReactiveState
     ) {
@@ -426,9 +423,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.linearError,
             this.settings.linearErrorMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.linearError = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -440,7 +437,7 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationErrorReductionRatioControl(
+    #buildErrorReductionRatioControl(
         aId: string,
         astate: ApgGui_TReactiveState
     ) {
@@ -451,9 +448,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.errorReductionRatio,
             this.settings.errorReductionRatioMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.errorReductionRatio = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -465,20 +462,20 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
 
 
 
-    #buildSimulationPredictionDistanceControl(
+    #buildPredictionDistanceControl(
         aId: string,
         astate: ApgGui_TReactiveState
     ) {
-        const caption ='Prediction distance' ;
+        const caption = 'Prediction distance';
         const r = this.buildRangeControl(
             aId,
             caption,
             this.settings.predictionDistance,
             this.settings.predictionDistanceMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.predictionDistance = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -488,6 +485,13 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
         return r;
     }
 
+
+    // #endregion
+    //--------------------------------------------------------------------------
+
+
+    //--------------------------------------------------------------------------
+    // #region Speed and reset
 
 
     #buildSimulationSpeedControl(
@@ -501,9 +505,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.slowDownFactor,
             this.settings.slowdownMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.slowDownFactor = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 this.gui.devLogNoTime(`${caption} change event: ${range.value}`);
             }
@@ -546,8 +550,13 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
     }
 
     // #endregion
+    //--------------------------------------------------------------------------
 
-    #buildSimulationGravityDetailsControl(
+    // -------------------------------------------------------------------------
+    // #region Gravity
+
+
+    #buildGravityDetailsControl(
         aId: string,
         astate: ApgGui_TReactiveState
     ) {
@@ -589,9 +598,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.gravity.x,
             this.settings.gravityXMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.gravity.x = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
             }
         );
@@ -612,9 +621,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.gravity.y,
             this.settings.gravityYMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.gravity.y = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
             }
         );
@@ -635,9 +644,9 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
             this.settings.gravity.z,
             this.settings.gravityZMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(aId)!.element as ApgGui_IRange;
                 this.settings.gravity.z = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${aId}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
             }
         );
@@ -646,31 +655,54 @@ export class ApgRpr_Simulation_GuiBuilder extends ApgGui_Builder {
         return r;
     }
 
+    // #endregion
+    //--------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
+    // #region Credits dialog
 
 
-    #buildCreditsDialogControl() {
+    #buildCreditsDialogControl(aid: string) {
+
+        const controls: string[] = [];
+
         const footer = this.gui.document.getElementById('footer');
-        footer.innerHTML;
+        controls.push(footer.innerHTML);
 
-        const CREDITS_CLOSE_BTN_CNT = 'creditsCloseButtonControl';
-        const creditsCloseButtonControl = this.buildButtonControl(
-            CREDITS_CLOSE_BTN_CNT,
+        controls.push(this.buildButtonControl(
+            'creditsCloseButtonControl',
             'Close',
             () => {
-                const dialog = this.gui.controls.get(this.CREDITS_DIALOG_CNT)!.element as IApgDomDialog;
+                const dialog = this.gui.controls.get(aid)!.element as ApgGui_IDialog;
                 dialog.close();
             }
-        );
+        ));
 
         const r = this.buildDialogControl(
-            this.CREDITS_DIALOG_CNT,
+            'creditsDialogControl',
             "Credits:",
-            [
-                footer.innerHTML,
-                creditsCloseButtonControl
-            ]
+            controls
         );
         return r;
     }
+
+
+
+    #buildCreditsDialogOpenButtonControl(aid: string) {
+
+        const r = this.buildButtonControl(
+            'creditsButtonControl',
+            'Credits',
+            () => {
+                const dialog = this.gui.controls.get(aid)!.element as ApgGui_IDialog;
+                dialog.showModal();
+            }
+        );
+        return r;
+
+    }
+
+    // #endregion
+    //--------------------------------------------------------------------------
 
 }

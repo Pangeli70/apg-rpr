@@ -2,7 +2,7 @@ import {
   RAPIER
 } from "../ApgRpr_Deps.ts";
 import {
-  ApgRpr_Simulation_GuiBuilder
+  ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 import {
   ApgRpr_Simulation
@@ -130,7 +130,7 @@ export class ApgRpr_B0_Fountain_Simulation extends ApgRpr_Simulation {
     return r;
   }
 }
-class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
   _guiSettings;
   constructor(asimulator, asettings) {
     super(asimulator, asettings);

@@ -6,37 +6,38 @@
 */
 
 import {
-    IApgDomBrowserWindow,
-    IApgDomDocument,
-    IApgDomMouseEvent
-} from "./ApgDom.ts";
+    RAPIER, md5
+} from './ApgRpr_Deps.ts';
+
+import {
+    ApgGui_IBrowserWindow,
+    ApgGui_IDocument,
+    ApgGui_IMouseEvent
+} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui
-} from "./ApgGui.ts";
+} from "./apg-gui/lib/classes/ApgGui.ts";
 
 import {
     ApgGui_Stats
-} from "./ApgGui_StatsPanel.ts";
+} from "./apg-gui/lib/classes/ApgGui_Stats.ts";
+
 import {
     ApgRpr_Colliders_StatsPanel,
     ApgRpr_Step_StatsPanel
 } from "./ApgRpr_StatsPanels.ts";
 
 import {
-    RAPIER, md5
-} from './ApgRpr_Deps.ts';
-
-import {
     ApgRpr_ICameraPosition,
     ApgRpr_IDebugInfo,
-    IApgRpr_Point2D
+    ApgRpr_IPoint2D
 } from "./ApgRpr_Interfaces.ts";
 
 import {
-    ApgRpr_Simulation,
+    ApgRpr_ISimulationParams,
     ApgRpr_ISimulationSettings,
-    ApgRpr_ISimulationParams
+    ApgRpr_Simulation
 } from "./ApgRpr_Simulation.ts";
 
 import {
@@ -48,10 +49,12 @@ import {
 } from "./ApgRpr_Simulations.ts";
 
 import {
+    ApgGui_Logger
+} from "./apg-gui/lib/classes/ApgGui_Logger.ts";
+
+import {
     ApgWgl_IOrbitControlsParams
-} from "./ApgWgl_Viewer.ts";
-import { ApgUts_Logger } from "./ApgUts_Logger.ts";
-import { ApgUts } from "./ApgUts.ts";
+} from "./apg-wgl/lib/classes/ApgWgl_Viewer.ts";
 
 
 
@@ -62,9 +65,9 @@ import { ApgUts } from "./ApgUts.ts";
 export class ApgRpr_Simulator {
 
     /** Used to interact with the browser we don't like global variables */
-    private _window: IApgDomBrowserWindow;
+    private _window: ApgGui_IBrowserWindow;
     /** Used to interact with the DOM we don't like global variables */
-    private _document: IApgDomDocument;
+    private _document: ApgGui_IDocument;
     get document() { return this._document; }
 
     /** The current set of simulations */
@@ -79,7 +82,7 @@ export class ApgRpr_Simulator {
     get gui() { return this._gui; }
 
     /** Logger */
-    private _logger: ApgUts_Logger;
+    private _logger: ApgGui_Logger;
     get logger() { return this._logger; }
 
     /** Stats objects */
@@ -92,7 +95,7 @@ export class ApgRpr_Simulator {
     viewer: ApgRpr_Viewer;
 
     /** Eventually used for picking objects with a raycaster */
-    mouse: IApgRpr_Point2D;
+    mouse: ApgRpr_IPoint2D;
 
     /** We don't know yet ??? */
     private _events: RAPIER.EventQueue;
@@ -183,8 +186,8 @@ export class ApgRpr_Simulator {
     static readonly RPR_SIMULATOR_NAME = "Rapier simulator";
 
     constructor(
-        awindow: IApgDomBrowserWindow,
-        adocument: IApgDomDocument,
+        awindow: ApgGui_IBrowserWindow,
+        adocument: ApgGui_IDocument,
         aguiElementId: string,
         aviewerElementId: string,
         asimulations: Map<ApgRpr_eSimulationName, typeof ApgRpr_Simulation>,
@@ -195,7 +198,7 @@ export class ApgRpr_Simulator {
         this._document = adocument;
         this._simulations = asimulations;
         this._defaultSimulationName = adefaultSim;
-        this._logger = new ApgUts_Logger();
+        this._logger = new ApgGui_Logger();
         this._logger.addLogger(ApgRpr_Simulator.RPR_SIMULATOR_NAME);
 
         this._gui = new ApgGui(
@@ -219,7 +222,7 @@ export class ApgRpr_Simulator {
         this._events = new RAPIER.EventQueue(true);
 
         // Collect continuously the mouse position in the range -1...1 both for x and y
-        this._window.addEventListener("mousemove", (event: IApgDomMouseEvent) => {
+        this._window.addEventListener("mousemove", (event: ApgGui_IMouseEvent) => {
             this.mouse.x = (event.clientX / this._window.innerWidth) * 2 - 1;
             this.mouse.y = 1 - (event.clientY / this._window.innerHeight) * 2;
         });
@@ -231,7 +234,10 @@ export class ApgRpr_Simulator {
 
 
     /**
-     * Tries to get simulation parameters in the following order 1) querystring, 2) localstorage 3) revert to defaults
+     * Tries to get simulation parameters in the following order:
+     * 1) querystring, 
+     * 2) localstorage 
+     * 3) defaults
      * @returns The current simulation parameters
      */
     getSimulationParams() {
@@ -360,10 +366,10 @@ export class ApgRpr_Simulator {
 
 
     /** 
-     * Called to allow the DOM to refresh when is changed diamically.
+     * Called to allow the Settings DOM to refresh when is changed diamically.
      * It delays the event loop calling setTimeout
      */
-    updateViewerPanel(ahtml: string) {
+    updateViewerSettings(ahtml: string) {
 
         this._gui.isRefreshing = true;
 
@@ -378,7 +384,7 @@ export class ApgRpr_Simulator {
 
 
     /** 
-     * Called to allow the DOM to refresh when is changed dinamically.
+     * Called to allow the HUD DOM to refresh when is changed dinamically.
      * It delays the event loop calling setTimeout
      */
     updateViewerHud(ahtml: string) {
@@ -415,7 +421,7 @@ export class ApgRpr_Simulator {
 
         const simulation = aparams.simulation;
         const simulationType = this._simulations.get(simulation);
-        ApgUts.Assert(
+        ApgGui.Assert(
             simulationType != undefined,
             `Simulation for (${simulation}) is not yet available`
         )

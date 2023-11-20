@@ -1,6 +1,6 @@
 import {
   ApgGui_StatsPanel
-} from "./ApgGui_StatsPanel.ts";
+} from "./apg-gui/lib/classes/ApgGui_Stats.ts";
 export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
   constructor(adocument, adevicePixelRatio, awidth, aname = "Simulation time", ameasureUnit = "ms (step)", aprecision = -1, aforeGroundFillStyle = "#ff8", abackGroundFillStyle = "#221") {
     super(

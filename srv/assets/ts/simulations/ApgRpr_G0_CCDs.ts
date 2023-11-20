@@ -6,14 +6,14 @@
 */
 
 import {
-    IApgDomCheckBox,
-    IApgDomElement,
-    IApgDomRange
-} from "../ApgDom.ts";
+    ApgGui_ICheckBox,
+    ApgGui_IElement,
+    ApgGui_IRange
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_IMinMaxStep
-} from "../ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
 import {
     RAPIER
@@ -24,7 +24,7 @@ import {
 } from "../ApgRpr_Interfaces.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -218,7 +218,7 @@ export class ApgRpr_G0_CCDs_Simulation extends ApgRpr_Simulation {
 }
 
 
-export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_G0_CCDs_ISimulationSettings;
 
@@ -271,9 +271,9 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.wallsDensity,
             this._guiSettings.wallsDensityMMS,
             () => {
-                const range = this.gui.controls.get(WALLS_DENS_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(WALLS_DENS_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.wallsDensity = parseFloat(range.value);
-                const output = this.gui.controls.get(`${WALLS_DENS_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${WALLS_DENS_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -286,9 +286,9 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.wallsHeight,
             this._guiSettings.wallsHeightMMS,
             () => {
-                const range = this.gui.controls.get(WALLS_HEIGHT_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(WALLS_HEIGHT_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.wallsHeight = parseInt(range.value);
-                const output = this.gui.controls.get(`${WALLS_HEIGHT_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${WALLS_HEIGHT_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -301,9 +301,9 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.wallsNumber,
             this._guiSettings.wallsNumberMMS,
             () => {
-                const range = this.gui.controls.get(WALLS_NUMB_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(WALLS_NUMB_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.wallsNumber = parseInt(range.value);
-                const output = this.gui.controls.get(`${WALLS_NUMB_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${WALLS_NUMB_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -315,7 +315,7 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             'Enable CCD',
             this._guiSettings.wallsCcd,
             () => {
-                const chkbox = this.gui.controls.get(WALLS_CCD_CNT)!.element as IApgDomCheckBox;
+                const chkbox = this.gui.controls.get(WALLS_CCD_CNT)!.element as ApgGui_ICheckBox;
                 this._guiSettings.wallsCcd = chkbox.checked;
                 // alert(chkbox.checked.toString());
             }
@@ -352,9 +352,9 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.projectileRadious,
             this._guiSettings.projectileRadiousMMS,
             () => {
-                const range = this.gui.controls.get(PROJ_RADIOUS_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(PROJ_RADIOUS_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.projectileRadious = parseFloat(range.value);
-                const output = this.gui.controls.get(`${PROJ_RADIOUS_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${PROJ_RADIOUS_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -367,9 +367,9 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.projectileDensity,
             this._guiSettings.projectileDensityMMS,
             () => {
-                const range = this.gui.controls.get(PROJ_DENSITY_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(PROJ_DENSITY_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.projectileDensity = parseFloat(range.value);
-                const output = this.gui.controls.get(`${PROJ_DENSITY_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${PROJ_DENSITY_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -382,9 +382,9 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.projectileSpeed,
             this._guiSettings.projectileSpeedMMS,
             () => {
-                const range = this.gui.controls.get(PROJ_SPEED_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(PROJ_SPEED_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.projectileSpeed = parseFloat(range.value);
-                const output = this.gui.controls.get(`${PROJ_SPEED_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${PROJ_SPEED_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -396,7 +396,7 @@ export class ApgRpr_G0_CCDs_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             'Enable CCD',
             this._guiSettings.projectileCcd,
             () => {
-                const chkbox = this.gui.controls.get(PROJ_CCD_CNT)!.element as IApgDomCheckBox;
+                const chkbox = this.gui.controls.get(PROJ_CCD_CNT)!.element as ApgGui_ICheckBox;
                 this._guiSettings.projectileCcd = chkbox.checked;
                 // alert(chkbox.checked.toString());
             }

@@ -10,7 +10,7 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -101,8 +101,11 @@ export class ApgRpr_E2_ConvexPolyhedron_Simulation extends ApgRpr_Simulation {
                     // Build the rigid body.
                     const polyhedronBodyDesc = RAPIER.RigidBodyDesc.dynamic()
                         .setTranslation(x, y, z);
-                    const polyhedronBody = this.world.createRigidBody(polyhedronBodyDesc);
-                    const polyhedronColliderDesc = RAPIER.ColliderDesc.roundConvexHull(vertices, border_rad);
+                    const polyhedronBody = this.world
+                        .createRigidBody(polyhedronBodyDesc);
+                    
+                    const polyhedronColliderDesc = RAPIER.ColliderDesc
+                        .roundConvexHull(vertices, border_rad);
                     this.world.createCollider(polyhedronColliderDesc, polyhedronBody);
                 }
             }
@@ -138,7 +141,7 @@ export class ApgRpr_E2_ConvexPolyhedron_Simulation extends ApgRpr_Simulation {
 
 
 
-export class ApgRpr_E2_ConvexPolyhedrons_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+export class ApgRpr_E2_ConvexPolyhedrons_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_E2_ConvexPolyhedrons_ISimulationSettings;
 

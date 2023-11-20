@@ -5,17 +5,27 @@
  * -----------------------------------------------------------------------
 */
 
+
+//--------------------------------------------------------------------------
+// #region Imports
+
+
 import {
-    IApgDomElement, IApgDomRange
-} from "../ApgDom.ts";
+    ApgGui_IElement, ApgGui_IRange, ApgGui_ISelect
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_IMinMaxStep
-} from "../ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
 import {
     RAPIER
 } from "../ApgRpr_Deps.ts";
+
+import {
+    ApgRrp_MaterialsTable,
+    ApgRrp_eMaterial
+} from "../ApgRpr_Materials.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -24,12 +34,16 @@ import {
 } from "../ApgRpr_Simulation.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_Simulator
 } from "../ApgRpr_Simulator.ts";
+
+
+// #endregion
+//--------------------------------------------------------------------------
 
 
 interface ApgRpr_A0_Pyramid_ISimulationSettings extends ApgRpr_ISimulationSettings {
@@ -39,14 +53,16 @@ interface ApgRpr_A0_Pyramid_ISimulationSettings extends ApgRpr_ISimulationSettin
     pyramidSize: number;
     pyramidSizeMMS: ApgGui_IMinMaxStep;
 
-    fallHeightFactor: number,
-    fallHeightFactorMMS: ApgGui_IMinMaxStep,
-
     cubeSize: number,
     cubeSizeMMS: ApgGui_IMinMaxStep,
 
+    fallHeightFactor: number,
+    fallHeightFactorMMS: ApgGui_IMinMaxStep,
+
     cubesRestitution: number;
     cubesRestitutionMMS: ApgGui_IMinMaxStep;
+
+    cubesMaterial: ApgRrp_eMaterial,
 
     cubesFriction: number;
     cubesFrictionMMS: ApgGui_IMinMaxStep;
@@ -90,17 +106,19 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
             pyramidSize: 8,
             pyramidSizeMMS: { min: 5, max: 12, step: 1 },
 
-            fallHeightFactor: 1,
-            fallHeightFactorMMS: { min: 0.1, max: 10, step: 0.1 },
-
             cubeSize: 0.05,
             cubeSizeMMS: { min: 0.01, max: 0.1, step: 0.01 },
 
+            fallHeightFactor: 1,
+            fallHeightFactorMMS: { min: 0.1, max: 10, step: 0.1 },
+
+            cubesMaterial: ApgRrp_eMaterial.HardWood,
+
             cubesRestitution: 0.5,
-            cubesRestitutionMMS: { min: 0.02, max: 2, step: 0.02 },
+            cubesRestitutionMMS: { min: 0.005, max: 1.1, step: 0.005 },
 
             cubesFriction: 0.5,
-            cubesFrictionMMS: { min: 0.02, max: 1, step: 0.02 },
+            cubesFrictionMMS: { min: 0.005, max: 1, step: 0.005 },
 
         }
 
@@ -128,7 +146,7 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
 
         this.logger.log(
             `World created for simulation ${this.params.simulation}`,
-            ApgRpr_Simulation.RPR_SIMULATION_NAME
+            ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME
         );
 
     }
@@ -145,6 +163,12 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
         const fallHeight = cubeSize * asettings.fallHeightFactor;
         const initialXZDisplacement = -1 * ((cubeSize * baseSize) + (cubeGap * (baseSize - 1))) / 2 + cubeRadious;
 
+        const material = ApgRrp_MaterialsTable[asettings.cubesMaterial];
+
+        const userData = {
+            material
+        }
+
         for (let iy = 0; iy < baseSize; iy++) {
 
             const levelXZOrigin = initialXZDisplacement + (iy * distance / 2);
@@ -158,17 +182,18 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
                     const z = levelXZOrigin + (iz * distance);
 
                     // Create dynamic cube.
-                    const bodyDesc = RAPIER.RigidBodyDesc
+                    const cubeRBD = RAPIER.RigidBodyDesc
                         .dynamic()
+                        .setUserData(userData)
                         .setTranslation(x, y, z);
-                    const boxBody = this.world.createRigidBody(bodyDesc);
+                    this.applyMaterialToRigidBodyDesc(cubeRBD, material);
+                    const cubeRB = this.world.createRigidBody(cubeRBD);
 
-                    const collDesc = RAPIER.ColliderDesc
+                    const cubeCD = RAPIER.ColliderDesc
                         // .roundCuboid(cubeRadious, cubeRadious, cubeRadious, cubeRadious/10)
                         .cuboid(cubeRadious, cubeRadious, cubeRadious)
-                        .setRestitution(asettings.cubesRestitution)
-                        .setFriction(asettings.cubesFriction);
-                    this.world.createCollider(collDesc, boxBody);
+                    this.applyMaterialToColliderDesc(cubeCD, material)
+                    this.world.createCollider(cubeCD, cubeRB);
                 }
             }
         }
@@ -177,10 +202,12 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_A0_Pyramid_ISimulationSettings;
 
+    private readonly _CUSTOM_RESTITUTION_RANGE_CONTROL_ID = 'CubesCustomRestitutionRangeControl';
+    private readonly _CUSTOM_FRICTION_RANGE_CONTROL_ID = 'CubesCustomFrictionRangeControl';
 
     constructor(
         asimulator: ApgRpr_Simulator,
@@ -192,22 +219,22 @@ class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
     }
 
 
+    //--------------------------------------------------------------------------
+    // #region GUI
+
 
     override buildControls() {
 
-        const changeSimulationControl = this.buildSimulationChangeControl();
-        const restartSimulationButtonControl = this.buildRestartButtonControl();
-        const pyramidSettingsGroupControl = this.#buildPyramidSettingsGroupControl();
-        const simulationControls = super.buildControls();
+        const controls: string[] = [];
+
+        controls.push(this.buildSimulationChangeControl());
+        controls.push(this.buildRestartButtonControl());
+        controls.push(this.#buildPyramidSettingsDetailsControl());
+        controls.push(super.buildControls());
 
         const r = this.buildPanelControl(
-            `ApgRprSim_${this._guiSettings.simulation}_SettingsPanelId`,
-            [
-                changeSimulationControl,
-                restartSimulationButtonControl,
-                pyramidSettingsGroupControl,
-                simulationControls
-            ]
+            `ApgRpr_${this._guiSettings.simulation}_SettingsPanelControl`,
+            controls
         );
 
         return r;
@@ -216,25 +243,27 @@ class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
 
 
-    #buildPyramidSettingsGroupControl() {
+    #buildPyramidSettingsDetailsControl() {
 
         const controls: string[] = [];
 
-        controls.push(this.#buildPyramidSizeControl('PyramidSizeControl'));
-        controls.push(this.#buildCubeSizeControl('CubeSizeControl'));
-        controls.push(this.#buildFallHeightFactorControl('FallHeightFactorControl'));
-        controls.push(this.#buildCubesRestitutionControl('CubesRestitutionControl'));
-        controls.push(this.#buildCubesFrictionControl('CubesFrictionControl'));
+        controls.push(this.#buildPyramidSizeControl());
+        controls.push(this.#buildCubeSizeControl());
+        controls.push(this.#buildFallHeightFactorControl());
+        controls.push(this.#buildCubesMaterialSelectControl());
+        controls.push(this.#buildCubesRestitutionControl());
+        controls.push(this.#buildCubesFrictionControl());
 
+        const id = "PyramidSettingsDetailsControl";
         const r = this.buildDetailsControl(
-            "pyramidGroupControl",
+            id,
             "Pyramid settings:",
             controls,
             this._guiSettings.isPyramidGroupOpened,
             () => {
                 if (!this.gui.isRefreshing) {
                     this._guiSettings.isPyramidGroupOpened = !this._guiSettings.isPyramidGroupOpened;
-                    this.gui.logNoTime('Pyramid group toggled');
+                    this.gui.devLogNoTime('Pyramid group toggled');
                 }
             }
 
@@ -244,20 +273,20 @@ class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
 
 
-    #buildPyramidSizeControl(
-        aId: string
-    ) {
+    #buildPyramidSizeControl() {
+
+        const id = 'PyramidSizeControl';
         const r = this.buildRangeControl(
-            aId,
+            id,
             'Size',
             this._guiSettings.pyramidSize,
             this._guiSettings.pyramidSizeMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(id)!.element as ApgGui_IRange;
                 this._guiSettings.pyramidSize = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${id}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
-                this.gui.logNoTime(`Size control change event: ${range.value}`);
+                this.gui.devLogNoTime(`Size control change event: ${range.value}`);
             }
         );
         return r;
@@ -265,41 +294,20 @@ class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
 
 
-    #buildFallHeightFactorControl(
-        aId: string
-    ) {
+    #buildCubeSizeControl() {
+
+        const id = 'CubeSizeControl';
         const r = this.buildRangeControl(
-            aId,
-            'Height factor',
-            this._guiSettings.fallHeightFactor,
-            this._guiSettings.fallHeightFactorMMS,
-            () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
-                this._guiSettings.fallHeightFactor = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
-                output.innerHTML = range.value;
-                this.gui.logNoTime(`Fall height control change event: ${range.value}`);
-            }
-        );
-        return r;
-    }
-
-
-
-    #buildCubeSizeControl(
-        aId: string
-    ) {
-        const r = this.buildRangeControl(
-            aId,
-            'Cube size',
+            id,
+            'Cube size [m]',
             this._guiSettings.cubeSize,
             this._guiSettings.cubeSizeMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(id)!.element as ApgGui_IRange;
                 this._guiSettings.cubeSize = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${id}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
-                this.gui.logNoTime(`Cube size control change event: ${range.value}`);
+                this.gui.devLogNoTime(`Cube size control change event: ${range.value}`);
             }
         );
         return r;
@@ -307,46 +315,157 @@ class ApgRpr_A0_Pyramid_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
 
 
 
-    #buildCubesRestitutionControl(
-        aId: string
-    ) {
+    #buildFallHeightFactorControl() {
+
+        const id = 'FallHeightFactorControl';
         const r = this.buildRangeControl(
-            aId,
+            id,
+            'Fall height factor',
+            this._guiSettings.fallHeightFactor,
+            this._guiSettings.fallHeightFactorMMS,
+            () => {
+                const range = this.gui.controls.get(id)!.element as ApgGui_IRange;
+                this._guiSettings.fallHeightFactor = parseFloat(range.value);
+                const output = this.gui.controls.get(`${id}Value`)!.element as ApgGui_IElement;
+                output.innerHTML = range.value;
+                this.gui.devLogNoTime(`Fall height control change event: ${range.value}`);
+            }
+        );
+        return r;
+    }
+
+
+
+    #buildCubesRestitutionControl() {
+
+        const id = this._CUSTOM_RESTITUTION_RANGE_CONTROL_ID;
+        const r = this.buildRangeControl(
+            id,
             'Restitution',
             this._guiSettings.cubesRestitution,
             this._guiSettings.cubesRestitutionMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(id)!.element as ApgGui_IRange;
                 this._guiSettings.cubesRestitution = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${id}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
-                this.gui.logNoTime(`Restitution control change event: ${range.value}`);
-            }
+
+                const material = ApgRrp_MaterialsTable[ApgRrp_eMaterial.Custom];
+                material.restitution = this._guiSettings.cubesRestitution;
+
+                this.gui.devLogNoTime(`Restitution control change event: ${range.value}`);
+            },
+            (this._guiSettings.cubesMaterial == ApgRrp_eMaterial.Custom) ? false : true
         );
         return r;
     }
 
 
 
-    #buildCubesFrictionControl(
-        aId: string
-    ) {
+    #buildCubesFrictionControl() {
+
+        const id = this._CUSTOM_FRICTION_RANGE_CONTROL_ID;
         const r = this.buildRangeControl(
-            aId,
+            id,
             'Friction',
             this._guiSettings.cubesFriction,
             this._guiSettings.cubesFrictionMMS,
             () => {
-                const range = this.gui.controls.get(aId)!.element as IApgDomRange;
+                const range = this.gui.controls.get(id)!.element as ApgGui_IRange;
                 this._guiSettings.cubesFriction = parseFloat(range.value);
-                const output = this.gui.controls.get(`${aId}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${id}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
-                this.gui.logNoTime(`Friction control change event: ${range.value}`);
+
+                const material = ApgRrp_MaterialsTable[ApgRrp_eMaterial.Custom];
+                material.friction = this._guiSettings.cubesFriction;
+
+                this.gui.devLogNoTime(`Friction control change event: ${range.value}`);
+            },
+            (this._guiSettings.cubesMaterial == ApgRrp_eMaterial.Custom) ? false : true
+        );
+        return r;
+    }
+
+
+
+    #buildCubesMaterialSelectControl() {
+
+        const keyValues = new Map<string, string>();
+        for (const key of Object.keys(ApgRrp_MaterialsTable)) {
+            keyValues.set(key, key);
+        }
+
+
+        const id = 'CubesMaterialSelectControl';
+        const r = this.buildSelectControl(
+            id,
+            'Material',
+            this._guiSettings.cubesMaterial,
+            keyValues,
+            () => {
+                const select = this.gui.controls.get(id)!.element as ApgGui_ISelect;
+                this._guiSettings.cubesMaterial = select.value as ApgRrp_eMaterial;
+
+                const material = ApgRrp_MaterialsTable[this._guiSettings.cubesMaterial];
+
+                const restitutionRange = this.gui.controls.get(this._CUSTOM_RESTITUTION_RANGE_CONTROL_ID)!.element as ApgGui_IRange;
+                restitutionRange.value = material.restitution.toString();
+                restitutionRange.disabled = (material.name == ApgRrp_eMaterial.Custom) ? false : true;
+                this._guiSettings.cubesRestitution = material.restitution;
+
+
+                const frictionRange = this.gui.controls.get(this._CUSTOM_FRICTION_RANGE_CONTROL_ID)!.element as ApgGui_IRange;
+                frictionRange.value = material.friction.toString();
+                frictionRange.disabled = (material.name == ApgRrp_eMaterial.Custom) ? false : true;
+                this._guiSettings.cubesFriction = material.friction;
+
+
+                this._guiSettings.doRestart = true;
+                this.gui.devLogNoTime(`Material select control change event: ${select.value}`);
             }
         );
         return r;
     }
 
+
+    // #endregion
+    //--------------------------------------------------------------------------
+
+
+    //--------------------------------------------------------------------------
+    // #region HUD
+
+
+    override buildHudControls() {
+
+        const controls: string[] = [];
+
+        controls.push(this.#buildRestartControl())
+
+        return controls.join("\n");
+    }
+
+
+    #buildRestartControl() {
+
+        const id = 'restartHudControl';
+        const r = this.buildButtonControl(
+            id,
+            'Restart',
+            () => {
+                this._guiSettings.doRestart = true;
+            },
+            true,
+            "padding: 0.1rem; margin: 0.1rem; max-width:25%; font-size:1rem; " +
+            "display: inline-block; float:right;"
+        );
+
+        return r;
+    }
+
+
+    // #endregion
+    //--------------------------------------------------------------------------
 
 }
 

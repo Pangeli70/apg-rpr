@@ -10,7 +10,7 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -117,7 +117,7 @@ export class ApgRpr_C1_Damping_Simulation extends ApgRpr_Simulation {
 
 
 
-export class ApgRpr_C1_Damping_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+export class ApgRpr_C1_Damping_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_C1_Damping_ISimulationSettings;
 

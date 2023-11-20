@@ -10,7 +10,7 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -136,7 +136,7 @@ export class ApgRpr_E0_TrimeshTerrain_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_E0_TrimeshTerrain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_E0_TrimeshTerrain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_E0_TrimeshTerrain_ISimulationSettings;
 

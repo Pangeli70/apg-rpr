@@ -6,16 +6,16 @@
 */
 
 import {
-    IApgDomCanvas,
-    IApgDomElement,
-    IApgDomImage,
-    IApgDomRange,
-    IApgDomSelect
-} from "../ApgDom.ts";
+    ApgGui_ICanvas,
+    ApgGui_IElement,
+    ApgGui_IImage,
+    ApgGui_IRange,
+    ApgGui_ISelect
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_IMinMaxStep
-} from "../ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
 import {
     RAPIER
@@ -28,7 +28,7 @@ import {
 } from "../ApgRpr_Simulation.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -79,7 +79,7 @@ export class ApgRpr_E1_PngTerrain_Simulation extends ApgRpr_Simulation {
 
         const pngResourceUrl = './assets/img/png/' + asettings.heightMap + '.png';
 
-        const image = this.simulator.document.createElement('img') as IApgDomImage;
+        const image = this.simulator.document.createElement('img') as ApgGui_IImage;
         image.src = pngResourceUrl;
 
         image.onload = () => {
@@ -126,17 +126,17 @@ export class ApgRpr_E1_PngTerrain_Simulation extends ApgRpr_Simulation {
 
 
 
-    #sampleImagePixels(image: IApgDomImage, anumberOfComumns: number, anumberOfRows: number) {
+    #sampleImagePixels(image: ApgGui_IImage, anumberOfComumns: number, anumberOfRows: number) {
 
         const pixels: number[] = [];
-        const canvas = this.simulator.document.createElement('canvas') as IApgDomCanvas;
+        const canvas = this.simulator.document.createElement('canvas') as ApgGui_ICanvas;
         this.simulator.document.body.appendChild(canvas);
 
         canvas.width = anumberOfComumns + 1;
         canvas.height = anumberOfRows + 1;
 
         const context = canvas.getContext('2d');
-        context.drawImage(image as unknown as IApgDomCanvas,
+        context.drawImage(image as unknown as ApgGui_ICanvas,
             0, 0, canvas.width, canvas.height,
 
         );
@@ -241,7 +241,7 @@ export class ApgRpr_E1_PngTerrain_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_E1_PngTerrain_ISimulationSettings;
 
@@ -295,7 +295,7 @@ class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.heightMap,
             keyValues,
             () => {
-                const select = this.gui.controls.get(MAP_SELECT_CNT)!.element as IApgDomSelect;
+                const select = this.gui.controls.get(MAP_SELECT_CNT)!.element as ApgGui_ISelect;
                 this._guiSettings.heightMap = select.value
                 this._guiSettings.doRestart = true;
                 //alert(select.value);
@@ -309,9 +309,9 @@ class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.sampleSize,
             this._guiSettings.sampleSizeMMS,
             () => {
-                const range = this.gui.controls.get(SAMPLES_SIZE_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(SAMPLES_SIZE_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.sampleSize = parseFloat(range.value);
-                const output = this.gui.controls.get(`${SAMPLES_SIZE_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${SAMPLES_SIZE_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -324,9 +324,9 @@ class ApgRpr_E1_PngTerrain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.mapHeight,
             this._guiSettings.mapHeightMMS,
             () => {
-                const range = this.gui.controls.get(MAP_HEIGHT_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(MAP_HEIGHT_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.mapHeight = parseFloat(range.value);
-                const output = this.gui.controls.get(`${MAP_HEIGHT_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${MAP_HEIGHT_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }

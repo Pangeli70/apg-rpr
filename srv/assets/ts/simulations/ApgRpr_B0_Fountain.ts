@@ -6,21 +6,21 @@
 */
 
 import {
-    IApgDomElement,
-    IApgDomRange,
-    IApgDomSelect
-} from "../ApgDom.ts";
+    ApgGui_IElement,
+    ApgGui_IRange,
+    ApgGui_ISelect
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_IMinMaxStep
-} from "../ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
 import {
     RAPIER
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 
@@ -250,7 +250,7 @@ export class ApgRpr_B0_Fountain_Simulation extends ApgRpr_Simulation {
 
 
 
-class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_B0_Fountain_ISimulationSettings;
 
@@ -298,9 +298,9 @@ class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.restitution,
             this._guiSettings.restitutionMMS,
             () => {
-                const range = this.gui.controls.get(BODIES_REST_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(BODIES_REST_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.restitution = parseFloat(range.value);
-                const output = this.gui.controls.get(`${BODIES_REST_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${BODIES_REST_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -338,7 +338,7 @@ class ApgRpr_B0_Fountain_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
             this._guiSettings.groundType,
             keyValues,
             () => {
-                const select = this.gui.controls.get(GROUND_SELECT_CNT)!.element as IApgDomSelect;
+                const select = this.gui.controls.get(GROUND_SELECT_CNT)!.element as ApgGui_ISelect;
                 this._guiSettings.groundType = select.value as ApgRprSim_Fountain_eGroundType;
                 this._guiSettings.doRestart = true;
             }

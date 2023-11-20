@@ -6,9 +6,9 @@
 */
 
 import {
-    IApgDomBrowserWindow,
-    IApgDomDocument
-} from "./ApgDom.ts";
+    ApgGui_IBrowserWindow,
+    ApgGui_IDocument
+} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     RAPIER
@@ -24,9 +24,11 @@ import {
 } from "./ApgRpr_Simulator.ts";
 
 
+
+
 export async function ApgRpr(
-    awindow: IApgDomBrowserWindow,
-    adocument: IApgDomDocument,
+    awindow: ApgGui_IBrowserWindow,
+    adocument: ApgGui_IDocument,
     aguiElementId: string,
     aviewerElementId: string,
 ) {

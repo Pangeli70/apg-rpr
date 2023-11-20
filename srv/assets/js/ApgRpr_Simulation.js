@@ -2,6 +2,10 @@ import {
   PRANDO,
   RAPIER
 } from "./ApgRpr_Deps.ts";
+import {
+  ApgRrp_MaterialsTable,
+  ApgRrp_eMaterial
+} from "./ApgRpr_Materials.ts";
 export class ApgRpr_Simulation {
   /** The Rapier world*/
   world;
@@ -15,17 +19,15 @@ export class ApgRpr_Simulation {
   rng;
   /** Logger for the various simulations */
   logger;
-  static RPR_SIMULATION_NAME = "Rapier simulation";
+  static RPR_SIMULATION_LOGGER_NAME = "Rapier simulation";
   /**
-   * Creates a new simulation and a new world for the Rapier simulator
-   * @param asimulator 
-   * @param aparams 
+   * Creates a new simulation and a new world for the RAPIER simulator
    */
   constructor(asimulator, aparams) {
     this.simulator = asimulator;
     this.logger = asimulator.logger;
-    if (!this.logger.hasLogger(ApgRpr_Simulation.RPR_SIMULATION_NAME)) {
-      this.logger.addLogger(ApgRpr_Simulation.RPR_SIMULATION_NAME);
+    if (!this.logger.hasLogger(ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME)) {
+      this.logger.addLogger(ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
     }
     this.params = aparams;
     if (this.params.settings == void 0) {
@@ -46,13 +48,15 @@ export class ApgRpr_Simulation {
   }
   /** 
    * Set up the default Gui settings for the simulator. This method can be overridden 
-   * and extended by derived classes to add more settings specific of the single simulation. 
+   * and extended by derived classes to add more settings each specific of every simulation. 
    */
   defaultSettings(acolliderSize = this.simulator.DEFAULT_COLLIDER_SIZE, asceneSize = this.simulator.DEFAULT_SCENE_SIZE) {
     const linearError = acolliderSize * this.simulator.DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR;
     const preditionDistance = acolliderSize * this.simulator.DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR;
     const r = {
       simulation: this.params.simulation,
+      scale: 1,
+      // Not Yet Implemented
       colliderSize: acolliderSize,
       sceneSize: asceneSize,
       table: {
@@ -129,6 +133,7 @@ export class ApgRpr_Simulation {
         max: this.simulator.MAX_SLOWDOWN,
         step: 1
       },
+      isDebugMode: false,
       cameraPosition: {
         eye: {
           x: asceneSize,
@@ -141,15 +146,17 @@ export class ApgRpr_Simulation {
           z: 0
         }
       },
-      isDebugMode: false,
       doResetCamera: false,
       doResetToDefaults: false,
       doRestart: false,
       isSimulatorDetailsOpened: false,
-      isStatsGroupOpened: false
+      isStatsDetailsOpened: false
     };
     return r;
   }
+  /**
+   * Per frame updating of the RAPIER simulator settings
+   */
   #applySettingsToWorld() {
     this.world.gravity = this.params.settings.gravity;
     this.world.maxVelocityIterations = this.params.settings.velocityIterations;
@@ -159,40 +166,44 @@ export class ApgRpr_Simulation {
     this.world.integrationParameters.erp = this.params.settings.errorReductionRatio;
     this.world.integrationParameters.predictionDistance = this.params.settings.predictionDistance;
   }
-  createGround() {
-    const groundRadious = this.simulator.viewer.metrics.worldSize;
-    const GROUND_HEIGHT = 1;
-    const userData = {
-      color: 48127
-    };
-    const groundBodyDesc = RAPIER.RigidBodyDesc.fixed().setUserData(userData);
-    const body = this.world.createRigidBody(groundBodyDesc);
-    const groundColliderDesc = RAPIER.ColliderDesc.cylinder(GROUND_HEIGHT / 2, groundRadious).setTranslation(0, -GROUND_HEIGHT / 2, 0);
-    this.world.createCollider(groundColliderDesc, body);
+  /**
+   * Applies the physic material properties to the rigid body descriptor
+   */
+  applyMaterialToRigidBodyDesc(arigidBodyDesc, material) {
+    arigidBodyDesc.setLinearDamping(material.linearDamping || 0).setAngularDamping(material.angularDamping || 0);
   }
+  /**
+   * Applies the physic material properties to the collider descriptor
+   */
+  applyMaterialToColliderDesc(acolliderDesc, material) {
+    acolliderDesc.setDensity(material.density).setFriction(material.friction).setRestitution(material.restitution);
+  }
+  /**
+   * Overridable method to create a simulation
+   */
   createWorld(_asettings) {
     this.createGround();
   }
   /**
    * Create the Gui for the current simulation
-   * @param aguiBuilderType The class derived from the standard GuiBuilder
    */
   buildGui(aguiBuilderType) {
     const guiBuilder = new aguiBuilderType(
       this.simulator,
       this.params.settings
     );
-    const guiHtml = guiBuilder.buildControls();
-    this.simulator.updateViewerPanel(guiHtml);
-    const hudHtml = guiBuilder.buildControlsToContainer();
+    const settingsHtml = guiBuilder.buildControls();
+    this.simulator.updateViewerSettings(settingsHtml);
+    const hudHtml = guiBuilder.buildHudControls();
     this.simulator.updateViewerHud(hudHtml);
     guiBuilder.bindControls();
-    this.logger.log(`Gui built for simulation ${this.params.simulation}`, ApgRpr_Simulation.RPR_SIMULATION_NAME);
+    this.logger.log(`Gui built for simulation ${this.params.simulation}`, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
   }
   /** 
-   * Update the simulation params accordingly with the Gui settings. This method 
-   * can be overridden and extended by derived classes to manage the settings 
-   * specific of the single simulation that need immediate and not restar updating. 
+   * Update the simulation params accordingly with the Gui settings. 
+   * This method can be overridden and extended by derived classes to manage 
+   * the settings specific of the single simulation that need immediate 
+   * per frame updating. 
    */
   updateFromGui() {
     if (this.needsUpdate()) {
@@ -202,8 +213,8 @@ export class ApgRpr_Simulation {
     }
   }
   /** 
-   * Update the Rapier simulator params from the Gui setting. This function should
-   * not be overridden.
+   * Update the Rapier simulator params from the Gui setting. 
+   * WARNING!! This method should not be overridden.
    */
   updateSimulatorFromGui() {
     this.params.simulation = this.params.settings.simulation;
@@ -236,9 +247,8 @@ export class ApgRpr_Simulation {
     }
   }
   /** 
-   * Raw verification of the current params and gui settings. If something was changed 
-   * from the previous saved data or if a restart command was issued the result is true. 
-   * False otherwise
+   * Detects it the current params and gui settings are changed from the 
+   * previous saved data or if a restart command was issued
    */
   needsUpdate() {
     const r = false;
@@ -300,24 +310,50 @@ export class ApgRpr_Simulation {
   savePrevParams() {
     this.prevParams = JSON.parse(JSON.stringify(this.params));
   }
-  createSimulationTable(atableWidth = 2, atableDepth = 1, atableHeight = 1, atableThickness = 0.05) {
-    const tableBodyDesc = RAPIER.RigidBodyDesc.fixed();
-    const tableBody = this.world.createRigidBody(tableBodyDesc);
-    const tableColliderDesc = RAPIER.ColliderDesc.cuboid(atableWidth / 2, atableThickness / 2, atableDepth / 2).setTranslation(0, atableHeight - atableThickness / 2, 0).setFriction(1);
-    this.world.createCollider(tableColliderDesc, tableBody);
+  /**
+   * Creates a ground for the simulation
+   */
+  createGround(amaterialName = ApgRrp_eMaterial.Stone) {
+    const groundRadious = this.simulator.viewer.metrics.worldSize;
+    const GROUND_HEIGHT = 1;
+    const material = ApgRrp_MaterialsTable[amaterialName];
+    const userData = {
+      material
+    };
+    const bodyDesc = RAPIER.RigidBodyDesc.fixed().setUserData(userData);
+    this.applyMaterialToRigidBodyDesc(bodyDesc, material);
+    const body = this.world.createRigidBody(bodyDesc);
+    const colliderDesc = RAPIER.ColliderDesc.cylinder(GROUND_HEIGHT / 2, groundRadious).setTranslation(0, -GROUND_HEIGHT / 2, 0);
+    this.applyMaterialToColliderDesc(colliderDesc, material);
+    this.world.createCollider(colliderDesc, body);
+  }
+  /**
+   * Creates a playground table for the simulation
+   */
+  createSimulationTable(atableWidth = 2, atableDepth = 1, atableHeight = 1, atableThickness = 0.05, amaterialName = ApgRrp_eMaterial.HardWood) {
+    const material = ApgRrp_MaterialsTable[amaterialName];
+    const userData = {
+      material
+    };
+    const tableRBD = RAPIER.RigidBodyDesc.fixed().setUserData(userData);
+    this.applyMaterialToRigidBodyDesc(tableRBD, material);
+    const tableBody = this.world.createRigidBody(tableRBD);
+    const tableCD = RAPIER.ColliderDesc.cuboid(atableWidth / 2, atableThickness / 2, atableDepth / 2).setTranslation(0, atableHeight - atableThickness / 2, 0);
+    this.applyMaterialToColliderDesc(tableCD, material);
+    this.world.createCollider(tableCD, tableBody);
     const tableSupportSize = 0.2;
     const tableSupportHeight = atableHeight - atableThickness;
-    const tableSupportBodyDesc = RAPIER.RigidBodyDesc.fixed();
-    const tableSupportBody = this.world.createRigidBody(tableSupportBodyDesc);
-    const tableSupportColliderDesc = RAPIER.ColliderDesc.cuboid(tableSupportSize / 2, tableSupportHeight / 2, tableSupportSize / 2).setTranslation(0, tableSupportHeight / 2, 0);
-    this.world.createCollider(tableSupportColliderDesc, tableSupportBody);
+    const tableSupportRBD = RAPIER.RigidBodyDesc.fixed().setUserData(userData);
+    this.applyMaterialToRigidBodyDesc(tableSupportRBD, material);
+    const tableSupportBody = this.world.createRigidBody(tableSupportRBD);
+    const tableSupportCD = RAPIER.ColliderDesc.cuboid(tableSupportSize / 2, tableSupportHeight / 2, tableSupportSize / 2).setTranslation(0, tableSupportHeight / 2, 0);
+    this.applyMaterialToColliderDesc(tableSupportCD, material);
+    this.world.createCollider(tableSupportCD, tableSupportBody);
   }
   /**
    * WARNING: The number of columns and rows generates a list of vertices
    * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
-   * @param anumberOfColumns 
-   * @param anumberOfRows 
-   * @returns An array of Float32Array heights one per vertex
+   * @returns An Float32Array of heights one per vertex
    */
   generateSlopedHeightFieldArray(anumberOfColumns, anumberOfRows) {
     const heights = [];
@@ -333,9 +369,6 @@ export class ApgRpr_Simulation {
   /**
    * WARNING: The number of columns and rows generates a list of vertices
    * of the size ( (number of columns + 1 ) * ( number of rows + 1) )
-   * @param aseed 
-   * @param anumberOfColumns 
-   * @param anumberOfRows 
    * @returns An array of Float32Array heights one per vertex
    */
   generateRandomHeightFieldArray(aseed, anumberOfColumns, anumberOfRows) {

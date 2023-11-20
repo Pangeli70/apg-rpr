@@ -6,21 +6,21 @@
 */
 
 import {
-    IApgDomElement,
-    IApgDomKeyboardEvent,
-    IApgDomRange
-} from "../ApgDom.ts";
+    ApgGui_IElement,
+    ApgGui_IKeyboardEvent,
+    ApgGui_IRange
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_IMinMaxStep
-} from "../ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
 import {
     RAPIER
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -136,7 +136,7 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
 
         this.movementDirection = { x: 0.0, y: -this.characterGravity, z: 0.0 };
 
-        this.simulator.document.onkeydown = (event: IApgDomKeyboardEvent) => {
+        this.simulator.document.onkeydown = (event: ApgGui_IKeyboardEvent) => {
             if (event.key == "ArrowUp" || event.key == "w") this.movementDirection.x = this.characterSpeed;
             if (event.key == "ArrowDown" || event.key == "s") this.movementDirection.x = -this.characterSpeed;
             if (event.key == "ArrowLeft" || event.key == "a") this.movementDirection.z = -this.characterSpeed;
@@ -144,7 +144,7 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
             if (event.key == " ") this.movementDirection.y = this.characterGravity;
         };
 
-        this.simulator.document.onkeyup = (event: IApgDomKeyboardEvent) => {
+        this.simulator.document.onkeyup = (event: ApgGui_IKeyboardEvent) => {
             if (event.key == "ArrowUp" || event.key == "w") this.movementDirection.x = 0.0;
             if (event.key == "ArrowDown" || event.key == "s") this.movementDirection.x = 0.0;
             if (event.key == "ArrowLeft" || event.key == "a") this.movementDirection.z = 0.0;
@@ -217,7 +217,7 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
 
 
 
-export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_I0_CharacterController_ISimulationSettings;
 
@@ -265,9 +265,9 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulation_
             this._guiSettings.cubesRestitution,
             this._guiSettings.cubesRestitutionMMS,
             () => {
-                const range = this.gui.controls.get(CUBES_REST_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(CUBES_REST_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.cubesRestitution = parseFloat(range.value);
-                const output = this.gui.controls.get(`${CUBES_REST_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${CUBES_REST_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }
@@ -280,9 +280,9 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulation_
             this._guiSettings.size,
             this._guiSettings.sizeMMS,
             () => {
-                const range = this.gui.controls.get(PYR_SIZE_CNT)!.element as IApgDomRange;
+                const range = this.gui.controls.get(PYR_SIZE_CNT)!.element as ApgGui_IRange;
                 this._guiSettings.size = parseFloat(range.value);
-                const output = this.gui.controls.get(`${PYR_SIZE_CNT}Value`)!.element as IApgDomElement;
+                const output = this.gui.controls.get(`${PYR_SIZE_CNT}Value`)!.element as ApgGui_IElement;
                 output.innerHTML = range.value;
                 //alert(range.value);
             }

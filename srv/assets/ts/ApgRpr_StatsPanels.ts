@@ -6,12 +6,12 @@
 */
 
 import {
-  IApgDomDocument
-} from "./ApgDom.ts";
+  ApgGui_IDocument
+} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
   ApgGui_StatsPanel
-} from "./ApgGui_StatsPanel.ts";
+} from "./apg-gui/lib/classes/ApgGui_Stats.ts";
 
 
 
@@ -19,7 +19,7 @@ import {
 export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
 
   constructor(
-    adocument: IApgDomDocument,
+    adocument: ApgGui_IDocument,
     adevicePixelRatio: number,
     awidth: number,
     aname = 'Simulation time',
@@ -49,7 +49,7 @@ export class ApgRpr_Step_StatsPanel extends ApgGui_StatsPanel {
 export class ApgRpr_Colliders_StatsPanel extends ApgGui_StatsPanel {
 
   constructor(
-    adocument: IApgDomDocument,
+    adocument: ApgGui_IDocument,
     adevicePixelRatio: number,
     awidth: number,
     aname = 'Num. of colliders',

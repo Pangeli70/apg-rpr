@@ -4,7 +4,7 @@ import * as RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
 
 export class ApgPrnWorldSimulator {
     static world: RAPIER.World | null = null;
-    static gravity: RAPIER.Vector3 = { x: 0.0, y: -9.81, z: 0.0 };
+    static gravity: RAPIER.Vector3 = { x: 0.0, y: -9.8, z: 0.0 };
 
     static groundColliderDesc: RAPIER.ColliderDesc | null = null;
     static groundCollider: RAPIER.Collider | null = null;

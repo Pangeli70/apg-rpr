@@ -1,6 +1,6 @@
 import {
   ApgGui_Builder
-} from "./ApgGui_Builder.ts";
+} from "./apg-gui/lib/classes/ApgGui_Builder.ts";
 import {
   RAPIER
 } from "./ApgRpr_Deps.ts";

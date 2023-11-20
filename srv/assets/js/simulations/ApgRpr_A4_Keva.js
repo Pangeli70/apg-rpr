@@ -2,7 +2,7 @@ import {
   RAPIER
 } from "../ApgRpr_Deps.ts";
 import {
-  ApgRpr_Simulation_GuiBuilder
+  ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 import {
   ApgRpr_Simulation
@@ -134,7 +134,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
     }
   }
 }
-class ApgRpr_A4_Keva_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+class ApgRpr_A4_Keva_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
   _guiSettings;
   constructor(asimulator, asettings) {
     super(asimulator, asettings);

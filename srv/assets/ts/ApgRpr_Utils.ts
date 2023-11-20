@@ -5,7 +5,7 @@
  * -----------------------------------------------------------------------
 */
 import {
-    RAPIER
+    RAPIER,
 } from './ApgRpr_Deps.ts';
 
 export class ApgRpr_Utils {
@@ -52,4 +52,5 @@ export class ApgRpr_Utils {
             indices: new Uint32Array(indices),
         };
     }
+
 }

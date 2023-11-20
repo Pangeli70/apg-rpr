@@ -1,21 +1,22 @@
 /** -----------------------------------------------------------------------
  * @module [apg-rpr]
  * @author [APG] ANGELI Paolo Giusto
- * @version 0.9.8 [APG 2023/08/11]
+ * @version 0.0.01 [APG 2023/08/11]
+ * @version 0.0.15 [APG 2023/11/12]
  * -----------------------------------------------------------------------
 */
 import {
-    IApgDomDialog,
-    IApgDomElement
-} from "./ApgDom.ts";
+    ApgGui_IDialog,
+    ApgGui_IElement
+} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui
-} from "./ApgGui.ts";
+} from "./apg-gui/lib/classes/ApgGui.ts";
 
 import {
     ApgGui_Builder
-} from "./ApgGui_Builder.ts";
+} from "./apg-gui/lib/classes/ApgGui_Builder.ts";
 
 import {
     ApgRpr_IDebugInfo
@@ -57,10 +58,10 @@ export class ApgRpr_Debug_GuiBuilder extends ApgGui_Builder {
             DEBUG_INFO_OPEN_BTN_CNT,
             'Show info',
             () => {
-                const dialog = this.gui.controls.get(this.DEBUG_INFO_DIALOG_CNT)!.element as IApgDomDialog;
+                const dialog = this.gui.controls.get(this.DEBUG_INFO_DIALOG_CNT)!.element as ApgGui_IDialog;
                 dialog.showModal();
 
-                const paragraph = this.gui.controls.get(this.DEBUG_INFO_PAR_CNT)!.element as IApgDomElement;
+                const paragraph = this.gui.controls.get(this.DEBUG_INFO_PAR_CNT)!.element as ApgGui_IElement;
                 paragraph.innerHTML = this.#buildDebugInfos();
             }
         );
@@ -90,7 +91,7 @@ export class ApgRpr_Debug_GuiBuilder extends ApgGui_Builder {
             DEBUG_INFO_CLOSE_BTN_CNT,
             'Close',
             () => {
-                const dialog = this.gui.controls.get(this.DEBUG_INFO_DIALOG_CNT)!.element as IApgDomDialog;
+                const dialog = this.gui.controls.get(this.DEBUG_INFO_DIALOG_CNT)!.element as ApgGui_IDialog;
                 dialog.close();
             }
         );

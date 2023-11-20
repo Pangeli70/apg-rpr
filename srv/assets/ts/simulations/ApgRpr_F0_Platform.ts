@@ -10,7 +10,7 @@ import {
 } from "../ApgRpr_Deps.ts";
 
 import {
-    ApgRpr_Simulation_GuiBuilder
+    ApgRpr_Simulator_GuiBuilder
 } from "../ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
@@ -168,7 +168,7 @@ export class ApgRpr_F0_Platform_Simulation extends ApgRpr_Simulation {
 
 
 
- class ApgRprSim_Platform_GuiBuilder extends ApgRpr_Simulation_GuiBuilder {
+ class ApgRprSim_Platform_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
     private _guiSettings: ApgRpr_F0_Platform_ISimulationSettings;
 
