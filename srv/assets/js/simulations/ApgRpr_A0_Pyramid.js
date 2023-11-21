@@ -10,7 +10,7 @@ import {
 } from "../ApgRpr_Simulation.ts";
 import {
   ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
   constructor(asimulator, aparams) {
     super(asimulator, aparams);

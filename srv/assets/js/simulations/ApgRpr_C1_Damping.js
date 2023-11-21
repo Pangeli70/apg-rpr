@@ -3,7 +3,7 @@ import {
 } from "../ApgRpr_Deps.ts";
 import {
   ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 import {
   ApgRpr_Simulation
 } from "../ApgRpr_Simulation.ts";

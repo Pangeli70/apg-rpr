@@ -22,7 +22,7 @@ import {
 
 import {
     ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -36,7 +36,7 @@ import {
 
 import {
     THREE
-} from "../apg-wgl/lib/ApgWgl_Deps.ts";
+} from "../apg-wgl/deps.ts";
 
 
 enum ApgRpr_A2_Domino_eCardsPatterns {
@@ -232,6 +232,54 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     }
 
 
+    #createSpiralCards(
+        asettings: ApgRpr_A2_Domino_ISimulationSettings,
+        aplaygroundDiameter: number
+    ) {
+
+
+        const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+        const initialRadious = aplaygroundDiameter / 20;
+        let currentRadious = initialRadious;
+        let currentAngle = 0;
+
+        const kIncr = 0.01;
+        const distance = this._cardHeight * 0.75;
+        const isConstantGrow = true;
+
+
+        const r = new Array<RAPIER.Quaternion>();
+        for (let i = 0; i < asettings.cardsNumber; i++) {
+            const angleRdns = currentAngle * this._K_TO_RDNS;
+            const x = Math.cos(angleRdns) * currentRadious;
+            const y = fallHeight;
+            const z = -Math.sin(angleRdns) * currentRadious;
+            const w = angleRdns;
+
+            const pit = Math.sqrt(distance ** 2 + currentRadious ** 2);
+            const newPit = (isConstantGrow) ?
+                pit + (initialRadious * kIncr):
+                pit * (1+kIncr)
+
+            const sin = distance / newPit;
+            const newAngleRdns = Math.asin(sin);
+            const newAngle = newAngleRdns / this._K_TO_RDNS;
+            currentAngle += newAngle;
+            currentRadious = newPit;
+
+            const message = `${currentAngle.toFixed(2)}, x:${x.toFixed(2)} z:${z.toFixed(2)} w:${w.toFixed(2)}`;
+            this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
+
+            const quaternion = new RAPIER.Quaternion(x, y, z, w);
+            r.push(quaternion);
+
+        }
+
+        return r;
+    }
+
+
+
 
     #createCards(
         asettings: ApgRpr_A2_Domino_ISimulationSettings,
@@ -246,6 +294,10 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
             }
             case ApgRpr_A2_Domino_eCardsPatterns.CIRCLE: {
                 qs = this.#createCircleCards(asettings, aplaygroundDiameter);
+                break;
+            }
+            case ApgRpr_A2_Domino_eCardsPatterns.SPIRAL: {
+                qs = this.#createSpiralCards(asettings, aplaygroundDiameter);
                 break;
             }
             case ApgRpr_A2_Domino_eCardsPatterns.RANDOM:
@@ -308,7 +360,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
         const collider = this.world.createCollider(colliderDesc, body);
         this.simulator.viewer.addCollider(collider);
 
-        const message = `Ball spawn s:${source.x.toFixed(2)},${source.y.toFixed(2)},${source.z.toFixed(2)} / t: ${target.x.toFixed(2)},${target.y.toFixed(2)},${target.z.toFixed(2)} / d:${speedVector.x.toFixed(2)},${speedVector.y.toFixed(2)},${speedVector.z.toFixed(2) }`
+        const message = `Ball spawn s:${source.x.toFixed(2)},${source.y.toFixed(2)},${source.z.toFixed(2)} / t: ${target.x.toFixed(2)},${target.y.toFixed(2)},${target.z.toFixed(2)} / d:${speedVector.x.toFixed(2)},${speedVector.y.toFixed(2)},${speedVector.z.toFixed(2)}`
         this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
 
     }

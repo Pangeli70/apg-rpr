@@ -11,8 +11,8 @@ import {
   ApgGui_Stats_GuiBuilder
 } from "./apg-gui/lib/builders/ApgGui_Stats_GuiBuilder.ts";
 import {
-  ApgWgl_GuiBuilder
-} from "./apg-wgl/lib/classes/ApgWgl_GuiBuilder.ts";
+  ApgRpr_Viewer_GuiBuilder
+} from "./ApgRpr_Viewer_GuiBuilder.ts";
 export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
   simulator;
   settings;
@@ -33,7 +33,7 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
     controls.push(new ApgGui_Logger_GuiBuilder(this.gui, this.simulator.logger).buildControls());
     controls.push(this.#buildFullscreenButtonControl());
     controls.push(this.#buildGetUrlButtonControl());
-    controls.push(new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer).buildControls());
+    controls.push(new ApgRpr_Viewer_GuiBuilder(this.gui, this.name, this.simulator.viewer).buildControls());
     controls.push(this.#buildCreditsDialogControl(this.CREDITS_DIALOG_CNT));
     controls.push(this.#buildCreditsDialogOpenButtonControl(this.CREDITS_DIALOG_CNT));
     const r = controls.join("\n");

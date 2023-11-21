@@ -3,14 +3,10 @@ import {
   THREE_EXRLoader,
   THREE_OrbitControls,
   THREE_RGBELoader
-} from "../ApgWgl_Deps.ts";
-export var ApgWgl_eEnvMapMode = /* @__PURE__ */ ((ApgWgl_eEnvMapMode2) => {
-  ApgWgl_eEnvMapMode2["NONE"] = "none";
-  ApgWgl_eEnvMapMode2["HDR"] = "hdr";
-  ApgWgl_eEnvMapMode2["EXR"] = "exr";
-  ApgWgl_eEnvMapMode2["LDR"] = "ldr";
-  return ApgWgl_eEnvMapMode2;
-})(ApgWgl_eEnvMapMode || {});
+} from "../../deps.ts";
+import {
+  ApgWgl_eEnvMapMode
+} from "../enums/ApgWgl_eEnvMapMode.ts";
 export class ApgWgl_Layers {
   static unassigned = 0;
   static helpers = 1;
@@ -127,7 +123,7 @@ export class ApgWgl_Viewer {
       camLightDistance: ametrics.worldSize / 10,
       camLightIsDetachedFromCamera: false,
       envMapLighting: false,
-      envMapMode: "exr" /* EXR */,
+      envMapMode: ApgWgl_eEnvMapMode.EXR,
       envMaps: [],
       envMapLightingIntensity: 1,
       envMapBackgroundBlurryness: 0,
@@ -362,21 +358,21 @@ export class ApgWgl_Viewer {
     let envMap = null;
     this.logger.devLog("Env map loading started", ApgWgl_Viewer.WGL_VIEWER_LOGGER_NAME);
     switch (this.settings.envMapMode) {
-      case "ldr" /* LDR */: {
+      case ApgWgl_eEnvMapMode.LDR: {
         if (this.textureLoader) {
           const url = "/assets/env/ldr/Psychedelic_1.jpg";
           envMap = this.textureLoader.load(url);
         }
         break;
       }
-      case "hdr" /* HDR */: {
+      case ApgWgl_eEnvMapMode.HDR: {
         if (this.hdrLoader) {
           const url = "/assets/env/hdr/Residential_garden_2k.hdr";
           envMap = await this.#_loadHdrAsync(this.hdrLoader, url);
         }
         break;
       }
-      case "exr" /* EXR */: {
+      case ApgWgl_eEnvMapMode.EXR: {
         if (this.exrLoader) {
           const url = "/assets/env/exr/Neon_photostudio_1k.exr";
           envMap = await this.#_loadExrAsync(this.exrLoader, url);

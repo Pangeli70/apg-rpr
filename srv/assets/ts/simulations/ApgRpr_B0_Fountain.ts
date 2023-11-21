@@ -21,8 +21,7 @@ import {
 
 import {
     ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
-
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,

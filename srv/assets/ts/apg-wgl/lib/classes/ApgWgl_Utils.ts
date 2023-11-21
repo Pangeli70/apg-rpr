@@ -1,13 +1,13 @@
 /** -----------------------------------------------------------------------
- * @module [apg-rpr]
+ * @module [apg-wgl]
  * @author [APG] ANGELI Paolo Giusto
- * @version 0.9.8 [APG 2023/08/11]
+ * @version 0.0.8 [APG 2023/11/20]
  * -----------------------------------------------------------------------
 */
 
 import {
     THREE
-} from "../ApgWgl_Deps.ts";
+} from "../../deps.ts";
 
 
 

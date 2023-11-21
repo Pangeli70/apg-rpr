@@ -1,7 +1,5 @@
-import {
-  ApgGui_eFormElementType,
-  ApgGui_eInputType
-} from "../interfaces/ApgGui_Dom.ts";
+import { ApgGui_eInputType } from "../enums/ApgGui_eInputType.ts";
+import { ApgGui_eFormElementType } from "../enums/ApgGui_eFormElementType.ts";
 export class ApgGui {
   /** A status flag that is used to pause some other stuff while the Gui is refreshing */
   isRefreshing = false;

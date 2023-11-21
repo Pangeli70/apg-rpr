@@ -11,7 +11,7 @@ import {
 
 import {
     ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -229,7 +229,7 @@ export class ApgRpr_H0_Joints_Simulation extends ApgRpr_Simulation {
     ) {
         const rad = 0.4;
         const shift = 1.0;
-        const parents = [];
+        const parents: RAPIER.RigidBody[] = [];
 
         for (let k = 0; k < num; ++k) {
             for (let i = 0; i < num; ++i) {
@@ -294,7 +294,7 @@ export class ApgRpr_H0_Joints_Simulation extends ApgRpr_Simulation {
     ) {
         const rad = 0.4;
         const shift = 1.0;
-        const parents = [];
+        const parents: RAPIER.RigidBody[] = [];
 
         for (let k = 0; k < num; ++k) {
             for (let i = 0; i < num; ++i) {

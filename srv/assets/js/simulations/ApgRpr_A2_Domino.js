@@ -3,13 +3,13 @@ import {
 } from "../ApgRpr_Deps.ts";
 import {
   ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 import {
   ApgRpr_Simulation
 } from "../ApgRpr_Simulation.ts";
 import {
   THREE
-} from "../apg-wgl/lib/ApgWgl_Deps.ts";
+} from "../apg-wgl/deps.ts";
 var ApgRpr_A2_Domino_eCardsPatterns = /* @__PURE__ */ ((ApgRpr_A2_Domino_eCardsPatterns2) => {
   ApgRpr_A2_Domino_eCardsPatterns2["RANDOM"] = "Random";
   ApgRpr_A2_Domino_eCardsPatterns2["LINEAR"] = "Linear";
@@ -108,6 +108,35 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     }
     return r;
   }
+  #createSpiralCards(asettings, aplaygroundDiameter) {
+    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const initialRadious = aplaygroundDiameter / 20;
+    let currentRadious = initialRadious;
+    let currentAngle = 0;
+    const kIncr = 0.01;
+    const distance = this._cardHeight * 0.75;
+    const isConstantGrow = true;
+    const r = new Array();
+    for (let i = 0; i < asettings.cardsNumber; i++) {
+      const angleRdns = currentAngle * this._K_TO_RDNS;
+      const x = Math.cos(angleRdns) * currentRadious;
+      const y = fallHeight;
+      const z = -Math.sin(angleRdns) * currentRadious;
+      const w = angleRdns;
+      const pit = Math.sqrt(distance ** 2 + currentRadious ** 2);
+      const newPit = isConstantGrow ? pit + initialRadious * kIncr : pit * (1 + kIncr);
+      const sin = distance / newPit;
+      const newAngleRdns = Math.asin(sin);
+      const newAngle = newAngleRdns / this._K_TO_RDNS;
+      currentAngle += newAngle;
+      currentRadious = newPit;
+      const message = `${currentAngle.toFixed(2)}, x:${x.toFixed(2)} z:${z.toFixed(2)} w:${w.toFixed(2)}`;
+      this.logger.log(message, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
+      const quaternion = new RAPIER.Quaternion(x, y, z, w);
+      r.push(quaternion);
+    }
+    return r;
+  }
   #createCards(asettings, aplaygroundDiameter) {
     let qs;
     switch (asettings.cardsPattern) {
@@ -117,6 +146,10 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
       }
       case "Circle" /* CIRCLE */: {
         qs = this.#createCircleCards(asettings, aplaygroundDiameter);
+        break;
+      }
+      case "Spiral" /* SPIRAL */: {
+        qs = this.#createSpiralCards(asettings, aplaygroundDiameter);
         break;
       }
       case "Random" /* RANDOM */:

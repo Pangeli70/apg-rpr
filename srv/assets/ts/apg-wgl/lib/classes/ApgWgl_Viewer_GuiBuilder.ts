@@ -1,157 +1,54 @@
 /** -----------------------------------------------------------------------
- * @module [apg-rpr]
+ * @module [apg-wgl]
  * @author [APG] ANGELI Paolo Giusto
- * @version 0.9.8 [APG 2023/08/16]
+ * @version 0.0.1 [APG 2023/08/11]
+ * @version 0.0.8 [APG 2023/11/20]
  * -----------------------------------------------------------------------
 */
-import {
-    THREE
-} from "../ApgWgl_Deps.ts";
+
+
+//--------------------------------------------------------------------------
+// #region Imports
 
 import {
-    ApgGui_IDialog,
-    ApgGui_IDetails,
-    ApgGui_IElement
-} from "../../../apg-gui/lib/interfaces/ApgGui_Dom.ts";
+    THREE
+} from "../../deps.ts";
 
 import {
     ApgGui,
-    ApgGui_IMinMaxStep,
-    ApgGui_TSelectValuesMap
-} from "../../../apg-gui/lib/classes/ApgGui.ts";
+    ApgGui_Builder,
+    ApgGui_IDetails,
+    ApgGui_IDialog,
+    ApgGui_IElement
+} from "../../../apg-gui/mod.ts";
 
 import {
-    ApgGui_Builder
-} from "../../../apg-gui/lib/classes/ApgGui_Builder.ts";
-
-import {
-    ApgWgl_ILayerDescr,
-    ApgWgl_IViewerSettings,
-    ApgWgl_Viewer,
-    ApgWgl_eEnvMapMode,
-    ApgWgl_Layers
+    ApgWgl_Layers,
+    ApgWgl_Viewer
 } from "./ApgWgl_Viewer.ts";
 
+import {
+    ApgWgl_eEnvMapMode
+} from "../enums/ApgWgl_eEnvMapMode.ts";
 
+import {
+    ApgWgl_IViewerGuiSettings
+} from "../interfaces/ApgWgl_IViewerGuiSettings.ts";
 
-
-export interface ApgWgl_IViewerGuiSettings extends ApgWgl_IViewerSettings {
-
-    // - worldSize: number;
-    worldSizeMMS: ApgGui_IMinMaxStep;
-
-    // eyeHeight: number
-
-    // - pixelRatio: number;
-    pixelRatioMMS: ApgGui_IMinMaxStep;
-
-    // - fogColor: THREE.Color;
-    // - fogDensity: number;
-    fogDensityMMS: ApgGui_IMinMaxStep;
-
-    // - toneMapping: THREE.ToneMapping;
-    toneMappingValues: ApgGui_TSelectValuesMap;
-    // - toneMappingExposure: number;
-    toneMappingExposureMMS: ApgGui_IMinMaxStep;
-
-    // - outputColorSpace: THREE.ColorSpace;
-    outputColorSpaceValues: ApgGui_TSelectValuesMap;
-
-    // - areShadowsEnabled: boolean;
-    // - shadowMapType: THREE.ShadowMapType;
-    shadowMapTypeValues: ApgGui_TSelectValuesMap;
-    //shadowMapRadious: number;
-    //shadowMapSize: number;
-
-    //anisotropy: number;
-    //anisotropyMMS: ApgGui_IMinMaxStep;
-
-    // - clearColor: THREE.Color;
-
-    // - perspCameraZoom: number;
-    perspCameraZoomMMS: ApgGui_IMinMaxStep;
-    // - perspCameraFov: number;
-    perspCameraFovMMS: ApgGui_IMinMaxStep;
-    // - perspCameraNear: number;
-    perspCameraNearMMS: ApgGui_IMinMaxStep;
-    // - perspCameraFar: number;
-    perspCameraFarMMS: ApgGui_IMinMaxStep;
-    //perspCameraPosition: THREE.Vector3;
-    //perspCameraPositionXMMS: ApgGui_IMinMaxStep;
-    //perspCameraPositionYMMS: ApgGui_IMinMaxStep;
-    //perspCameraPositionZMMS: ApgGui_IMinMaxStep;
-
-    // - ambLightEnabled: boolean;
-    // - ambLightColor: THREE.Color;
-    // - ambLightIntensity: number;
-    ambLightIntensityMMS: ApgGui_IMinMaxStep;
-
-    // - sunLightColor: THREE.Color;
-    // - sunLightEnabled: boolean;
-    // - sunLightIntensity: number;
-    sunLightIntensityMMS: ApgGui_IMinMaxStep;
-    //sunLightPosition: THREE.Vector3;
-    //sunLightPositionXMMS: ApgGui_IMinMaxStep;
-    //sunLightPositionYMMS: ApgGui_IMinMaxStep;
-    //sunLightPositionZMMS: ApgGui_IMinMaxStep;
-    //sunLightShadowMapCameraSize: number,
-    //sunLightShadowMapCameraNear: number,
-    //sunLightShadowMapCameraFar: number,
-
-    // - camLightEnabled: boolean;
-    // - camLightColor: THREE.Color;
-    // - camLightIntensity: number;
-    camLightIntensityMMS: ApgGui_IMinMaxStep;
-    //camLightDistance: number;
-    //camLightDistanceMMS: ApgGui_IMinMaxStep;
-    //camLightPosition: THREE.Vector3;
-    //camLightPositionXMMS: ApgGui_IMinMaxStep;
-    //camLightPositionYMMS: ApgGui_IMinMaxStep;
-    //camLightPositionZMMS: ApgGui_IMinMaxStep;
-    //camLightIsDetachedFromCamera: boolean;
-
-    // - envMapLighting: boolean;
-    // - envMapMode: ApgWgl_eEnvMapMode;
-    envMapModeValues: ApgGui_TSelectValuesMap;
-    //envMaps: string[];
-    // - envMapLightingIntensity: number,
-    envMapLightingIntensityMMS: ApgGui_IMinMaxStep,
-    // - envMapBackgroundBlurryness: number,
-    envMapBackgroundBlurrynessMMS: ApgGui_IMinMaxStep,
-    // - envMapBackgroundIntensity: number,
-    envMapBackgroundIntensityMMS: ApgGui_IMinMaxStep,
-
-    //orbControlsTarget: THREE.Vector3;
-    //orbControlsTargetPositionXMMS: ApgGui_IMinMaxStep;
-    //orbControlsTargetPositionYMMS: ApgGui_IMinMaxStep;
-    //orbControlsTargetPositionZMMS: ApgGui_IMinMaxStep;
-    //orbControlsMinDistance: number;
-    //orbControlsMinDistanceMMS: ApgGui_IMinMaxStep;
-    //orbControlsMaxDistance: number;
-    //orbControlsMaxDistanceMMS: ApgGui_IMinMaxStep;
-    //orbControlsMinPolarAngle: number;
-    //orbControlsMinPolarAngleMMS: ApgGui_IMinMaxStep;
-    //orbControlsMaxPolarAngle: number;
-    //orbControlsMaxPolarAngleMMS: ApgGui_IMinMaxStep;
-    //orbControlsEnableDamping: boolean;
-    //orbControlsDampingFactor: number;
-    //orbControlsDampingFactorMMS: ApgGui_IMinMaxStep;
-
-    //layers: Map<ApgWgl_eLayers, ApgWgl_ILayerDescr>;
-
-}
+// #endregion
+//--------------------------------------------------------------------------
 
 
 
 /**
  * This is the basic Web GL gui Builder that contains the viewer settings.
  */
-export class ApgWgl_GuiBuilder extends ApgGui_Builder {
+export class ApgWgl_Viewer_GuiBuilder extends ApgGui_Builder {
 
     settings: ApgWgl_IViewerGuiSettings;
     viewer: ApgWgl_Viewer;
 
-    readonly VIEWER_SETTINGS_DIALOG_CNT = "ViewerSettingsDialogControl"
+    readonly VIEWER_SETTINGS_DIALOG_CNT = "ApgWgl_ViewerSettings_DialogControl"
 
     constructor(
         agui: ApgGui,
@@ -163,14 +60,15 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         this.viewer = aviewer;
         this.settings = aviewer.settings as ApgWgl_IViewerGuiSettings;
 
-        // @WARNING we are injecting GUI properties in the original settings object !!! -- APG 20230930
+        // @WARNING we are injecting GUI properties in the original 
+        // settings object!!! -- APG 20230930
 
         this.settings.worldSizeMMS = { min: 500, max: 2000, step: 500 };
 
         this.settings.pixelRatioMMS = {
-            min: 0.2,
+            min: this.viewer.APG_WGL_MAX_PIXEL_RATIO / 10,
             max: this.viewer.APG_WGL_MAX_PIXEL_RATIO,
-            step: 0.1
+            step: this.viewer.APG_WGL_MAX_PIXEL_RATIO / 10
         }
 
         this.settings.fogDensityMMS = { min: 0.00010, max: 0.00200, step: 0.00005 };
@@ -181,7 +79,6 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             ['2', 'Reinhard'],
             ['3', 'Cineon'],
             ['5', 'ACESFilmic'],
-            ['6', 'Custom']
         ]);
         this.settings.toneMappingExposureMMS = { min: 0, max: 2, step: 0.1 }
 
@@ -200,9 +97,9 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         ]);
 
         this.settings.perspCameraZoomMMS = { min: 0.5, max: 20, step: 0.5 };
-        this.settings.perspCameraFovMMS = { min: 35, max: 75, step: 5 };
+        this.settings.perspCameraFovMMS = { min: 25, max: 100, step: 5 };
         this.settings.perspCameraNearMMS = { min: 0.1, max: 1, step: 0.1 };
-        this.settings.perspCameraFarMMS = { min: 10, max: 100, step: 5 };
+        this.settings.perspCameraFarMMS = { min: 10, max: 200, step: 5 };
 
         this.settings.ambLightIntensityMMS = { min: 0, max: 1, step: 0.1 }
         this.settings.sunLightIntensityMMS = { min: 0, max: 1, step: 0.1 }
@@ -218,12 +115,12 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
         this.settings.envMapBackgroundBlurrynessMMS = { min: 0, max: 0.5, step: 0.025 }
         this.settings.envMapBackgroundIntensityMMS = { min: 0, max: 2, step: 0.1 }
 
-        this.getLayersMap();
+        this.#getLayers();
 
     }
 
 
-    private getLayersMap() {
+    #getLayers() {
         this.settings.layers[ApgWgl_Layers.unassigned.toString()] = {
             index: ApgWgl_Layers.unassigned,
             visible: true,
@@ -239,41 +136,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             visible: false,
             name: "Helpers"
         };
-        // this.settings.layers.set(ApgWgl_eLayers.staticColliders, {
-        //     index: ApgWgl_eLayers.staticColliders,
-        //     visible: true,
-        //     name: "Static colliders"
-        // });
-        // this.settings.layers.set(ApgWgl_eLayers.staticSensors, {
-        //     index: ApgWgl_eLayers.staticSensors,
-        //     visible: true,
-        //     name: "Static sensors"
-        // });
-        // this.settings.layers.set(ApgWgl_eLayers.kinematicColliders, {
-        //     index: ApgWgl_eLayers.kinematicColliders,
-        //     visible: true,
-        //     name: "Kinematic colliders"
-        // });
-        // this.settings.layers.set(ApgWgl_eLayers.dynamicColliders, {
-        //     index: ApgWgl_eLayers.dynamicColliders,
-        //     visible: true,
-        //     name: "Dynamic colliders"
-        // });
-        // this.settings.layers.set(ApgWgl_eLayers.dynamicInstancedColliders, {
-        //     index: ApgWgl_eLayers.dynamicInstancedColliders,
-        //     visible: true,
-        //     name: "Dynamic instanced colliders"
-        // });
-        // this.settings.layers.set(ApgWgl_eLayers.characters, {
-        //     index: ApgWgl_eLayers.characters,
-        //     visible: true,
-        //     name: "Characters"
-        // });
     }
 
     /**
      * 
-     * @returns 
      */
     override buildControls() {
 
@@ -544,10 +410,13 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
     }
 
 
+
     #buildFogDetails() {
 
-        const FOG_COLOR_PICKER_CNT = 'FogColorPicker_Control';
-        const FogColorPicker_Control = this.buildColorPickerControl(
+        const controls: string[] = [];
+
+        const FOG_COLOR_PICKER_CNT = 'ApgWgl_FogColor_ColorPickerControl';
+        controls.push(this.buildColorPickerControl(
             FOG_COLOR_PICKER_CNT,
             'Color',
             this.settings.fogColor.getHex(),
@@ -555,10 +424,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const color = this.readColorPickerControl(FOG_COLOR_PICKER_CNT)
                 this.settings.fogColor.setHex(color);
             }
-        );
+        ));
 
-        const FOG_DENSITY_CNT = 'FogNearRange_Control';
-        const FogDensityRange_Control = this.buildRangeControl(
+        const FOG_DENSITY_CNT = 'ApgWgl_FogDensity_RangeControl';
+        controls.push(this.buildRangeControl(
             FOG_DENSITY_CNT,
             'Density',
             this.settings.fogDensity,
@@ -567,26 +436,26 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const densityValue = this.readRangeControl(FOG_DENSITY_CNT);
                 this.settings.fogDensity = densityValue;
             }
-        )
+        ));
 
-        const FOG_DETAILS_CNT = 'FogDetails_Control';
-        const fogDetails_Control = this.buildDetailsControl(
+        const FOG_DETAILS_CNT = 'ApgWgl_Fog_DetailsControl';
+        const r = this.buildDetailsControl(
             FOG_DETAILS_CNT,
             'Fog',
-            [
-                FogColorPicker_Control,
-                FogDensityRange_Control,
-            ]
+            controls
         );
 
-        return fogDetails_Control;
+        return r;
     }
+
 
 
     #buildCameraDetails() {
 
-        const CAMERA_ZOOM_CNT = 'CameraZoomRange_Control';
-        const CameraZoomRange_Control = this.buildRangeControl(
+        const controls: string[] = [];
+
+        const CAMERA_ZOOM_CNT = 'ApgWgl_CameraZoom_RangeControl';
+        controls.push(this.buildRangeControl(
             CAMERA_ZOOM_CNT,
             'Zoom',
             this.settings.perspCameraZoom,
@@ -595,10 +464,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(CAMERA_ZOOM_CNT);
                 this.settings.perspCameraZoom = value;
             }
-        )
+        ));
 
-        const CAMERA_FOV_CNT = 'CameraFovRange_Control';
-        const CameraFovRange_Control = this.buildRangeControl(
+        const CAMERA_FOV_CNT = 'ApgWgl_CameraFov_RangeControl';
+        controls.push(this.buildRangeControl(
             CAMERA_FOV_CNT,
             'Field of view',
             this.settings.perspCameraFov,
@@ -607,10 +476,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(CAMERA_FOV_CNT);
                 this.settings.perspCameraZoom = value;
             }
-        )
+        ));
 
-        const CAMERA_NEAR_CNT = 'CameraNearRange_Control';
-        const CameraNearRange_Control = this.buildRangeControl(
+        const CAMERA_NEAR_CNT = 'ApgWgl_CameraNear_RangeControl';
+        controls.push(this.buildRangeControl(
             CAMERA_NEAR_CNT,
             'Near plane',
             this.settings.perspCameraNear,
@@ -619,11 +488,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(CAMERA_NEAR_CNT);
                 this.settings.perspCameraNear = value;
             }
-        )
+        ))
 
-
-        const CAMERA_FAR_CNT = 'CameraFarRange_Control';
-        const CameraFarRange_Control = this.buildRangeControl(
+        const CAMERA_FAR_CNT = 'ApgWgl_CameraFar_RangeControl';
+        controls.push(this.buildRangeControl(
             CAMERA_FAR_CNT,
             'Far plane',
             this.settings.perspCameraFar,
@@ -632,29 +500,23 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(CAMERA_FAR_CNT);
                 this.settings.perspCameraFar = value;
             }
-        )
+        ));
 
-        const CAMERA_DETAILS_CNT = 'CameraDetails_Control';
-        const cameraDetails_Control = this.buildDetailsControl(
+        const CAMERA_DETAILS_CNT = 'ApgWgl_Camera_DetailsControl';
+        const r = this.buildDetailsControl(
             CAMERA_DETAILS_CNT,
             'Camera',
-            [
-                CameraZoomRange_Control,
-                CameraFovRange_Control,
-                CameraNearRange_Control,
-                CameraFarRange_Control
-            ]
+            controls
         );
 
-        return cameraDetails_Control;
+        return r;
     }
+
 
 
     #buildLayersDetails() {
 
-
-        const layersControls: string[] = [];
-
+        const controls: string[] = [];
 
         for (const index of Object.keys(this.settings.layers)) {
 
@@ -672,63 +534,41 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                     layerDescr.visible = checked;
                 }
             )
-            layersControls.push(LayerCheckBox_Control);
+            controls.push(LayerCheckBox_Control);
         }
 
-
-        const LAYERS_DETAILS_CNT = 'LayersDetails_Control';
-        const fogDetails_Control = this.buildDetailsControl(
+        const LAYERS_DETAILS_CNT = 'ApgWgl_Layers_DetailsControl';
+        const r = this.buildDetailsControl(
             LAYERS_DETAILS_CNT,
             'Layers',
-            layersControls
+            controls
         );
 
-        return fogDetails_Control;
+        return r;
     }
 
-
-    #buildLightsDetails() {
-        const ambLightControl = this.#buildAmbienLightFieldSet();
-
-        const sunLightControl = this.#buildSunLightFieldSet();
-
-        const camLightControl = this.#buildCamLightFieldSet();
-
-        const LIGHTS_DETAILS_CNT = 'LightsDetails_Control';
-        const lightsDetails_Control = this.buildDetailsControl(
-            LIGHTS_DETAILS_CNT,
-            'Lights',
-            [
-                ambLightControl,
-                sunLightControl,
-                camLightControl,
-            ]
-        );
-
-        return lightsDetails_Control;
-    }
 
 
     #buildInfoDetails() {
 
-        const INFO_PAR_CNT = 'InfoParagraph_Control';
+        const controls: string[] = [];
+
         const info = this.viewer.getInfo();
 
-        const InfoParagraph_Control = this.buildParagraphControl(
+        const INFO_PAR_CNT = 'InfoParagraph_Control';
+        controls.push(this.buildParagraphControl(
             INFO_PAR_CNT,
             info.join("\n"),
-        );
+        ));
 
-        const INFO_DETAILS_CNT = 'InfoDetails_Control';
-        const infoDetails_Control = this.buildDetailsControl(
-            INFO_DETAILS_CNT,
+        const ID = 'ApgWgl_Info_DetailsControl';
+        const r = this.buildDetailsControl(
+            ID,
             'Info',
-            [
-                InfoParagraph_Control,
-            ],
+            controls,
             false,
             () => {
-                const details = this.gui.document.getElementById(INFO_DETAILS_CNT) as ApgGui_IDetails;
+                const details = this.gui.document.getElementById(ID) as ApgGui_IDetails;
                 if (details.open) {
                     const paragraph = this.gui.document.getElementById(INFO_PAR_CNT) as ApgGui_IElement;
                     const info = this.viewer.getInfo();
@@ -737,14 +577,42 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
             }
         );
 
-        return infoDetails_Control;
+        return r;
     }
 
 
-    #buildAmbienLightFieldSet() {
 
-        const AMB_LIGHT_ENABLE_CNT = 'AmbLightChecBox_Control';
-        const AmbLightEnable_Control = this.buildCheckBoxControl(
+    //--------------------------------------------------------------------------
+    // #region Lights controls
+
+
+
+    #buildLightsDetails() {
+
+        const controls: string[] = [];
+
+        controls.push(this.#buildAmbientLightFieldSet());
+        controls.push(this.#buildSunLightFieldSet());
+        controls.push(this.#buildCamLightFieldSet())
+
+        const ID = 'ApgWgl_Lights_DetailsControl';
+        const r = this.buildDetailsControl(
+            ID,
+            'Lights',
+            controls
+        );
+
+        return r;
+    }
+
+
+
+    #buildAmbientLightFieldSet() {
+
+        const controls: string[] = [];
+
+        const AMB_LIGHT_ENABLE_CNT = 'ApgWgl_AmbLightEnable_CheckBoxControl';
+        controls.push(this.buildCheckBoxControl(
             AMB_LIGHT_ENABLE_CNT,
             'Ambient light enable',
             this.settings.ambLightEnabled,
@@ -752,10 +620,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const checked = this.readCheckBoxControl(AMB_LIGHT_ENABLE_CNT);
                 this.settings.ambLightEnabled = checked;
             }
-        )
+        ));
 
-        const AMB_LIGHT_COLOR_PICKER_CNT = 'AmbLightColorPicker_Control';
-        const AmbLightColor_Control = this.buildColorPickerControl(
+        const AMB_LIGHT_COLOR_PICKER_CNT = 'ApgWgl_AmbLightColor_ColorPickerControl';
+        controls.push(this.buildColorPickerControl(
             AMB_LIGHT_COLOR_PICKER_CNT,
             'Ambient light Color',
             this.settings.ambLightColor.getHex(),
@@ -763,10 +631,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const color = this.readColorPickerControl(AMB_LIGHT_COLOR_PICKER_CNT);
                 this.settings.ambLightColor.setHex(color);
             }
-        );
+        ));
 
-        const AMB_LIGHT_INTENSITY_CNT = 'AmbLightRange_Control';
-        const AmbLightIntensity_Controls = this.buildRangeControl(
+        const AMB_LIGHT_INTENSITY_CNT = 'ApgWgl_AmbLightIntensity_RangeControl';
+        controls.push(this.buildRangeControl(
             AMB_LIGHT_INTENSITY_CNT,
             'Ambient light intensity',
             this.settings.ambLightIntensity,
@@ -775,26 +643,25 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(AMB_LIGHT_INTENSITY_CNT);
                 this.settings.ambLightIntensity = value;
             }
-        )
+        ));
 
-        const AMB_LIGHT_FIELDSET_CNT = 'AmbLightFieldset_Control';
-        const ambLightFieldset_Control = this.buildFieldSetControl(
-            AMB_LIGHT_FIELDSET_CNT,
+        const ID = 'ApgWgl_AmbLight_FieldsetControl';
+        const r = this.buildFieldSetControl(
+            ID,
             'Ambient light settings',
-            [
-                AmbLightEnable_Control,
-                AmbLightColor_Control,
-                AmbLightIntensity_Controls
-            ]
+            controls
         );
-        return ambLightFieldset_Control;
+        return r;
     }
 
 
-    #buildSunLightFieldSet(): string {
 
-        const SUN_LIGHT_ENABLE_CNT = 'SunLightChecBox_Control';
-        const SunLightEnable_Control = this.buildCheckBoxControl(
+    #buildSunLightFieldSet() {
+
+        const controls: string[] = [];
+
+        const SUN_LIGHT_ENABLE_CNT = 'ApgWgl_SunLightEnable_CheckBoxControl';
+        controls.push(this.buildCheckBoxControl(
             SUN_LIGHT_ENABLE_CNT,
             'Enable',
             this.settings.sunLightEnabled,
@@ -802,10 +669,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const checked = this.readCheckBoxControl(SUN_LIGHT_ENABLE_CNT);
                 this.settings.sunLightEnabled = checked;
             }
-        )
+        ));
 
-        const SUN_LIGHT_COLOR_PICKER_CNT = 'SunLightColorPicker_Control';
-        const SunLightColorPicker_Control = this.buildColorPickerControl(
+        const SUN_LIGHT_COLOR_PICKER_CNT = 'ApgWgl_SunLightColor_ColorPickerControl';
+        controls.push(this.buildColorPickerControl(
             SUN_LIGHT_COLOR_PICKER_CNT,
             'Color',
             this.settings.sunLightColor.getHex(),
@@ -813,10 +680,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const color = this.readColorPickerControl(SUN_LIGHT_COLOR_PICKER_CNT);
                 this.settings.sunLightColor.setHex(color);
             }
-        );
+        ));
 
-        const SUN_LIGHT_INTENSITY_CNT = 'SunLightRange_Control';
-        const sunLightIntensity_Controls = this.buildRangeControl(
+        const SUN_LIGHT_INTENSITY_CNT = 'ApgWgl_SunLightIntensity_RangeControl';
+        controls.push(this.buildRangeControl(
             SUN_LIGHT_INTENSITY_CNT,
             'Intensity',
             this.settings.sunLightIntensity,
@@ -825,27 +692,25 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(SUN_LIGHT_INTENSITY_CNT);
                 this.settings.sunLightIntensity = value;
             }
-        )
+        ));
 
-
-        const SUN_LIGHT_FIELDSET_CNT = 'SunLightFieldset_Control';
-        const sunLightFieldset_Control = this.buildFieldSetControl(
-            SUN_LIGHT_FIELDSET_CNT,
+        const ID = 'ApgWgl_SunLight_FieldsetControl';
+        const r = this.buildFieldSetControl(
+            ID,
             'Sun light settings',
-            [
-                SunLightEnable_Control,
-                SunLightColorPicker_Control,
-                sunLightIntensity_Controls
-            ]
+            controls
         );
-        return sunLightFieldset_Control;
+        return r;
     }
+
 
 
     #buildCamLightFieldSet() {
 
-        const CAM_LIGHT_ENABLE_CNT = 'CamLightChecBox_Control';
-        const CamLightEnable_Control = this.buildCheckBoxControl(
+        const controls: string[] = [];
+
+        const CAM_LIGHT_ENABLE_CNT = 'ApgWgl_CamLightEnable_CheckBoxControl';
+        controls.push(this.buildCheckBoxControl(
             CAM_LIGHT_ENABLE_CNT,
             'Enable',
             this.settings.camLightEnabled,
@@ -853,10 +718,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const checked = this.readCheckBoxControl(CAM_LIGHT_ENABLE_CNT);
                 this.settings.camLightEnabled = checked;
             }
-        )
+        ));
 
-        const CAM_LIGHT_COLOR_PICKER_CNT = 'CamLightColorPicker_Control';
-        const CamLightColorPicker_Control = this.buildColorPickerControl(
+        const CAM_LIGHT_COLOR_PICKER_CNT = 'ApgWgl_CamLightColor_ColorPickerControl';
+        controls.push(this.buildColorPickerControl(
             CAM_LIGHT_COLOR_PICKER_CNT,
             'Color',
             this.settings.camLightColor.getHex(),
@@ -864,10 +729,10 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const color = this.readColorPickerControl(CAM_LIGHT_COLOR_PICKER_CNT);
                 this.settings.camLightColor.setHex(color);
             }
-        );
+        ));
 
-        const CAM_LIGHT_INTENSITY_CNT = 'CamLightRange_Control';
-        const CamLightIntensity_Controls = this.buildRangeControl(
+        const CAM_LIGHT_INTENSITY_CNT = 'ApgWgl_CamLightIntensity_RangeControl';
+        controls.push(this.buildRangeControl(
             CAM_LIGHT_INTENSITY_CNT,
             'Intensity',
             this.settings.camLightIntensity,
@@ -876,20 +741,18 @@ export class ApgWgl_GuiBuilder extends ApgGui_Builder {
                 const value = this.readRangeControl(CAM_LIGHT_INTENSITY_CNT);
                 this.settings.camLightIntensity = value;
             }
-        )
+        ));
 
-
-        const CAM_LIGHT_FIELDSET_CNT = 'CamLightFieldset_Control';
-        const camLightFieldset_Control = this.buildFieldSetControl(
-            CAM_LIGHT_FIELDSET_CNT,
+        const ID = 'ApgWgl_CamLight_FieldsetControl';
+        const r = this.buildFieldSetControl(
+            ID,
             'Cam light settings',
-            [
-                CamLightEnable_Control,
-                CamLightColorPicker_Control,
-                CamLightIntensity_Controls
-            ]
+            controls
         );
-        return camLightFieldset_Control;
+        return r;
     }
+
+    // #endregion
+    //--------------------------------------------------------------------------
 
 }

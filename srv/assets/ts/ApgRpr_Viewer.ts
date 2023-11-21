@@ -17,7 +17,7 @@ import {
 
 import {
     THREE
-} from './apg-wgl/lib/ApgWgl_Deps.ts';
+} from './apg-wgl/deps.ts';
 
 import {
     ApgRpr_Utils
@@ -64,7 +64,6 @@ export enum ApgRpr_eInstancedMeshType {
     ROUNDEND_CONES = "RCNS",
     CAPSULES = "CPLS",
 }
-
 
 
 export interface ApgRpr_IEntity {

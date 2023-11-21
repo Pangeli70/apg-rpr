@@ -25,7 +25,7 @@ import {
 
 import {
     ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -39,7 +39,7 @@ import {
 
 import {
     THREE
-} from "../apg-wgl/lib/ApgWgl_Deps.ts";
+} from "../apg-wgl/deps.ts";
 
 
 // #endregion

@@ -5,21 +5,25 @@
  * -----------------------------------------------------------------------
 */
 
+
+//--------------------------------------------------------------------------
+// #region Imports
+
 import {
     ApgGui_IButton,
     ApgGui_IDialog,
     ApgGui_IElement,
     ApgGui_IRange,
     ApgGui_ISelect
-} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui_Builder
-} from "./apg-gui/lib/classes/ApgGui_Builder.ts";
+} from "../apg-gui/lib/classes/ApgGui_Builder.ts";
 
 import {
     ApgRpr_ISimulationSettings,
-} from "./ApgRpr_Simulation.ts";
+} from "../ApgRpr_Simulation.ts";
 
 import {
     ApgRpr_Debug_GuiBuilder
@@ -27,28 +31,31 @@ import {
 
 import {
     ApgGui_Logger_GuiBuilder
-} from "./apg-gui/lib/builders/ApgGui_Logger_GuiBuilder.ts";
+} from "../apg-gui/lib/builders/ApgGui_Logger_GuiBuilder.ts";
 
 import {
     ApgGui_Stats_GuiBuilder
-} from "./apg-gui/lib/builders/ApgGui_Stats_GuiBuilder.ts";
+} from "../apg-gui/lib/builders/ApgGui_Stats_GuiBuilder.ts";
 
 import {
     ApgRpr_eSimulationName
-} from "./ApgRpr_Simulations.ts";
-
-import {
-    ApgWgl_GuiBuilder
-} from "./apg-wgl/lib/classes/ApgWgl_GuiBuilder.ts";
+} from "../ApgRpr_Simulations.ts";
 
 import {
     ApgRpr_Simulator
-} from "./ApgRpr_Simulator.ts";
+} from "../ApgRpr_Simulator.ts";
 
 import {
     ApgGui_TReactiveState
-} from "./apg-gui/lib/classes/ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
+import {
+    ApgRpr_Viewer_GuiBuilder
+} from "./ApgRpr_Viewer_GuiBuilder.ts";
+
+
+// #endregion
+//--------------------------------------------------------------------------
 
 
 /**
@@ -100,7 +107,7 @@ export class ApgRpr_Simulator_GuiBuilder extends ApgGui_Builder {
 
         controls.push(this.#buildGetUrlButtonControl());
 
-        controls.push(new ApgWgl_GuiBuilder(this.gui, this.name, this.simulator.viewer!)
+        controls.push(new ApgRpr_Viewer_GuiBuilder(this.gui, this.name, this.simulator.viewer!)
             .buildControls());
 
         controls.push(this.#buildCreditsDialogControl(this.CREDITS_DIALOG_CNT));

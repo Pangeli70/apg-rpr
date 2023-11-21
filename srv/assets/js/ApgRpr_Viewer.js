@@ -4,7 +4,7 @@ import {
 } from "./ApgRpr_Deps.ts";
 import {
   THREE
-} from "./apg-wgl/lib/ApgWgl_Deps.ts";
+} from "./apg-wgl/deps.ts";
 import {
   ApgRpr_Utils
 } from "./ApgRpr_Utils.ts";

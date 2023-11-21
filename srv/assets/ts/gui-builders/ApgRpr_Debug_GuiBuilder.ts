@@ -8,23 +8,23 @@
 import {
     ApgGui_IDialog,
     ApgGui_IElement
-} from "./apg-gui/lib/interfaces/ApgGui_Dom.ts";
+} from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
 import {
     ApgGui
-} from "./apg-gui/lib/classes/ApgGui.ts";
+} from "../apg-gui/lib/classes/ApgGui.ts";
 
 import {
     ApgGui_Builder
-} from "./apg-gui/lib/classes/ApgGui_Builder.ts";
+} from "../apg-gui/lib/classes/ApgGui_Builder.ts";
 
 import {
     ApgRpr_IDebugInfo
-} from "./ApgRpr_Interfaces.ts";
+} from "../ApgRpr_Interfaces.ts";
 
 import {
     RAPIER
-} from "./ApgRpr_Deps.ts";
+} from "../ApgRpr_Deps.ts";
 
 
 

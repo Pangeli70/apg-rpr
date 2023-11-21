@@ -11,7 +11,7 @@ import {
 
 import {
     ApgRpr_Simulator_GuiBuilder
-} from "../ApgRpr_Simulation_GuiBuilder.ts";
+} from "../gui-builders/ApgRpr_Simulation_GuiBuilder.ts";
 
 import {
     ApgRpr_ISimulationParams,
@@ -88,7 +88,7 @@ export class ApgRpr_E2_ConvexPolyhedron_Simulation extends ApgRpr_Simulation {
                     const y = j * shift + centery + 3.0;
                     const z = k * shift - centerz;
 
-                    const randomVertices = [];
+                    const randomVertices:number[] = [];
                     for (l = 0; l < 10; ++l) {
                         const x1 = this.rng.next() * scale;
                         const y1 = this.rng.next() * scale;

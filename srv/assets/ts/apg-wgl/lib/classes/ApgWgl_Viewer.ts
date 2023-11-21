@@ -1,205 +1,54 @@
 /** -----------------------------------------------------------------------
- * @module [apg-rpr]
+ * @module [apg-wgl]
  * @author [APG] ANGELI Paolo Giusto
- * @version 0.9.8 [APG 2023/08/11]
+ * @version 0.0.1 [APG 2023/08/11]
+ * @version 0.0.8 [APG 2023/11/20]
  * -----------------------------------------------------------------------
 */
+
+//--------------------------------------------------------------------------
+// #region Imports
+
 import {
     ApgGui_IBrowserWindow,
     ApgGui_ICanvas,
     ApgGui_IDocument,
-    ApgGui_IElement
-} from '../../../apg-gui/lib/interfaces/ApgGui_Dom.ts';
-
-import {
+    ApgGui_IElement,
     ApgGui_Logger
-} from "../../../apg-gui/lib/classes/ApgGui_Logger.ts";
+} from "../../../apg-gui/mod.ts";
 
 import {
     THREE,
     THREE_EXRLoader,
     THREE_OrbitControls,
     THREE_RGBELoader
-} from '../ApgWgl_Deps.ts';
+} from '../../deps.ts';
+
+import {
+    ApgWgl_eEnvMapMode
+} from "../enums/ApgWgl_eEnvMapMode.ts";
+
+import {
+    ApgWgl_IOrbitControlsParams
+} from "../interfaces/ApgWgl_IOrbitControlsParams.ts";
+
+import {
+    ApgWgl_IViewerSettings
+} from "../interfaces/ApgWgl_IViewerSettings.ts";
+
+import {
+    ApgWgl_IMetrics
+} from "../interfaces/ApgWgl_IMetrics.ts";
 
 
-
-export enum ApgWgl_eEnvMapMode {
-
-    NONE = "none",
-    HDR = "hdr",
-    EXR = "exr",
-    LDR = "ldr"
-}
-
-
-
-export interface ApgWgl_IEnvMaps {
-    mode: ApgWgl_eEnvMapMode,
-    maps: string[]
-}
-
+// #endregion
+//--------------------------------------------------------------------------
 
 
 export class ApgWgl_Layers {
     static readonly unassigned = 0;
     static readonly helpers = 1;
     static readonly lights = 2;
-}
-
-
-
-export interface ApgWgl_ILayerDescr {
-    index: number,
-    visible: boolean,
-    name: string
-}
-
-
-
-export interface ApgWgl_IOrbitControlsParams {
-    eye: THREE.Vector3,
-    target: THREE.Vector3
-}
-
-
-
-export interface ApgWgl_IViewerSettings {
-
-    /** Overall diameter size of the world */
-    worldSize: number;
-    /** Height position of the camera for the character head */
-    eyeHeight: number;
-
-    /** Renderer scaling factor */
-    pixelRatio: number;
-
-    /** Color of the fog */
-    fogColor: THREE.Color;
-    /** Exponential fog density */
-    fogDensity: number;
-
-    /** THREE JS Constants */
-    toneMapping: THREE.ToneMapping;
-    /** ??? */
-    toneMappingExposure: number;
-
-    /** THREE JS Constants */
-    outputColorSpace: THREE.ColorSpace;
-
-    /** Use shadows */
-    areShadowsEnabled: boolean;
-    /** THREE JS Constants */
-    shadowMapType: THREE.ShadowMapType;
-    /** ??? */
-    shadowMapRadious: number;
-    /** Multiples of 1024 */
-    shadowMapSize: number;
-
-    /** Anysotropy for textures */
-    anisotropy: number;
-
-    /** Scene background color */
-    clearColor: THREE.Color;
-
-    /** Field of view */
-    perspCameraFov: number;
-    /** Near clipping plane */
-    perspCameraNear: number;
-    /** Far clipping plane */
-    perspCameraFar: number;
-    /** Position */
-    perspCameraPosition: THREE.Vector3;
-    /** Zoom level */
-    perspCameraZoom: number;
-
-    /** Ambient light */
-    ambLightEnabled: boolean;
-    /**  */
-    ambLightColor: THREE.Color;
-    /**  */
-    ambLightIntensity: number;
-
-    /** Sun light */
-    sunLightEnabled: boolean;
-    /** */
-    sunLightColor: THREE.Color;
-    /** */
-    sunLightIntensity: number;
-    /** */
-    sunLightPosition: THREE.Vector3;
-    /** Sun light shadow*/
-    sunLightShadowMapCameraSize: number,
-    /** */
-    sunLightShadowMapCameraNear: number,
-    /** */
-    sunLightShadowMapCameraFar: number,
-
-    /** Camera light */
-    camLightEnabled: boolean;
-    /** */
-    camLightColor: THREE.Color;
-    /** */
-    camLightIntensity: number;
-    /** */
-    camLightDistance: number;
-    /** */
-    camLightPosition: THREE.Vector3;
-    /** */
-    camLightIsDetachedFromCamera: boolean;
-
-    /** Environment lighting and mapping */
-    envMapLighting: boolean;
-    /** Three modes are available LDR, HDR and EXR*/
-    envMapMode: ApgWgl_eEnvMapMode;
-    /** urls of the environment maps */
-    envMaps: string[];
-    /** */
-    envMapLightingIntensity: number,
-    /** */
-    envMapBackgroundBlurryness: number,
-    /** */
-    envMapBackgroundIntensity: number,
-
-    /** User interaction controller */
-    orbControlsTarget: THREE.Vector3;
-    /** */
-    orbControlsMinDistance: number;
-    /** */
-    orbControlsMaxDistance: number;
-    /** */
-    orbControlsMinPolarAngle: number;
-    /** */
-    orbControlsMaxPolarAngle: number;
-    /** */
-    orbControlsEnableDamping: boolean;
-    /** */
-    orbControlsDampingFactor: number;
-
-    /** */
-    layers: Record<string, ApgWgl_ILayerDescr>;
-
-}
-
-
-
-export interface ApgWgl_IMetrics {
-
-    /** Radious of the scene */
-    sceneSize: number;
-
-    /** Radious of the walkable space */
-    worldSize: number;
-
-    /** Radious of the sight size to control fog */
-    sightSize: number;
-
-    /** Radious of the universe */
-    universeSize: number;
-
-    /** Default first person view heigth from ground */
-    eyeHeight: number;
-
 }
 
 
@@ -223,7 +72,7 @@ export class ApgWgl_Viewer {
     private static readonly APG_WGL_DEFAULT_EYE_HEIGHT = 1.65;
     get defaultEyeHeight() { return ApgWgl_Viewer.APG_WGL_DEFAULT_EYE_HEIGHT; }
     private static readonly APG_WGL_DEFAULT_WORLD_FACTOR = 10;
-    readonly APG_WGL_MAX_PIXEL_RATIO;
+    readonly APG_WGL_MAX_PIXEL_RATIO: number;
 
     /** Dom Elements*/
     protected viewerElement!: ApgGui_IElement;

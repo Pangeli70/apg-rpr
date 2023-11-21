@@ -1,8 +1,8 @@
 /** -----------------------------------------------------------------------
  * @module [apg-gui]
  * @author [APG] ANGELI Paolo Giusto
- * @version 0.0.01 [APG 2023/08/15]
- * @version 0.0.15 [APG 2023/11/12]
+ * @version 0.0.1 [APG 2023/08/15]
+ * @version 0.0.8 [APG 2023/11/12]
  * -----------------------------------------------------------------------
 */
 
@@ -14,10 +14,9 @@ import {
     ApgGui_IInput,
     ApgGui_IRange,
     ApgGui_ISelect,
-    ApgGui_TEventCallback,
-    ApgGui_eFormElementType,
-    ApgGui_eInputType
-} from "../interfaces/ApgGui_Dom.ts";
+    ApgGui_TEventCallback} from "../interfaces/ApgGui_Dom.ts";
+import { ApgGui_eInputType } from "../enums/ApgGui_eInputType.ts";
+import { ApgGui_eFormElementType } from "../enums/ApgGui_eFormElementType.ts";
 
 import {
     ApgGui,

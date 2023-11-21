@@ -52,9 +52,7 @@ import {
     ApgGui_Logger
 } from "./apg-gui/lib/classes/ApgGui_Logger.ts";
 
-import {
-    ApgWgl_IOrbitControlsParams
-} from "./apg-wgl/lib/classes/ApgWgl_Viewer.ts";
+import { ApgWgl_IOrbitControlsParams } from "./apg-wgl/lib/interfaces/ApgWgl_IOrbitControlsParams.ts";
 
 
 

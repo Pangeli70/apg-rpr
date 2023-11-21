@@ -1,7 +1,5 @@
-import {
-  ApgGui_eFormElementType,
-  ApgGui_eInputType
-} from "../interfaces/ApgGui_Dom.ts";
+import { ApgGui_eInputType } from "../enums/ApgGui_eInputType.ts";
+import { ApgGui_eFormElementType } from "../enums/ApgGui_eFormElementType.ts";
 import {
   ApgGui
 } from "./ApgGui.ts";
