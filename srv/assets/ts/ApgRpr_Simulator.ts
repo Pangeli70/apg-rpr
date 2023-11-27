@@ -52,7 +52,9 @@ import {
     ApgGui_Logger
 } from "./apg-gui/lib/classes/ApgGui_Logger.ts";
 
-import { ApgWgl_IOrbitControlsParams } from "./apg-wgl/lib/interfaces/ApgWgl_IOrbitControlsParams.ts";
+import {
+    ApgWgl_IOrbitControlsParams
+} from "./apg-wgl/lib/interfaces/ApgWgl_IOrbitControlsParams.ts";
 
 
 
@@ -62,58 +64,93 @@ import { ApgWgl_IOrbitControlsParams } from "./apg-wgl/lib/interfaces/ApgWgl_IOr
  */
 export class ApgRpr_Simulator {
 
-    /** Used to interact with the browser we don't like global variables */
+    /**
+     * Used to interact with the browser we don't like global variables
+     * */
     private _window: ApgGui_IBrowserWindow;
-    /** Used to interact with the DOM we don't like global variables */
-    private _document: ApgGui_IDocument;
-    get document() { return this._document; }
 
-    /** The current set of simulations */
+    /**
+     * Used to interact with the DOM we don't like global variables
+     */
+    get document() { return this._document; }
+    private _document: ApgGui_IDocument;
+
+    /**
+     * The current set of simulations
+     */
     private _simulations: Map<ApgRpr_eSimulationName, typeof ApgRpr_Simulation>;
-    /** Names of the loaded simulations */
+    /**
+     * Names of the loaded simulations
+     */
     get simulationsNames() { return Array.from(this._simulations.keys()); }
-    /** Default simulation */
+    /**
+     * Default simulation
+     */
     private _defaultSimulationName: ApgRpr_eSimulationName;
 
     /** Gui */
-    private _gui: ApgGui;
     get gui() { return this._gui; }
+    private _gui: ApgGui;
 
     /** Logger */
-    private _logger: ApgGui_Logger;
     get logger() { return this._logger; }
+    private _logger: ApgGui_Logger;
 
-    /** Stats objects */
-    private _stats: ApgGui_Stats | null = null;
+    /** 
+     * Stats 
+     */
     get stats() { return this._stats; }
+    private _stats: ApgGui_Stats | null = null;
     private _stepStatsPanel: ApgRpr_Step_StatsPanel | null = null;;
     private _collidersStatsPanel: ApgRpr_Colliders_StatsPanel | null = null;;
 
-    /** The THREE viewer attached to the simulation */
+    /**
+     * The THREE viewer attached to the simulation
+     */
     viewer: ApgRpr_Viewer;
 
-    /** Eventually used for picking objects with a raycaster */
+    /**
+     * Eventually used for picking objects with a raycaster
+     */
     mouse: ApgRpr_IPoint2D;
 
-    /** We don't know yet ??? */
+    /**
+     * We don't know yet ???
+     */
     private _events: RAPIER.EventQueue;
 
-    /** All the simulation is inside the world */
+    /**
+     * All the simulation is inside the RAPIER world
+     */
     private _world: RAPIER.World | null = null;
 
-    /** Hook to interact with the simulation before each step*/
+    /** 
+     * Hook to interact with the simulation before each step
+     */
     private _preStepAction: Function | null = null;
-    /** Hook to interact with the simulation after each step*/
+    /**
+     * Hook to interact with the simulation after each step
+     */
     private _postStepAction: Function | null = null;
 
 
-    /** This is used to count the number of times the step function is called and to manage the slowdown */
+    /**
+     * This is used to count the number of times the step function is 
+     * called and to manage the slowdown
+     */
     private _runCall = 0;
 
-    /** The simulation slowdown factor: 1 means run continuously. 
-     * When set to MAX_SLOWDOWN the simulation is stopped */
-    private _slowdownFactor = 1;
+    /** 
+     * The simulation slowdown factor: 1 means run continuously. 
+     * When set to MAX_SLOWDOWN the simulation is stopped
+     */
     set slowDownFactor(a: number) { this._slowdownFactor = a; }
+    private _slowdownFactor = 1;
+
+    /**
+     * Maximum slowdown factor. Is used to pause the simulation.
+     */
+    readonly MAX_SLOWDOWN = 20;
 
 
     /** Used to keep track of requestAnimationFrame timings and 
@@ -122,21 +159,32 @@ export class ApgRpr_Simulator {
     // it will be no more fully deterministic and so reproducible
     private _lastFrameTime = -1;
 
-    /** We run the simulation only if the document has the focus */
+    /**
+     * We run the simulation only if the document has the focus
+     */
     private _documentHasFocus = false;
 
 
-    /** The simulation is in debug mode so we show collider edges and vectors and collect additional data */
-    private _isInDebugMode = false;
+    /**
+     * The simulation is in debug mode so we show collider edges and vectors 
+     * and collect additional data
+     */
     set debugMode(a: boolean) { this._isInDebugMode = a; }
+    private _isInDebugMode = false;
 
-    /** The debug info contain the simulation step counter and other data*/
+    /**
+     * The debug info contain the simulation step counter and other data
+     */
     debugInfo: ApgRpr_IDebugInfo;
 
 
-    /** The last snapshot collected to be eventually stored or transmitted */
+    /**
+     * The last snapshot collected to be eventually stored or transmitted
+     */
     snapshot?: Int8Array;
-    /** The simulation step of the snapshot */
+    /**
+     * The simulation step of the snapshot
+     */
     private _snapshotStepId = 0;
 
     readonly DEFAULT_GRAVITY = 9.8;
@@ -150,9 +198,13 @@ export class ApgRpr_Simulator {
 
     readonly DEFAULT_COLLIDER_SIZE = 0.1;
 
-    // maxVelocityIterations
+    /**
+     * Maps the maxVelocityIterations setting of the RAPIER solver
+     */
     readonly DEFAULT_RAPIER_VELOCITY_ITERATIONS = 4;
-    // maxVelocityFrictionIterations
+    /**
+     * Maps the maxVelocityFrictionIterations setting of the RAPIER solver
+     */
     readonly DEFAULT_RAPIER_FRICTION_ITERATIONS = 1;
     // maxStabilizationIterations
     readonly DEFAULT_RAPIER_STABILIZATION_ITERATIONS = 1;
@@ -176,12 +228,14 @@ export class ApgRpr_Simulator {
     readonly DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR = 0.001;
     readonly DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR = 0.01;
 
-    readonly MAX_SLOWDOWN = 20;
+
 
     readonly LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";
     readonly LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS = "ApgRprLocalStorage_SimulationSettingsFor_";
 
     static readonly RPR_SIMULATOR_NAME = "Rapier simulator";
+
+
 
     constructor(
         awindow: ApgGui_IBrowserWindow,
@@ -210,7 +264,11 @@ export class ApgRpr_Simulator {
         }
 
         this.viewer = new ApgRpr_Viewer(
-            this._window, this._document, this._gui.viewerElement, this._logger, this.DEFAULT_SCENE_SIZE
+            this._window,
+            this._document,
+            this._gui.viewerElement,
+            this._logger,
+            this.DEFAULT_SCENE_SIZE
         );
 
 
@@ -260,10 +318,21 @@ export class ApgRpr_Simulator {
         if (settings == null) {
             const lastSimulation = this._window.localStorage.getItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION);
             if (lastSimulation != undefined) {
-                const localStorageSettings = this._window.localStorage.getItem(this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + lastSimulation);
+                const localStorageSimulationKey = this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + lastSimulation
+                const localStorageSettings = this._window.localStorage.getItem(localStorageSimulationKey);
                 if (localStorageSettings != undefined) {
                     try {
                         settings = JSON.parse(localStorageSettings);
+                        if (
+                            settings != null && 
+                            (
+                                settings.signature == undefined ||
+                                settings.signature != ApgRpr_Simulation.RPR_SIMULATION_SETTINGS_SIGNATURE
+                            )
+                        ) {
+                            settings = null;
+                            this._window.localStorage.setItem(localStorageSimulationKey, "");
+                        }
                     }
                     catch (e) {
                         alert('Invalid local storage settings: ' + e.message);
@@ -345,7 +414,6 @@ export class ApgRpr_Simulator {
         // @MAYBE  we should delete the old stuff explicitly-- APG 20230814
         this._world = aworld;
 
-
         // @MAYBE  these are too hidden side effect change name -- APG 20230814
         this._stepStatsPanel!.begin();
         this._collidersStatsPanel!.begin();
@@ -364,19 +432,13 @@ export class ApgRpr_Simulator {
 
 
     /** 
-     * Called to allow the Settings DOM to refresh when is changed diamically.
+     * Called to allow the Settings DOM to refresh when is changed dinamically.
      * It delays the event loop calling setTimeout
      */
-    updateViewerSettings(ahtml: string) {
+    updateGuiPanel(ahtml: string) {
 
-        this._gui.isRefreshing = true;
+        this._gui.updateGuiPanel(ahtml);
 
-        this._gui.panelElement.innerHTML = ahtml;
-
-        // @WARNING This is a hack that could be useful to allow to run everything asynchronously -- APG 20230916
-        setTimeout(() => {
-            this._gui.isRefreshing = false;
-        }, 0);
     }
 
 
@@ -385,21 +447,16 @@ export class ApgRpr_Simulator {
      * Called to allow the HUD DOM to refresh when is changed dinamically.
      * It delays the event loop calling setTimeout
      */
-    updateViewerHud(ahtml: string) {
+    updateGuiHud(ahtml: string) {
 
-        this._gui.isRefreshing = true;
+        this._gui.updateGuiHud(ahtml);
 
-        this._gui.hudElement.innerHTML = ahtml;
-
-        setTimeout(() => {
-            this._gui.isRefreshing = false;
-        }, 0);
     }
 
 
 
     /** 
-     * If we call this it means that the camera is locked
+     * If we call this it means that the camera is locked WTF ???
      */
     resetCamera(acameraPosition: ApgRpr_ICameraPosition) {
 
@@ -412,8 +469,7 @@ export class ApgRpr_Simulator {
 
 
     /**
-     * Allows to restart the current simulation or to change another one
-     * @param aparams
+     * Allows to restart the current simulation or to change it
      */
     setSimulation(aparams: ApgRpr_ISimulationParams) {
 
@@ -424,19 +480,22 @@ export class ApgRpr_Simulator {
             `Simulation for (${simulation}) is not yet available`
         )
 
-        // @TODO this should detach the previous event listeners and remove all the elements from the dom -- APG 20230922
+        // @TODO this should detach the previous event listeners and remove 
+        // all the elements from the dom-- APG 20230922
         this._gui.clearControls();
 
-        // @TODO this should freeze ther THREE viewer updates and remove all the meshes from the scene -- APG 20230922
+        // @TODO this should freeze ther THREE viewer updates and remove all 
+        // the meshes from the scene-- APG 20230922
         this.viewer.reset();
 
         if (aparams.settings) {
             aparams.settings.doRestart = false;
         }
 
-        // @TODO Semantically this seems not good. We should store this somewhere and
-        // dispose everyting explicitly when we change the simulation instead than let 
-        // the garbage collector to do it on its own -- APG 20230812
+        // @TODO Semantically this seems not good. We should store this 
+        // somewhere and dispose everyting explicitly when we change the 
+        // simulation instead than let the garbage collector to do it on 
+        // its own-- APG 20230812
         const _newSimulation = new simulationType!(this, aparams);
 
 
@@ -452,6 +511,9 @@ export class ApgRpr_Simulator {
 
 
 
+    /**
+     * Core business is here
+     */
     run() {
 
         const procStartTime = performance.now();

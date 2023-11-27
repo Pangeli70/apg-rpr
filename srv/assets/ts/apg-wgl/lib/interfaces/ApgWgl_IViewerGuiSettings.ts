@@ -6,9 +6,9 @@
 */
 
 import {
-  ApgGui_IMinMaxStep,
   ApgGui_TSelectValuesMap
 } from "../../../apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "../../../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
   ApgWgl_IViewerSettings

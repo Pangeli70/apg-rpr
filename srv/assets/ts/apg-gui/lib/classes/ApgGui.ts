@@ -9,69 +9,31 @@
 import {
     ApgGui_IDocument,
     ApgGui_IElement,
-    ApgGui_IRange,
-    ApgGui_TEventCallback} from "../interfaces/ApgGui_Dom.ts";
-import { ApgGui_eInputType } from "../enums/ApgGui_eInputType.ts";
-import { ApgGui_eFormElementType } from "../enums/ApgGui_eFormElementType.ts";
+    ApgGui_IRange
+} from "../interfaces/ApgGui_Dom.ts";
+
+import {
+    ApgGui_eInputType
+} from "../enums/ApgGui_eInputType.ts";
+
+import {
+    ApgGui_eFormElementType
+} from "../enums/ApgGui_eFormElementType.ts";
 
 import {
     ApgGui_Logger
 } from "./ApgGui_Logger.ts";
 
-
-
-export interface ApgGui_IMinMaxStep {
-    min: number;
-    max: number;
-    step: number;
-}
+import {
+    ApgGui_IControl
+} from "../interfaces/ApgGui_IControl.ts";
 
 
 
 export type ApgGui_TSelectValuesMap = Map<string, string>;
 
 
-
 export type ApgGui_TReactiveState = Record<string, string | number | boolean | Record<string, string | number | boolean>>;
-
-
-
-
-export interface ApgGui_IReactive {
-
-    /** The object that holds the property that need reactivity in one of the GUI controls */
-    state: ApgGui_TReactiveState;
-
-    /** The name of the property that will be associated to the GUI state */
-    prop: string;
-}
-
-
-
-/**
- * Data structure to collect data for a Gui Controls
- */
-export interface ApgGui_IControl {
-
-    /** Dom element */
-    element: (ApgGui_IElement | null);
-
-    /** Dom Element type */
-    type: ApgGui_eFormElementType;
-
-    /** Input type */
-    inputType?: ApgGui_eInputType;
-
-    /** Function to call when the event handled is called. Now only one event handler is associated automatically for every input type  */
-    callback?: ApgGui_TEventCallback;
-
-    /** Used to manage two way automatic update of the controls */
-    reactive?: ApgGui_IReactive;
-
-    /** Allows to inject a prebuilt element in the control */
-    injected?: ApgGui_IElement;
-}
-
 
 
 /**
@@ -80,7 +42,8 @@ export interface ApgGui_IControl {
 export class ApgGui {
 
     /** A status flag that is used to pause some other stuff while the Gui is refreshing */
-    isRefreshing = false;
+    private _isRefreshing = false;
+    get isRefreshing() { return this._isRefreshing; }
 
     /** Map of the controls, is used for binding events and reactivity */
     controls: Map<string, ApgGui_IControl> = new Map();
@@ -98,11 +61,12 @@ export class ApgGui {
     hudElement: ApgGui_IElement;
 
     /** The multipurpose logger */
-    logger: ApgGui_Logger;
+    private _logger: ApgGui_Logger;
 
 
     /** Name of the logger */
     private static readonly LOGGER_NAME = 'Gui';
+
 
 
     /**
@@ -116,6 +80,8 @@ export class ApgGui {
             throw new Error(aerrorMessage);
         }
     }
+
+
 
     /**
      * If the condition is true alerts and throws an error
@@ -136,7 +102,7 @@ export class ApgGui {
     ) {
 
         this.document = adocument;
-        this.logger = alogger;
+        this._logger = alogger;
 
         this.panelElement = this.document.getElementById(apanelElementId);
         ApgGui.Assert(
@@ -154,33 +120,78 @@ export class ApgGui {
         this.hudElement.style.cssText = "position: absolute; bottom: 2.5%; left: 22.5%; width: 75%; min-height:0%; background-color: #38516740;";
         this.viewerElement.appendChild(this.hudElement);
 
-        this.logger.addLogger(ApgGui.LOGGER_NAME);
-        this.logger.log('ApgGui created', ApgGui.LOGGER_NAME)
+        this._logger.addLogger(ApgGui.LOGGER_NAME);
+        this._logger.log('ApgGui created', ApgGui.LOGGER_NAME)
 
     }
+
+
+
+    /** 
+     * Called to allow the DOM to refresh when is changed dinamically.
+     * It delays the event loop calling setTimeout
+     */
+    updateGuiPanel(ahtml: string) {
+
+        this._isRefreshing = true;
+
+        this.panelElement.innerHTML = ahtml;
+
+        // @WARNING This is a hack that allows the dom to update ad
+        // could be useful to allow to run everything asynchronously-- APG 20230916
+        setTimeout(() => {
+            this._isRefreshing = false;
+        }, 0);
+    }
+
+
+
+    /** 
+     * Called to allow the HUD DOM to refresh when is changed dinamically.
+     * It delays the event loop calling setTimeout
+     */
+    updateGuiHud(ahtml: string) {
+
+        this._isRefreshing = true;
+
+        this.hudElement.innerHTML = ahtml;
+
+        setTimeout(() => {
+            this._isRefreshing = false;
+        }, 0);
+    }
+
 
 
     log(aitem: string) {
-        this.logger.log(aitem, ApgGui.LOGGER_NAME);
+        this._logger.log(aitem, ApgGui.LOGGER_NAME);
     }
+
+
 
     devLog(aitem: string) {
-        this.logger.devLog(aitem, ApgGui.LOGGER_NAME);
+        this._logger.devLog(aitem, ApgGui.LOGGER_NAME);
     }
+
+
 
     logNoTime(aitem: string) {
-        this.logger.logNoTime(aitem, ApgGui.LOGGER_NAME);
+        this._logger.logNoTime(aitem, ApgGui.LOGGER_NAME);
     }
 
+
+
     devLogNoTime(aitem: string) {
-        this.logger.logDevNoTime(aitem, ApgGui.LOGGER_NAME);
+        this._logger.logDevNoTime(aitem, ApgGui.LOGGER_NAME);
     }
+
 
 
     clearControls() {
         // @TODO do we need to perfom some cleanup on DOM and especially on event Handlers? -- APG 20230927
         this.controls.clear();
     }
+
 
 
     setReactiveControl(
@@ -204,6 +215,8 @@ export class ApgGui {
             prop: aprop
         }
     }
+
+
 
     /**
      * Refreshes the DOM elements that have reactive GUI controls

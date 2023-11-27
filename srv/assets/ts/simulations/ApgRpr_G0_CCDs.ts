@@ -11,9 +11,7 @@ import {
     ApgGui_IRange
 } from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
-import {
-    ApgGui_IMinMaxStep
-} from "../apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     RAPIER

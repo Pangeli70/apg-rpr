@@ -20,6 +20,7 @@ export class ApgRpr_Simulation {
   /** Logger for the various simulations */
   logger;
   static RPR_SIMULATION_LOGGER_NAME = "Rapier simulation";
+  static RPR_SIMULATION_SETTINGS_SIGNATURE = "0.0.8";
   /**
    * Creates a new simulation and a new world for the RAPIER simulator
    */
@@ -50,21 +51,23 @@ export class ApgRpr_Simulation {
    * Set up the default Gui settings for the simulator. This method can be overridden 
    * and extended by derived classes to add more settings each specific of every simulation. 
    */
-  defaultSettings(acolliderSize = this.simulator.DEFAULT_COLLIDER_SIZE, asceneSize = this.simulator.DEFAULT_SCENE_SIZE) {
-    const linearError = acolliderSize * this.simulator.DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR;
-    const preditionDistance = acolliderSize * this.simulator.DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR;
+  defaultSettings(aglobalScale = 1, acolliderSize = this.simulator.DEFAULT_COLLIDER_SIZE, asceneSize = this.simulator.DEFAULT_SCENE_SIZE) {
+    const linearError = aglobalScale * acolliderSize * this.simulator.DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR;
+    const preditionDistance = aglobalScale * acolliderSize * this.simulator.DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR;
+    const playground = {
+      width: aglobalScale * 2,
+      depth: aglobalScale * 1,
+      height: aglobalScale * 1,
+      thickness: aglobalScale * 0.05
+    };
     const r = {
+      signature: ApgRpr_Simulation.RPR_SIMULATION_SETTINGS_SIGNATURE,
       simulation: this.params.simulation,
-      scale: 1,
+      globalScale: aglobalScale,
       // Not Yet Implemented
-      colliderSize: acolliderSize,
-      sceneSize: asceneSize,
-      table: {
-        width: 2,
-        depth: 1,
-        height: 1,
-        thickness: 0.05
-      },
+      colliderSize: aglobalScale * acolliderSize,
+      sceneSize: aglobalScale * asceneSize,
+      playground,
       gravity: new RAPIER.Vector3(
         this.simulator.DEFAULT_GRAVITY_X,
         this.simulator.DEFAULT_GRAVITY_Y,
@@ -111,9 +114,9 @@ export class ApgRpr_Simulation {
       },
       linearError,
       linearErrorMMS: {
-        min: linearError / 5,
-        max: linearError * 5,
-        step: linearError / 5
+        min: linearError / 10,
+        max: linearError * 10,
+        step: linearError / 10
       },
       errorReductionRatio: this.simulator.DEFAULT_APG_RPR_ERR_REDUCTION_RATIO,
       errorReductionRatioMMS: {
@@ -123,9 +126,9 @@ export class ApgRpr_Simulation {
       },
       predictionDistance: preditionDistance,
       predictionDistanceMMS: {
-        min: preditionDistance / 5,
-        max: preditionDistance * 5,
-        step: preditionDistance / 5
+        min: preditionDistance / 10,
+        max: preditionDistance * 10,
+        step: preditionDistance / 10
       },
       slowDownFactor: 1,
       slowdownMMS: {
@@ -136,13 +139,13 @@ export class ApgRpr_Simulation {
       isDebugMode: false,
       cameraPosition: {
         eye: {
-          x: asceneSize,
-          y: this.simulator.viewer.defaultEyeHeight,
-          z: -asceneSize
+          x: playground.width * 2,
+          y: aglobalScale * this.simulator.viewer.defaultEyeHeight,
+          z: -playground.width * 2
         },
         target: {
           x: 0,
-          y: 1,
+          y: playground.height,
           z: 0
         }
       },
@@ -193,11 +196,14 @@ export class ApgRpr_Simulation {
       this.params.settings
     );
     const settingsHtml = guiBuilder.buildControls();
-    this.simulator.updateViewerSettings(settingsHtml);
+    this.simulator.updateGuiPanel(settingsHtml);
     const hudHtml = guiBuilder.buildHudControls();
-    this.simulator.updateViewerHud(hudHtml);
+    this.simulator.updateGuiHud(hudHtml);
     guiBuilder.bindControls();
-    this.logger.log(`Gui built for simulation ${this.params.simulation}`, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
+    this.logger.log(
+      `Gui built for simulation ${this.params.simulation}`,
+      ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME
+    );
   }
   /** 
    * Update the simulation params accordingly with the Gui settings. 

@@ -45,9 +45,16 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
     return r;
   }
   createWorld(asettings) {
-    this.#initWorld();
+    this.createGround();
+    this.createSimulationTable(
+      asettings.playground.width,
+      asettings.playground.depth,
+      asettings.playground.height,
+      asettings.playground.thickness
+    );
+    this.#buildKeva(asettings);
   }
-  #buildBlock(halfExtents, shift, numx, numy, numz) {
+  #buildKevaLevel(halfExtents, shift, numx, numy, numz, base) {
     const half_extents_zyx = {
       x: halfExtents.z,
       y: halfExtents.y,
@@ -67,7 +74,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
           const z = i % 2 == 0 ? dim2.z * k * 2 : spacing * k * 2;
           const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(
             x + dim2.x + shift.x,
-            y + dim2.y + shift.y,
+            y + dim2.y + shift.y + base,
             z + dim2.z + shift.z
           );
           const body = this.world.createRigidBody(bodyDesc);
@@ -84,7 +91,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
     for (let i = 0; i < blockWidth / (dim.x * 2); ++i) {
       const x = i * dim.x * 2 + dim.x + shift.x;
       for (let j = 0; j < blockWidth / (dim.z * 2); ++j) {
-        const y = dim.y + shift.y + blockHeight;
+        const y = dim.y + shift.y + blockHeight + base;
         const z = j * dim.z * 2 + dim.z + shift.z;
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y, z);
         const body = this.world.createRigidBody(bodyDesc);
@@ -93,18 +100,8 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
       }
     }
   }
-  #initWorld() {
-    const groundSize = 50;
-    const groundHeight = 0.1;
-    const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, -groundHeight, 0);
-    const body = this.world.createRigidBody(bodyDesc);
-    const colliderDesc = RAPIER.ColliderDesc.cuboid(
-      groundSize,
-      groundHeight,
-      groundSize
-    );
-    this.world.createCollider(colliderDesc, body);
-    const halfExtents = new RAPIER.Vector3(0.1, 0.5, 2);
+  #buildKeva(asettings) {
+    const halfExtents = new RAPIER.Vector3(1e-3, 5e-3, 0.02);
     let blockHeight = 0;
     const numyArr = [0, 3, 5, 5, 7, 9];
     let numBlocksBuilt = 0;
@@ -113,7 +110,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
       const numy = numyArr[i];
       const numz = numx * 3 + 1;
       const blockWidth = numx * halfExtents.z * 2;
-      this.#buildBlock(
+      this.#buildKevaLevel(
         halfExtents,
         new RAPIER.Vector3(
           -blockWidth / 2,
@@ -122,15 +119,11 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
         ),
         numx,
         numy,
-        numz
+        numz,
+        asettings.playground.height
       );
       blockHeight += numy * halfExtents.y * 2 + halfExtents.x * 2;
       numBlocksBuilt += numx * numy * numz;
-    }
-  }
-  updateFromGui() {
-    if (this.needsUpdate()) {
-      super.updateFromGui();
     }
   }
 }

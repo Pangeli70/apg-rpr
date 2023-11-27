@@ -15,9 +15,7 @@ import {
     ApgGui_IRange
 } from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
-import {
-    ApgGui_IMinMaxStep
-} from "../apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     RAPIER
@@ -142,10 +140,10 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
         this.createGround();
 
         this.createSimulationTable(
-            asettings.table.width,
-            asettings.table.depth,
-            asettings.table.height,
-            asettings.table.thickness
+            asettings.playground.width,
+            asettings.playground.depth,
+            asettings.playground.height,
+            asettings.playground.thickness
         );
 
         this._maxBlocks = asettings.numBlocks;
@@ -171,7 +169,7 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
         const fallHeight = asettings.blockHeight * asettings.fallHeightFactor;
 
         const x = 0;
-        const y = asettings.table.height
+        const y = asettings.playground.height
             + fallHeight
             + (asettings.blockHeight * this._currentBlock);
         const z = 0;

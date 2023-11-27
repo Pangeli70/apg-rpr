@@ -20,11 +20,11 @@ import { ApgGui_eFormElementType } from "../enums/ApgGui_eFormElementType.ts";
 
 import {
     ApgGui,
-    ApgGui_IControl,
-    ApgGui_IMinMaxStep,
     ApgGui_TReactiveState,
     ApgGui_TSelectValuesMap
 } from "./ApgGui.ts";
+import { ApgGui_IControl } from "../interfaces/ApgGui_IControl.ts";
+import { ApgGui_IMinMaxStep } from "../interfaces/ApgGui_IMinMaxStep.ts";
 
 
 

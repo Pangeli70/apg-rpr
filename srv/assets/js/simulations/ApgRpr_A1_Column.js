@@ -45,10 +45,10 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
   createWorld(asettings) {
     this.createGround();
     this.createSimulationTable(
-      asettings.table.width,
-      asettings.table.depth,
-      asettings.table.height,
-      asettings.table.thickness
+      asettings.playground.width,
+      asettings.playground.depth,
+      asettings.playground.height,
+      asettings.playground.thickness
     );
     this._maxBlocks = asettings.numBlocks;
     this.logger.log(
@@ -65,7 +65,7 @@ export class ApgRpr_A1_Column_Simulation extends ApgRpr_Simulation {
     const blockSize = asettings.blockHeightMMS.max;
     const fallHeight = asettings.blockHeight * asettings.fallHeightFactor;
     const x = 0;
-    const y = asettings.table.height + fallHeight + asettings.blockHeight * this._currentBlock;
+    const y = asettings.playground.height + fallHeight + asettings.blockHeight * this._currentBlock;
     const z = 0;
     const a = this.rng.next() * (Math.PI / 2);
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), a);

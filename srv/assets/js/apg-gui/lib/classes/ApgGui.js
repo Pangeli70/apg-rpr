@@ -1,8 +1,15 @@
-import { ApgGui_eInputType } from "../enums/ApgGui_eInputType.ts";
-import { ApgGui_eFormElementType } from "../enums/ApgGui_eFormElementType.ts";
+import {
+  ApgGui_eInputType
+} from "../enums/ApgGui_eInputType.ts";
+import {
+  ApgGui_eFormElementType
+} from "../enums/ApgGui_eFormElementType.ts";
 export class ApgGui {
   /** A status flag that is used to pause some other stuff while the Gui is refreshing */
-  isRefreshing = false;
+  _isRefreshing = false;
+  get isRefreshing() {
+    return this._isRefreshing;
+  }
   /** Map of the controls, is used for binding events and reactivity */
   controls = /* @__PURE__ */ new Map();
   /** We don't like global objects */
@@ -14,7 +21,7 @@ export class ApgGui {
   /** The Hud element to show controls to interact with the simulation*/
   hudElement;
   /** The multipurpose logger */
-  logger;
+  _logger;
   /** Name of the logger */
   static LOGGER_NAME = "Gui";
   /**
@@ -38,7 +45,7 @@ export class ApgGui {
   }
   constructor(adocument, apanelElementId, aviewerElementId, alogger) {
     this.document = adocument;
-    this.logger = alogger;
+    this._logger = alogger;
     this.panelElement = this.document.getElementById(apanelElementId);
     ApgGui.Assert(
       this.panelElement != void 0,
@@ -52,20 +59,42 @@ export class ApgGui {
     this.hudElement = this.document.createElement("div");
     this.hudElement.style.cssText = "position: absolute; bottom: 2.5%; left: 22.5%; width: 75%; min-height:0%; background-color: #38516740;";
     this.viewerElement.appendChild(this.hudElement);
-    this.logger.addLogger(ApgGui.LOGGER_NAME);
-    this.logger.log("ApgGui created", ApgGui.LOGGER_NAME);
+    this._logger.addLogger(ApgGui.LOGGER_NAME);
+    this._logger.log("ApgGui created", ApgGui.LOGGER_NAME);
+  }
+  /** 
+   * Called to allow the DOM to refresh when is changed dinamically.
+   * It delays the event loop calling setTimeout
+   */
+  updateGuiPanel(ahtml) {
+    this._isRefreshing = true;
+    this.panelElement.innerHTML = ahtml;
+    setTimeout(() => {
+      this._isRefreshing = false;
+    }, 0);
+  }
+  /** 
+   * Called to allow the HUD DOM to refresh when is changed dinamically.
+   * It delays the event loop calling setTimeout
+   */
+  updateGuiHud(ahtml) {
+    this._isRefreshing = true;
+    this.hudElement.innerHTML = ahtml;
+    setTimeout(() => {
+      this._isRefreshing = false;
+    }, 0);
   }
   log(aitem) {
-    this.logger.log(aitem, ApgGui.LOGGER_NAME);
+    this._logger.log(aitem, ApgGui.LOGGER_NAME);
   }
   devLog(aitem) {
-    this.logger.devLog(aitem, ApgGui.LOGGER_NAME);
+    this._logger.devLog(aitem, ApgGui.LOGGER_NAME);
   }
   logNoTime(aitem) {
-    this.logger.logNoTime(aitem, ApgGui.LOGGER_NAME);
+    this._logger.logNoTime(aitem, ApgGui.LOGGER_NAME);
   }
   devLogNoTime(aitem) {
-    this.logger.logDevNoTime(aitem, ApgGui.LOGGER_NAME);
+    this._logger.logDevNoTime(aitem, ApgGui.LOGGER_NAME);
   }
   clearControls() {
     this.controls.clear();

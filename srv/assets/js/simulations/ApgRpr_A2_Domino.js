@@ -49,20 +49,20 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
   createWorld(asettings) {
     this.createGround();
     this.createSimulationTable(
-      asettings.table.width,
-      asettings.table.depth,
-      asettings.table.height,
-      asettings.table.thickness
+      asettings.playground.width,
+      asettings.playground.depth,
+      asettings.playground.height,
+      asettings.playground.thickness
     );
-    const playGroundDiameter = asettings.table.depth * 0.9;
-    const northBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, asettings.table.height, asettings.table.depth / 2 * 0.9).setRotation({ x: 0, y: 1, z: 0, w: 0.5 });
+    const playGroundDiameter = asettings.playground.depth * 0.9;
+    const northBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, asettings.playground.height, asettings.playground.depth / 2 * 0.9).setRotation({ x: 0, y: 1, z: 0, w: 0.5 });
     const northBody = this.world.createRigidBody(northBodyDesc);
     const northColliderDesc = RAPIER.ColliderDesc.cuboid(0.01, 0.01, 0.01);
     this.world.createCollider(northColliderDesc, northBody);
     this.#createCards(asettings, playGroundDiameter);
   }
   #createRandomCards(asettings, aplaygroundDiameter) {
-    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
     const r = new Array();
     for (let i = 0; i < asettings.cardsNumber; i++) {
       const x = (this.rng.next() - 0.5) * aplaygroundDiameter;
@@ -75,7 +75,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     return r;
   }
   #createLineCards(asettings, aplaygroundDiameter) {
-    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
     const deltaX = this._cardHeight * 0.75;
     const r = new Array();
     for (let i = 0; i < asettings.cardsNumber; i++) {
@@ -90,7 +90,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     return r;
   }
   #createCircleCards(asettings, aplaygroundDiameter) {
-    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
     const radious = aplaygroundDiameter / 2;
     const deltaAngle = 360 / asettings.cardsNumber;
     const r = new Array();
@@ -109,7 +109,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     return r;
   }
   #createSpiralCards(asettings, aplaygroundDiameter) {
-    const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+    const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
     const initialRadious = aplaygroundDiameter / 20;
     let currentRadious = initialRadious;
     let currentAngle = 0;

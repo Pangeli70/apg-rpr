@@ -10,9 +10,7 @@ import {
     ApgGui_IRange
 } from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
-import {
-    ApgGui_IMinMaxStep
-} from "../apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     RAPIER
@@ -69,10 +67,11 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
         this.simulator.addWorld(this.world);
 
         this.simulator.setPreStepAction(() => {
-            this.#spawnBall();
             this.updateFromGui();
         });
     }
+
+
 
     override defaultSettings() {
 
@@ -113,15 +112,21 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
         this.createGround();
 
         this.createSimulationTable(
-            asettings.table.width,
-            asettings.table.depth,
-            asettings.table.height,
-            asettings.table.thickness
+            asettings.playground.width,
+            asettings.playground.depth,
+            asettings.playground.height,
+            asettings.playground.thickness
         );
 
+        this.#buildTiles(asettings);
+    }
+
+
+
+    #buildTiles(asettings: ApgRpr_A3_Jenga_ISimulationSettings) {
         const piecesPerRow = 4;
         const levels = asettings.blockLevels;
-        const shift = asettings.table.height;
+        const shift = asettings.playground.height;
 
         // In THREE world units
         const pieceWidth = asettings.blockWidth;
@@ -135,11 +140,11 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
 
         for (let j = 0; j < levels; j++) {
 
-            const y = shift + (j * (pieceHeight + pieceGap*2));
+            const y = shift + (j * (pieceHeight + pieceGap * 2));
 
             for (let i = 0; i < piecesPerRow; i++) {
 
-                const delta = - halfRowCenter + ((pieceWidth + pieceGap) * i);
+                const delta = -halfRowCenter + ((pieceWidth + pieceGap) * i);
                 let x, z, w, d;
                 if (j % 2 == 0) {
                     x = delta;
@@ -158,7 +163,7 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
                 // Create dynamic cube.
                 const boxBodyDesc = RAPIER.RigidBodyDesc
                     .dynamic()
-                    .setTranslation(x, y, z)
+                    .setTranslation(x, y, z);
                 const boxBody = this.world.createRigidBody(boxBodyDesc);
 
                 const pW = w;
@@ -167,38 +172,13 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
 
                 const boxColliderDesc = RAPIER.ColliderDesc
                     .cuboid(pW / 2, pH / 2, pD / 2)
-                    .setFriction(0.9)
+                    .setFriction(0.9);
                 this.world.createCollider(boxColliderDesc, boxBody)
                     .setRestitution(asettings.cubesRestitution);
 
             }
         }
     }
-
-
-
-
-
-    #spawnBall() {
-
-
-
-    }
-
-
-
-    override updateFromGui() {
-
-        if (this.needsUpdate()) {
-
-            // @TODO implement Pyramid settings
-
-            super.updateFromGui();
-        }
-
-    }
-
-
 
 
 }

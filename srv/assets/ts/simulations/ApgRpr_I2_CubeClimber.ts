@@ -32,7 +32,7 @@ import {
 } from "../ApgRpr_Simulator.ts";
 
 
-export interface ApgRpr_I0_CharacterController_ISimulationSettings extends ApgRpr_ISimulationSettings {
+export interface ApgRpr_I2_CubeClimber_ISimulationSettings extends ApgRpr_ISimulationSettings {
 
     isCubesGroupOpened: boolean;
 
@@ -46,7 +46,7 @@ export interface ApgRpr_I0_CharacterController_ISimulationSettings extends ApgRp
 
 
 
-export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation {
+export class ApgRpr_I2_CubeClimber_Simulation extends ApgRpr_Simulation {
 
     character!: RAPIER.RigidBody;
     characterCollider!: RAPIER.Collider;
@@ -64,9 +64,9 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
 
         super(asimulator, aparams);
 
-        this.buildGui(ApgRprSim_CharacterController_GuiBuilder);
+        this.buildGui(ApgRpr_I2_CubeClimber_GuiBuilder);
 
-        const settings = this.params.settings! as ApgRpr_I0_CharacterController_ISimulationSettings;
+        const settings = this.params.settings! as ApgRpr_I2_CubeClimber_ISimulationSettings;
         this.createWorld(settings);
         this.simulator.addWorld(this.world);
 
@@ -78,7 +78,7 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
 
 
     
-    protected override createWorld(asettings: ApgRpr_I0_CharacterController_ISimulationSettings) {
+    protected override createWorld(asettings: ApgRpr_I2_CubeClimber_ISimulationSettings) {
 
         // Create Ground.
         const groundBodyDesc = RAPIER.RigidBodyDesc.fixed();
@@ -182,7 +182,7 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
 
     override defaultSettings() {
 
-        const r: ApgRpr_I0_CharacterController_ISimulationSettings = {
+        const r: ApgRpr_I2_CubeClimber_ISimulationSettings = {
 
             ...super.defaultSettings(),
 
@@ -215,9 +215,9 @@ export class ApgRpr_I0_CharacterController_Simulation extends ApgRpr_Simulation 
 
 
 
-export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
+export class ApgRpr_I2_CubeClimber_GuiBuilder extends ApgRpr_Simulator_GuiBuilder {
 
-    private _guiSettings: ApgRpr_I0_CharacterController_ISimulationSettings;
+    private _guiSettings: ApgRpr_I2_CubeClimber_ISimulationSettings;
 
 
     constructor(
@@ -226,7 +226,7 @@ export class ApgRprSim_CharacterController_GuiBuilder extends ApgRpr_Simulator_G
     ) {
         super(asimulator, asettings);
 
-        this._guiSettings = asettings as ApgRpr_I0_CharacterController_ISimulationSettings;
+        this._guiSettings = asettings as ApgRpr_I2_CubeClimber_ISimulationSettings;
     }
 
 

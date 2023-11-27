@@ -12,7 +12,7 @@ import {
 
 import {
     ApgGui_IMinMaxStep
-} from "../apg-gui/lib/classes/ApgGui.ts";
+} from "../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     RAPIER
@@ -73,6 +73,8 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
         });
     }
 
+
+
     override defaultSettings() {
 
         const r: ApgRpr_A4_Keva_ISimulationSettings = {
@@ -107,20 +109,32 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
         return r;
     }
 
+
+
     protected override createWorld(asettings: ApgRpr_A4_Keva_ISimulationSettings) {
 
-        this.#initWorld();
+        this.createGround();
+
+        this.createSimulationTable(
+            asettings.playground.width,
+            asettings.playground.depth,
+            asettings.playground.height,
+            asettings.playground.thickness
+        );
+
+        this.#buildKeva(asettings);
     }
 
 
 
 
-    #buildBlock(
+    #buildKevaLevel(
         halfExtents: RAPIER.Vector3,
         shift: RAPIER.Vector3,
         numx: number,
         numy: number,
         numz: number,
+        base: number,
     ) {
         const half_extents_zyx = {
             x: halfExtents.z,
@@ -150,7 +164,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
                         .dynamic()
                         .setTranslation(
                             x + dim.x + shift.x,
-                            y + dim.y + shift.y,
+                            y + dim.y + shift.y + base,
                             z + dim.z + shift.z,
                         );
                     const body = this.world.createRigidBody(bodyDesc);
@@ -174,7 +188,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
 
             for (let j = 0; j < blockWidth / (dim.z * 2.0); ++j) {
                 // Build the rigid body.
-                const y = dim.y + shift.y + blockHeight;
+                const y = dim.y + shift.y + blockHeight + base;
                 const z = j * dim.z * 2.0 + dim.z + shift.z;
                 const bodyDesc = RAPIER.RigidBodyDesc
                     .dynamic()
@@ -187,27 +201,13 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
         }
     }
 
-    #initWorld() {
 
 
-        // Create Ground.
-        const groundSize = 50.0;
-        const groundHeight = 0.1;
-        const bodyDesc = RAPIER.RigidBodyDesc
-            .fixed()
-            .setTranslation(0.0, -groundHeight, 0.0);
-        const body = this.world
-            .createRigidBody(bodyDesc);
-        const colliderDesc = RAPIER.ColliderDesc
-            .cuboid(
-                groundSize,
-                groundHeight,
-                groundSize,
-            );
-        this.world.createCollider(colliderDesc, body);
+    #buildKeva(asettings: ApgRpr_A4_Keva_ISimulationSettings) {
+
 
         // Keva tower.
-        const halfExtents = new RAPIER.Vector3(0.1, 0.5, 2.0);
+        const halfExtents = new RAPIER.Vector3(0.001, 0.005, 0.02);
         let blockHeight = 0.0;
         // These should only be set to odd values otherwise
         // the blocks won't align in the nicest way.
@@ -219,7 +219,7 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
             const numy = numyArr[i];
             const numz = numx * 3 + 1;
             const blockWidth = numx * halfExtents.z * 2.0;
-            this.#buildBlock(
+            this.#buildKevaLevel(
                 halfExtents,
                 new RAPIER.Vector3(
                     -blockWidth / 2.0,
@@ -229,23 +229,12 @@ export class ApgRpr_A4_Keva_Simulation extends ApgRpr_Simulation {
                 numx,
                 numy,
                 numz,
+                asettings.playground.height
             );
             blockHeight += numy * halfExtents.y * 2.0 + halfExtents.x * 2.0;
             numBlocksBuilt += numx * numy * numz;
         }
     }
-
-    override updateFromGui() {
-
-        if (this.needsUpdate()) {
-
-            // @TODO implement Pyramid settings
-
-            super.updateFromGui();
-        }
-
-    }
-
 
 
 

@@ -44,10 +44,10 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
   createWorld(asettings) {
     this.createGround();
     this.createSimulationTable(
-      asettings.table.width,
-      asettings.table.depth,
-      asettings.table.height,
-      asettings.table.thickness
+      asettings.playground.width,
+      asettings.playground.depth,
+      asettings.playground.height,
+      asettings.playground.thickness
     );
     this.#makePyramid(asettings);
     this.logger.log(
@@ -69,7 +69,7 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
     };
     for (let iy = 0; iy < baseSize; iy++) {
       const levelXZOrigin = initialXZDisplacement + iy * distance / 2;
-      const levelHeight = asettings.table.height + fallHeight + cubeRadious;
+      const levelHeight = asettings.playground.height + fallHeight + cubeRadious;
       for (let ix = 0; ix < baseSize - iy; ix++) {
         for (let iz = 0; iz < baseSize - iy; iz++) {
           const y = levelHeight + iy * distance;

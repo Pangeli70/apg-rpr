@@ -1,5 +1,0 @@
-{
-    "deno.disablePaths": [
-        "\\srv\\assets"
-    ]
-}

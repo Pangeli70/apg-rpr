@@ -5,9 +5,7 @@
  * -----------------------------------------------------------------------
 */
 
-import {
-    ApgGui_IMinMaxStep
-} from "./apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "./apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     PRANDO,
@@ -42,7 +40,7 @@ import {
 
 
 
-interface ApgRpr_ISimulationTable {
+interface ApgRpr_ISimulationPlayground {
     width: number;
     depth: number;
     height: number;
@@ -55,75 +53,123 @@ interface ApgRpr_ISimulationTable {
  */
 export interface ApgRpr_ISimulationSettings {
 
-    /** Identifier of the current simulation */
+    /**
+     * Signature to detect if the data format of the settings in the local 
+     * storage is still valid
+     */
+    signature: string;
+
+    /**
+     * Identifier of the current simulation
+     */
     simulation: ApgRpr_eSimulationName;
 
-    /** Scale factor of the simulation NOT YET IMPLEMENTED */
-    scale: number;
+    /** 
+     * cale factor of the simulation NOT YET IMPLEMENTED
+     */
+    globalScale: number;
 
-    /** Average collider size */
+    /**
+     * Average collider size
+     */
     colliderSize: number;
 
-    /** Scene size for the THREE environment */
+    /**
+     * Scene size for the THREE environment
+     */
     sceneSize: number;
 
-    /** Table Playground */
-    table: ApgRpr_ISimulationTable;
+    /**
+     * Playground
+     */
+    playground: ApgRpr_ISimulationPlayground;
 
-    /** World Gravity */
+    /**
+     * World Gravity
+     */
     gravity: RAPIER.Vector3;
     gravityXMMS: ApgGui_IMinMaxStep;
     gravityYMMS: ApgGui_IMinMaxStep;
     gravityZMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator movement precision */
+    /**
+     * Simulator movement precision
+     */
     velocityIterations: number;
     velocityIterationsMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator friction precision */
+    /**
+     * Simulator friction precision
+     */
     frictionIterations: number;
     frictionIterationsMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator stabilization precision */
+    /**
+     * Simulator stabilization precision
+     */
     stabilizationIterations: number;
     stabilizationIterationsMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator fast moving objects precision */
+    /**
+     * Simulator fast moving objects precision
+     */
     ccdSteps: number;
     ccdStepsMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator linear error */
+    /**
+     * Simulator linear error
+     */
     linearError: number;
     linearErrorMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator error reduction  */
+    /**
+     * Simulator error reduction
+     */
     errorReductionRatio: number;
     errorReductionRatioMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator collision prediction */
+    /**
+     * Simulator collision prediction
+     */
     predictionDistance: number;
     predictionDistanceMMS: ApgGui_IMinMaxStep;
 
-    /** Simulation speed  */
+    /**
+     * Simulation speed
+     */
     slowDownFactor: number;
     slowdownMMS: ApgGui_IMinMaxStep;
 
-    /** Simulator is in debug mode */
+    /**
+     * Simulator is in debug mode
+     */
     isDebugMode: boolean;
 
-    /** Camera */
+    /**
+     * Camera
+     */
     cameraPosition: ApgRpr_ICameraPosition;
 
-    /** Flag to reset camera position */
+    /**
+     * Flag to reset camera position
+     */
     doResetCamera: boolean;
-    /** Flag to restore default settings for the simulation */
+    /**
+     * Flag to restore default settings for the simulation
+     */
     doResetToDefaults: boolean;
-    /** Flag to restart the simulation from the initial positions */
+    /**
+     * Flag to restart the simulation
+     */
     doRestart: boolean;
 
-    /** GUI Flag for the simulation details  */
+    /**
+     * GUI Flag for the simulation details
+     */
     isSimulatorDetailsOpened: boolean;
-    /** GUI Flag for the stats details */
+    /**
+     * GUI Flag for the stats details
+     */
     isStatsDetailsOpened: boolean;
 }
 
@@ -167,7 +213,7 @@ export class ApgRpr_Simulation {
 
     static readonly RPR_SIMULATION_LOGGER_NAME = "Rapier simulation";
 
-
+    static readonly RPR_SIMULATION_SETTINGS_SIGNATURE = "0.0.8";  
 
     /**
      * Creates a new simulation and a new world for the RAPIER simulator
@@ -216,29 +262,34 @@ export class ApgRpr_Simulation {
      * and extended by derived classes to add more settings each specific of every simulation. 
      */
     protected defaultSettings(
+        aglobalScale = 1,
         acolliderSize = this.simulator.DEFAULT_COLLIDER_SIZE,
-        asceneSize = this.simulator.DEFAULT_SCENE_SIZE
+        asceneSize = this.simulator.DEFAULT_SCENE_SIZE,
     ) {
 
-        const linearError = acolliderSize * this.simulator.DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR;
-        const preditionDistance = acolliderSize * this.simulator.DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR;
+        const linearError = aglobalScale * acolliderSize * this.simulator.DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR;
+        const preditionDistance = aglobalScale * acolliderSize * this.simulator.DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR;
+        const playground: ApgRpr_ISimulationPlayground = {
+            width: aglobalScale * 2,
+            depth: aglobalScale * 1,
+            height: aglobalScale * 1,
+            thickness: aglobalScale * 0.05
+        };
+
 
         const r: ApgRpr_ISimulationSettings = {
 
+            signature: ApgRpr_Simulation.RPR_SIMULATION_SETTINGS_SIGNATURE,
+
             simulation: this.params.simulation,
 
-            scale: 1, // Not Yet Implemented
+            globalScale: aglobalScale, // Not Yet Implemented
 
-            colliderSize: acolliderSize,
+            colliderSize: aglobalScale * acolliderSize,
 
-            sceneSize: asceneSize,
+            sceneSize: aglobalScale * asceneSize,
 
-            table: {
-                width: 2,
-                depth: 1,
-                height: 1,
-                thickness: 0.05
-            },
+            playground,
 
             gravity: new RAPIER.Vector3(
                 this.simulator.DEFAULT_GRAVITY_X,
@@ -291,9 +342,9 @@ export class ApgRpr_Simulation {
 
             linearError: linearError,
             linearErrorMMS: {
-                min: linearError / 5,
-                max: linearError * 5,
-                step: linearError / 5
+                min: linearError / 10,
+                max: linearError * 10,
+                step: linearError / 10
             },
 
             errorReductionRatio: this.simulator.DEFAULT_APG_RPR_ERR_REDUCTION_RATIO,
@@ -305,9 +356,9 @@ export class ApgRpr_Simulation {
 
             predictionDistance: preditionDistance,
             predictionDistanceMMS: {
-                min: preditionDistance / 5,
-                max: preditionDistance * 5,
-                step: preditionDistance / 5
+                min: preditionDistance / 10,
+                max: preditionDistance * 10,
+                step: preditionDistance / 10
             },
 
             slowDownFactor: 1,
@@ -321,12 +372,14 @@ export class ApgRpr_Simulation {
 
             cameraPosition: {
                 eye: {
-                    x: asceneSize,
-                    y: this.simulator.viewer.defaultEyeHeight,
-                    z: -asceneSize
+                    x: playground.width * 2,
+                    y: aglobalScale * this.simulator.viewer.defaultEyeHeight,
+                    z: -playground.width * 2
                 },
                 target: {
-                    x: 0, y: 1, z: 0
+                    x: 0,
+                    y: playground.height,
+                    z: 0
                 }
             },
 
@@ -392,6 +445,7 @@ export class ApgRpr_Simulation {
     }
 
 
+
     /**
      * Overridable method to create a simulation
      */
@@ -416,14 +470,17 @@ export class ApgRpr_Simulation {
         );
 
         const settingsHtml = guiBuilder.buildControls();
-        this.simulator.updateViewerSettings(settingsHtml);
+        this.simulator.updateGuiPanel(settingsHtml);
 
         const hudHtml = guiBuilder.buildHudControls();
-        this.simulator.updateViewerHud(hudHtml);
+        this.simulator.updateGuiHud(hudHtml);
 
         guiBuilder.bindControls();
 
-        this.logger.log(`Gui built for simulation ${this.params.simulation}`, ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME);
+        this.logger.log(
+            `Gui built for simulation ${this.params.simulation}`,
+            ApgRpr_Simulation.RPR_SIMULATION_LOGGER_NAME
+        );
     }
 
 

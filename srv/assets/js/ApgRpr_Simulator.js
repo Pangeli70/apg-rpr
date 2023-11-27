@@ -13,81 +13,128 @@ import {
   ApgRpr_Step_StatsPanel
 } from "./ApgRpr_StatsPanels.ts";
 import {
+  ApgRpr_Simulation
+} from "./ApgRpr_Simulation.ts";
+import {
   ApgRpr_Viewer
 } from "./ApgRpr_Viewer.ts";
 import {
   ApgGui_Logger
 } from "./apg-gui/lib/classes/ApgGui_Logger.ts";
 export class ApgRpr_Simulator {
-  /** Used to interact with the browser we don't like global variables */
+  /**
+   * Used to interact with the browser we don't like global variables
+   * */
   _window;
-  /** Used to interact with the DOM we don't like global variables */
-  _document;
+  /**
+   * Used to interact with the DOM we don't like global variables
+   */
   get document() {
     return this._document;
   }
-  /** The current set of simulations */
+  _document;
+  /**
+   * The current set of simulations
+   */
   _simulations;
-  /** Names of the loaded simulations */
+  /**
+   * Names of the loaded simulations
+   */
   get simulationsNames() {
     return Array.from(this._simulations.keys());
   }
-  /** Default simulation */
+  /**
+   * Default simulation
+   */
   _defaultSimulationName;
   /** Gui */
-  _gui;
   get gui() {
     return this._gui;
   }
+  _gui;
   /** Logger */
-  _logger;
   get logger() {
     return this._logger;
   }
-  /** Stats objects */
-  _stats = null;
+  _logger;
+  /** 
+   * Stats 
+   */
   get stats() {
     return this._stats;
   }
+  _stats = null;
   _stepStatsPanel = null;
   _collidersStatsPanel = null;
-  /** The THREE viewer attached to the simulation */
+  /**
+   * The THREE viewer attached to the simulation
+   */
   viewer;
-  /** Eventually used for picking objects with a raycaster */
+  /**
+   * Eventually used for picking objects with a raycaster
+   */
   mouse;
-  /** We don't know yet ??? */
+  /**
+   * We don't know yet ???
+   */
   _events;
-  /** All the simulation is inside the world */
+  /**
+   * All the simulation is inside the RAPIER world
+   */
   _world = null;
-  /** Hook to interact with the simulation before each step*/
+  /** 
+   * Hook to interact with the simulation before each step
+   */
   _preStepAction = null;
-  /** Hook to interact with the simulation after each step*/
+  /**
+   * Hook to interact with the simulation after each step
+   */
   _postStepAction = null;
-  /** This is used to count the number of times the step function is called and to manage the slowdown */
+  /**
+   * This is used to count the number of times the step function is 
+   * called and to manage the slowdown
+   */
   _runCall = 0;
-  /** The simulation slowdown factor: 1 means run continuously. 
-   * When set to MAX_SLOWDOWN the simulation is stopped */
-  _slowdownFactor = 1;
+  /** 
+   * The simulation slowdown factor: 1 means run continuously. 
+   * When set to MAX_SLOWDOWN the simulation is stopped
+   */
   set slowDownFactor(a) {
     this._slowdownFactor = a;
   }
+  _slowdownFactor = 1;
+  /**
+   * Maximum slowdown factor. Is used to pause the simulation.
+   */
+  MAX_SLOWDOWN = 20;
   /** Used to keep track of requestAnimationFrame timings and 
    * make the simulation time indipendent */
   // @WARNING this is experimental, if the simulation goes time indipendant 
   // it will be no more fully deterministic and so reproducible
   _lastFrameTime = -1;
-  /** We run the simulation only if the document has the focus */
+  /**
+   * We run the simulation only if the document has the focus
+   */
   _documentHasFocus = false;
-  /** The simulation is in debug mode so we show collider edges and vectors and collect additional data */
-  _isInDebugMode = false;
+  /**
+   * The simulation is in debug mode so we show collider edges and vectors 
+   * and collect additional data
+   */
   set debugMode(a) {
     this._isInDebugMode = a;
   }
-  /** The debug info contain the simulation step counter and other data*/
+  _isInDebugMode = false;
+  /**
+   * The debug info contain the simulation step counter and other data
+   */
   debugInfo;
-  /** The last snapshot collected to be eventually stored or transmitted */
+  /**
+   * The last snapshot collected to be eventually stored or transmitted
+   */
   snapshot;
-  /** The simulation step of the snapshot */
+  /**
+   * The simulation step of the snapshot
+   */
   _snapshotStepId = 0;
   DEFAULT_GRAVITY = 9.8;
   DEFAULT_GRAVITY_X = 0;
@@ -96,9 +143,13 @@ export class ApgRpr_Simulator {
   /** This sets the viewer and the world*/
   DEFAULT_SCENE_SIZE = 10;
   DEFAULT_COLLIDER_SIZE = 0.1;
-  // maxVelocityIterations
+  /**
+   * Maps the maxVelocityIterations setting of the RAPIER solver
+   */
   DEFAULT_RAPIER_VELOCITY_ITERATIONS = 4;
-  // maxVelocityFrictionIterations
+  /**
+   * Maps the maxVelocityFrictionIterations setting of the RAPIER solver
+   */
   DEFAULT_RAPIER_FRICTION_ITERATIONS = 1;
   // maxStabilizationIterations
   DEFAULT_RAPIER_STABILIZATION_ITERATIONS = 1;
@@ -119,7 +170,6 @@ export class ApgRpr_Simulator {
   // collider size related factors
   DEFAULT_APG_RPR_LINEAR_ERROR_FACTOR = 1e-3;
   DEFAULT_APG_RPR_PREDICTION_DISTANCE_FACTOR = 0.01;
-  MAX_SLOWDOWN = 20;
   LOCALSTORAGE_KEY__LAST_SIMULATION = "ApgRprLocalStorage_LastSimulation";
   LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS = "ApgRprLocalStorage_SimulationSettingsFor_";
   static RPR_SIMULATOR_NAME = "Rapier simulator";
@@ -178,10 +228,15 @@ export class ApgRpr_Simulator {
     if (settings == null) {
       const lastSimulation = this._window.localStorage.getItem(this.LOCALSTORAGE_KEY__LAST_SIMULATION);
       if (lastSimulation != void 0) {
-        const localStorageSettings = this._window.localStorage.getItem(this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + lastSimulation);
+        const localStorageSimulationKey = this.LOCALSTORAGE_KEY_HEADER__SIMULATION_SETTINGS + lastSimulation;
+        const localStorageSettings = this._window.localStorage.getItem(localStorageSimulationKey);
         if (localStorageSettings != void 0) {
           try {
             settings = JSON.parse(localStorageSettings);
+            if (settings != null && (settings.signature == void 0 || settings.signature != ApgRpr_Simulation.RPR_SIMULATION_SETTINGS_SIGNATURE)) {
+              settings = null;
+              this._window.localStorage.setItem(localStorageSimulationKey, "");
+            }
           } catch (e) {
             alert("Invalid local storage settings: " + e.message);
           }
@@ -242,36 +297,27 @@ export class ApgRpr_Simulator {
     this._logger.devLog("Rapier world added", ApgRpr_Simulator.RPR_SIMULATOR_NAME);
   }
   /** 
-   * Called to allow the Settings DOM to refresh when is changed diamically.
+   * Called to allow the Settings DOM to refresh when is changed dinamically.
    * It delays the event loop calling setTimeout
    */
-  updateViewerSettings(ahtml) {
-    this._gui.isRefreshing = true;
-    this._gui.panelElement.innerHTML = ahtml;
-    setTimeout(() => {
-      this._gui.isRefreshing = false;
-    }, 0);
+  updateGuiPanel(ahtml) {
+    this._gui.updateGuiPanel(ahtml);
   }
   /** 
    * Called to allow the HUD DOM to refresh when is changed dinamically.
    * It delays the event loop calling setTimeout
    */
-  updateViewerHud(ahtml) {
-    this._gui.isRefreshing = true;
-    this._gui.hudElement.innerHTML = ahtml;
-    setTimeout(() => {
-      this._gui.isRefreshing = false;
-    }, 0);
+  updateGuiHud(ahtml) {
+    this._gui.updateGuiHud(ahtml);
   }
   /** 
-   * If we call this it means that the camera is locked
+   * If we call this it means that the camera is locked WTF ???
    */
   resetCamera(acameraPosition) {
     this.viewer.moveCamera(acameraPosition);
   }
   /**
-   * Allows to restart the current simulation or to change another one
-   * @param aparams
+   * Allows to restart the current simulation or to change it
    */
   setSimulation(aparams) {
     const simulation = aparams.simulation;
@@ -292,6 +338,9 @@ export class ApgRpr_Simulator {
     this._window.localStorage.setItem(settingsKey, localStorageSettings);
     this._logger.devLog(simulation + " simulation changed", ApgRpr_Simulator.RPR_SIMULATOR_NAME);
   }
+  /**
+   * Core business is here
+   */
   run() {
     const procStartTime = performance.now();
     if (this._world) {

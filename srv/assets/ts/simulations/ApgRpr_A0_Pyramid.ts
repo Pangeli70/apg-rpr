@@ -14,9 +14,7 @@ import {
     ApgGui_IElement, ApgGui_IRange, ApgGui_ISelect
 } from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
-import {
-    ApgGui_IMinMaxStep
-} from "../apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     RAPIER
@@ -135,10 +133,10 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
         this.createGround();
 
         this.createSimulationTable(
-            asettings.table.width,
-            asettings.table.depth,
-            asettings.table.height,
-            asettings.table.thickness
+            asettings.playground.width,
+            asettings.playground.depth,
+            asettings.playground.height,
+            asettings.playground.thickness
         );
 
         // Dynamic cubes layered in a pyramid shape.
@@ -172,7 +170,7 @@ export class ApgRpr_A0_Pyramid_Simulation extends ApgRpr_Simulation {
         for (let iy = 0; iy < baseSize; iy++) {
 
             const levelXZOrigin = initialXZDisplacement + (iy * distance / 2);
-            const levelHeight = asettings.table.height + fallHeight + cubeRadious;
+            const levelHeight = asettings.playground.height + fallHeight + cubeRadious;
 
             for (let ix = 0; ix < (baseSize - iy); ix++) {
                 for (let iz = 0; iz < (baseSize - iy); iz++) {

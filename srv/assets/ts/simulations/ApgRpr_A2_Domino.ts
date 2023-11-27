@@ -12,9 +12,7 @@ import {
     ApgGui_ISelect
 } from "../apg-gui/lib/interfaces/ApgGui_Dom.ts";
 
-import {
-    ApgGui_IMinMaxStep
-} from "../apg-gui/lib/classes/ApgGui.ts";
+import { ApgGui_IMinMaxStep } from "../apg-gui/lib/interfaces/ApgGui_IMinMaxStep.ts";
 
 import {
     RAPIER
@@ -122,18 +120,18 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
         this.createGround();
 
         this.createSimulationTable(
-            asettings.table.width,
-            asettings.table.depth,
-            asettings.table.height,
-            asettings.table.thickness
+            asettings.playground.width,
+            asettings.playground.depth,
+            asettings.playground.height,
+            asettings.playground.thickness
         );
 
-        const playGroundDiameter = asettings.table.depth * 0.9;
+        const playGroundDiameter = asettings.playground.depth * 0.9;
 
         // Create North sign.
         const northBodyDesc = RAPIER.RigidBodyDesc
             .fixed()
-            .setTranslation(0, asettings.table.height, (asettings.table.depth / 2) * 0.9)
+            .setTranslation(0, asettings.playground.height, (asettings.playground.depth / 2) * 0.9)
             .setRotation({ x: 0, y: 1, z: 0, w: 0.5 })
         const northBody = this.world.createRigidBody(northBodyDesc);
         const northColliderDesc = RAPIER.ColliderDesc
@@ -156,7 +154,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
         aplaygroundDiameter: number
     ) {
 
-        const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+        const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
         const r = new Array<RAPIER.Quaternion>();
         for (let i = 0; i < asettings.cardsNumber; i++) {
 
@@ -179,7 +177,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
         aplaygroundDiameter: number
     ) {
 
-        const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+        const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
         const deltaX = this._cardHeight * 0.75;
         const r = new Array<RAPIER.Quaternion>();
         for (let i = 0; i < asettings.cardsNumber; i++) {
@@ -203,7 +201,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     ) {
 
 
-        const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+        const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
         const radious = aplaygroundDiameter / 2;
         const deltaAngle = 360 / asettings.cardsNumber;
 
@@ -238,7 +236,7 @@ export class ApgRpr_A2_Domino_Simulation extends ApgRpr_Simulation {
     ) {
 
 
-        const fallHeight = asettings.table.height + 0.5 * this._cardHeight;
+        const fallHeight = asettings.playground.height + 0.5 * this._cardHeight;
         const initialRadious = aplaygroundDiameter / 20;
         let currentRadious = initialRadious;
         let currentAngle = 0;

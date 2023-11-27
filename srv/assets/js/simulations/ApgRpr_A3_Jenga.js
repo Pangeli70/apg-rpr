@@ -16,7 +16,6 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
     this.createWorld(settings);
     this.simulator.addWorld(this.world);
     this.simulator.setPreStepAction(() => {
-      this.#spawnBall();
       this.updateFromGui();
     });
   }
@@ -48,14 +47,17 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
   createWorld(asettings) {
     this.createGround();
     this.createSimulationTable(
-      asettings.table.width,
-      asettings.table.depth,
-      asettings.table.height,
-      asettings.table.thickness
+      asettings.playground.width,
+      asettings.playground.depth,
+      asettings.playground.height,
+      asettings.playground.thickness
     );
+    this.#buildTiles(asettings);
+  }
+  #buildTiles(asettings) {
     const piecesPerRow = 4;
     const levels = asettings.blockLevels;
-    const shift = asettings.table.height;
+    const shift = asettings.playground.height;
     const pieceWidth = asettings.blockWidth;
     const pieceHeight = pieceWidth / 2;
     const pieceDepth = pieceWidth * piecesPerRow;
@@ -87,13 +89,6 @@ export class ApgRpr_A3_Jenga_Simulation extends ApgRpr_Simulation {
         const boxColliderDesc = RAPIER.ColliderDesc.cuboid(pW / 2, pH / 2, pD / 2).setFriction(0.9);
         this.world.createCollider(boxColliderDesc, boxBody).setRestitution(asettings.cubesRestitution);
       }
-    }
-  }
-  #spawnBall() {
-  }
-  updateFromGui() {
-    if (this.needsUpdate()) {
-      super.updateFromGui();
     }
   }
 }
